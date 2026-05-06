@@ -24,6 +24,7 @@ export default function Dashboard() {
   const { language } = useSettingsStore()
   const [data, setData] = useState<DashboardSummary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchDashboardSummary()
@@ -35,17 +36,32 @@ export default function Dashboard() {
       if (res.data.success) {
         setData(res.data.data)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
+      setError(err.message || 'Failed to connect to the server.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <div className="w-full h-[60vh] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+      </div>
+    )
+  }
+
+  if (error || !data) {
+    return (
+      <div className="w-full h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <div className="bg-red-50 text-red-500 p-4 rounded-xl border border-red-100 max-w-md text-center">
+          <h3 className="font-bold mb-2">Connection Error</h3>
+          <p className="text-sm">{error || 'Could not load data'}</p>
+          <p className="text-xs mt-4 text-red-400">
+            Current API URL: {import.meta.env.VITE_API_URL || 'Not Set'}
+          </p>
+        </div>
       </div>
     )
   }
