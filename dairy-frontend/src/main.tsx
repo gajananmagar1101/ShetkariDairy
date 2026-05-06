@@ -9,6 +9,9 @@ if (apiUrl) {
   if (!apiUrl.startsWith('http')) {
     apiUrl = 'https://' + apiUrl
   }
+  if (apiUrl.endsWith('/')) {
+    apiUrl = apiUrl.slice(0, -1)
+  }
   axios.defaults.baseURL = apiUrl
 }
 
