@@ -6,4 +6,4 @@ spring:
       uri: mongodb+srv://gajananmagar004_db_user:OJgp4EnQLg7tsvYa@cluster0.eobdyd7.mongodb.net/dairy_db?appName=Cluster0
 
 server:
-  port: 8080
+  port: ${PORT:8080}
