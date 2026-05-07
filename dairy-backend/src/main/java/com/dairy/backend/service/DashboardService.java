@@ -23,6 +23,10 @@ public class DashboardService {
     private final MilkEntryRepository milkEntryRepository;
     private final CustomerRepository customerRepository;
 
+    private BigDecimal nz(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
+    }
+
     public DashboardSummaryDto getSummary() {
         LocalDate today = LocalDate.now();
         LocalDate yesterday = today.minusDays(1);
@@ -36,15 +40,15 @@ public class DashboardService {
         BigDecimal todaysCollection = BigDecimal.ZERO;
 
         for (MilkEntry entry : todaysEntries) {
-            totalMilkToday = totalMilkToday.add(entry.getMorningQuantity()).add(entry.getEveningQuantity());
-            todaysCollection = todaysCollection.add(entry.getTotalAmount());
+            totalMilkToday = totalMilkToday.add(nz(entry.getMorningQuantity())).add(nz(entry.getEveningQuantity()));
+            todaysCollection = todaysCollection.add(nz(entry.getTotalAmount()));
         }
 
         // Yesterday's Stats for Growth Calculation
         List<MilkEntry> yesterdaysEntries = milkEntryRepository.findByDate(yesterday);
         BigDecimal yesterdaysCollection = BigDecimal.ZERO;
         for (MilkEntry entry : yesterdaysEntries) {
-            yesterdaysCollection = yesterdaysCollection.add(entry.getTotalAmount());
+            yesterdaysCollection = yesterdaysCollection.add(nz(entry.getTotalAmount()));
         }
 
         // Calculate Growth %
@@ -85,8 +89,8 @@ public class DashboardService {
         for (MilkEntry entry : weeklyEntries) {
             DashboardSummaryDto.WeeklyTrend trend = trendMap.get(entry.getDate());
             if (trend != null) {
-                trend.setMilk(trend.getMilk().add(entry.getMorningQuantity()).add(entry.getEveningQuantity()));
-                trend.setAmount(trend.getAmount().add(entry.getTotalAmount()));
+                trend.setMilk(trend.getMilk().add(nz(entry.getMorningQuantity())).add(nz(entry.getEveningQuantity())));
+                trend.setAmount(trend.getAmount().add(nz(entry.getTotalAmount())));
             }
         }
 

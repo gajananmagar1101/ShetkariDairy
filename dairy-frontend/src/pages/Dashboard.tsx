@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Droplets, Users, IndianRupee, TrendingUp, Loader2 } from 'lucide-react'
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import axios from 'axios'
+import { getApiBaseUrl } from '../lib/api'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 
@@ -35,10 +36,12 @@ export default function Dashboard() {
       const res = await axios.get('/api/dashboard/summary')
       if (res.data.success) {
         setData(res.data.data)
+      } else {
+        setError('Dashboard API returned an unexpected response.')
       }
     } catch (err: any) {
       console.error(err)
-      setError(err.message || 'Failed to connect to the server.')
+      setError(err.response?.data?.message || err.message || 'Failed to connect to the server.')
     } finally {
       setIsLoading(false)
     }
@@ -59,7 +62,7 @@ export default function Dashboard() {
           <h3 className="font-bold mb-2">Connection Error</h3>
           <p className="text-sm">{error || 'Could not load data'}</p>
           <p className="text-xs mt-4 text-red-400">
-            Current API URL: {import.meta.env.VITE_API_URL || 'Not Set'}
+            Current API URL: {getApiBaseUrl()}
           </p>
         </div>
       </div>
