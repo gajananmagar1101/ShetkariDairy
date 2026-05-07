@@ -3,7 +3,7 @@ spring:
     name: dairy-backend
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb+srv://gajananmagar004_db_user:OJgp4EnQLg7tsvYa@cluster0.eobdyd7.mongodb.net/dairy_db?appName=Cluster0}
+      uri: ${SPRING_DATA_MONGODB_URI:${MONGODB_URI:mongodb+srv://gajananmagar004_db_user:OJgp4EnQLg7tsvYa@cluster0.eobdyd7.mongodb.net/dairy_db?appName=Cluster0}}
 
 server:
   port: ${PORT:8080}
