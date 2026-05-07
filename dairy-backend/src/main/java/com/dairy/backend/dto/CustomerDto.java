@@ -20,5 +20,8 @@ public class CustomerDto {
     private String milkType;
     private BigDecimal ratePerLiter;
     private BigDecimal dailyQuantity;
+    private Boolean autoEntryEnabled;
+    private BigDecimal defaultMorningQuantity;
+    private BigDecimal defaultEveningQuantity;
     private Boolean active;
 }

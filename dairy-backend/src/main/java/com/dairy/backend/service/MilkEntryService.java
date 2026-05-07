@@ -22,6 +22,10 @@ public class MilkEntryService {
     private final MilkEntryRepository milkEntryRepository;
     private final CustomerRepository customerRepository;
 
+    private BigDecimal safe(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
+    }
+
     @Transactional
     public MilkEntryDto addMilkEntry(MilkEntryDto dto) {
         Customer customer = customerRepository.findById(dto.getCustomerId())
@@ -102,32 +106,46 @@ public class MilkEntryService {
         int generatedCount = 0;
 
         for (Customer customer : activeCustomers) {
-            // Check if customer has a daily quantity plan
-            if (customer.getDailyQuantity() != null && customer.getDailyQuantity().compareTo(BigDecimal.ZERO) > 0) {
-                // Prevent duplicate entries for the same date
-                if (!milkEntryRepository.existsByCustomerIdAndDate(customer.getId(), date)) {
-                    BigDecimal mQty = customer.getDailyQuantity();
-                    BigDecimal rate = customer.getRatePerLiter();
-                    BigDecimal totalAmount = mQty.multiply(rate);
+            boolean hasLegacyDailyPlan = customer.getDailyQuantity() != null
+                    && customer.getDailyQuantity().compareTo(BigDecimal.ZERO) > 0;
+            boolean shouldAutoGenerate = customer.isAutoEntryEnabled() || hasLegacyDailyPlan;
 
-                    MilkEntry entry = MilkEntry.builder()
-                            .customerId(customer.getId())
-                            .date(date)
-                            .morningQuantity(mQty)
-                            .eveningQuantity(BigDecimal.ZERO)
-                            .ratePerLiter(rate)
-                            .totalAmount(totalAmount)
-                            .build();
-
-                    milkEntryRepository.save(entry);
-
-                    // Update balance
-                    customer.setBalance(customer.getBalance().add(totalAmount));
-                    customerRepository.save(customer);
-
-                    generatedCount++;
-                }
+            if (!shouldAutoGenerate || milkEntryRepository.existsByCustomerIdAndDate(customer.getId(), date)) {
+                continue;
             }
+
+            BigDecimal morningQty = safe(customer.getDefaultMorningQuantity());
+            BigDecimal eveningQty = safe(customer.getDefaultEveningQuantity());
+
+            // Backward compatibility for existing customers already using dailyQuantity.
+            if (morningQty.compareTo(BigDecimal.ZERO) == 0
+                    && eveningQty.compareTo(BigDecimal.ZERO) == 0
+                    && hasLegacyDailyPlan) {
+                eveningQty = customer.getDailyQuantity();
+            }
+
+            BigDecimal totalQty = morningQty.add(eveningQty);
+            if (totalQty.compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+
+            BigDecimal rate = customer.getRatePerLiter();
+            BigDecimal totalAmount = totalQty.multiply(rate);
+
+            MilkEntry entry = MilkEntry.builder()
+                    .customerId(customer.getId())
+                    .date(date)
+                    .morningQuantity(morningQty)
+                    .eveningQuantity(eveningQty)
+                    .ratePerLiter(rate)
+                    .totalAmount(totalAmount)
+                    .build();
+
+            milkEntryRepository.save(entry);
+
+            customer.setBalance(customer.getBalance().add(totalAmount));
+            customerRepository.save(customer);
+            generatedCount++;
         }
         return generatedCount;
     }

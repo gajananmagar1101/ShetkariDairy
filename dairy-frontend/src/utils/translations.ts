@@ -54,6 +54,11 @@ export const translations = {
     deleteConfirm: 'Are you sure you want to delete this customer?',
     editCustomer: 'Edit Customer',
     updateCustomer: 'Update Customer',
+    monthlyAutoEntry: 'Monthly Auto Entry',
+    monthlyAutoEntryDesc: 'Auto-create this customer entry every day at 9:30 PM.',
+    defaultMorningQty: 'Default Morning (L)',
+    defaultEveningQty: 'Default Evening (L)',
+    autoEntry930: '9:30 PM auto entry enabled',
     // Dashboard
     dashboardOverview: 'Dashboard Overview',
     dashboardDesc: 'Here is the summary of your dairy business today.',
@@ -171,6 +176,11 @@ export const translations = {
     deleteConfirm: 'तुम्हाला खात्री आहे का की हा ग्राहक डिलीट करायचा आहे?',
     editCustomer: 'ग्राहक माहिती बदला',
     updateCustomer: 'माहिती अपडेट करा',
+    monthlyAutoEntry: 'मासिक ऑटो एंट्री',
+    monthlyAutoEntryDesc: 'या ग्राहकासाठी रोज रात्री 9:30 वाजता एंट्री आपोआप तयार होईल.',
+    defaultMorningQty: 'डिफॉल्ट सकाळ (L)',
+    defaultEveningQty: 'डिफॉल्ट संध्याकाळ (L)',
+    autoEntry930: 'रोज रात्री 9:30 ला ऑटो एंट्री',
     // Dashboard
     dashboardOverview: 'डॅशबोर्ड माहिती',
     dashboardDesc: 'येथे तुमच्या आजच्या डेअरी व्यवसायाचा गोषवारा आहे.',

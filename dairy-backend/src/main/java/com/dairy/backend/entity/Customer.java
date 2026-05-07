@@ -38,6 +38,15 @@ public class Customer {
     private String milkType; // COW or BUFFALO
     private BigDecimal ratePerLiter;
     private BigDecimal dailyQuantity;
+
+    @Builder.Default
+    private boolean autoEntryEnabled = false;
+
+    @Builder.Default
+    private BigDecimal defaultMorningQuantity = BigDecimal.ZERO;
+
+    @Builder.Default
+    private BigDecimal defaultEveningQuantity = BigDecimal.ZERO;
     
     @Builder.Default
     private boolean isActive = true;

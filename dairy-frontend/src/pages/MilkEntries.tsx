@@ -11,6 +11,9 @@ interface Customer {
   milkType: string
   ratePerLiter: number
   dailyQuantity: number
+  autoEntryEnabled: boolean
+  defaultMorningQuantity: number
+  defaultEveningQuantity: number
 }
 
 interface MilkEntry {
@@ -213,6 +216,7 @@ export default function MilkEntries() {
         <div>
           <h1 className="text-2xl font-bold text-slate-800">{t(language, 'dailyMilkEntryTitle')}</h1>
           <p className="text-slate-500 text-sm mt-1">{t(language, 'dailyMilkEntryDesc')}</p>
+          <p className="text-xs text-indigo-600 mt-2">{t(language, 'monthlyAutoEntryDesc')}</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">

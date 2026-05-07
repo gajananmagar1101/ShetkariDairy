@@ -23,6 +23,17 @@ public class CustomerService {
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
 
+    private BigDecimal safe(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private BigDecimal resolveDailyQuantity(CustomerDto dto) {
+        if (dto.getDailyQuantity() != null) {
+            return dto.getDailyQuantity();
+        }
+        return safe(dto.getDefaultMorningQuantity()).add(safe(dto.getDefaultEveningQuantity()));
+    }
+
     public CustomerDto createCustomer(CustomerDto dto) {
         Customer customer = Customer.builder()
                 .name(dto.getName())
@@ -32,7 +43,10 @@ public class CustomerService {
                 .balance(BigDecimal.ZERO)
                 .milkType(dto.getMilkType())
                 .ratePerLiter(dto.getRatePerLiter())
-                .dailyQuantity(dto.getDailyQuantity())
+                .dailyQuantity(resolveDailyQuantity(dto))
+                .autoEntryEnabled(Boolean.TRUE.equals(dto.getAutoEntryEnabled()))
+                .defaultMorningQuantity(safe(dto.getDefaultMorningQuantity()))
+                .defaultEveningQuantity(safe(dto.getDefaultEveningQuantity()))
                 .isActive(true)
                 .build();
 
@@ -60,7 +74,10 @@ public class CustomerService {
         customer.setAddress(dto.getAddress());
         customer.setMilkType(dto.getMilkType());
         customer.setRatePerLiter(dto.getRatePerLiter());
-        customer.setDailyQuantity(dto.getDailyQuantity());
+        customer.setDailyQuantity(resolveDailyQuantity(dto));
+        customer.setAutoEntryEnabled(Boolean.TRUE.equals(dto.getAutoEntryEnabled()));
+        customer.setDefaultMorningQuantity(safe(dto.getDefaultMorningQuantity()));
+        customer.setDefaultEveningQuantity(safe(dto.getDefaultEveningQuantity()));
         // Do not update balance or joinedDate during normal edit
         return mapToDto(customerRepository.save(customer));
     }
@@ -75,6 +92,9 @@ public class CustomerService {
                 .milkType(customer.getMilkType())
                 .ratePerLiter(customer.getRatePerLiter())
                 .dailyQuantity(customer.getDailyQuantity())
+                .autoEntryEnabled(customer.isAutoEntryEnabled())
+                .defaultMorningQuantity(customer.getDefaultMorningQuantity())
+                .defaultEveningQuantity(customer.getDefaultEveningQuantity())
                 .active(customer.isActive())
                 .build();
     }

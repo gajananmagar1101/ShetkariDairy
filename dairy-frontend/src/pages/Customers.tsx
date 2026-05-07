@@ -21,6 +21,9 @@ interface Customer {
   milkType: string
   ratePerLiter: number
   dailyQuantity: number
+  autoEntryEnabled: boolean
+  defaultMorningQuantity: number
+  defaultEveningQuantity: number
   active: boolean
 }
 
@@ -31,9 +34,18 @@ export default function Customers() {
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [formData, setFormData] = useState({ 
-    name: '', phone: '', address: '', milkType: 'COW', ratePerLiter: '60', dailyQuantity: '1' 
-  })
+  const emptyForm = {
+    name: '',
+    phone: '',
+    address: '',
+    milkType: 'COW',
+    ratePerLiter: '60',
+    dailyQuantity: '1',
+    autoEntryEnabled: false,
+    defaultMorningQuantity: '0',
+    defaultEveningQuantity: '1',
+  }
+  const [formData, setFormData] = useState(emptyForm)
 
   const fetchCustomers = async () => {
     try {
@@ -55,10 +67,18 @@ export default function Customers() {
   const handleSubmitCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      const morningQty = parseFloat(formData.defaultMorningQuantity || '0') || 0
+      const eveningQty = parseFloat(formData.defaultEveningQuantity || '0') || 0
+      const computedDailyQuantity = formData.autoEntryEnabled
+        ? morningQty + eveningQty
+        : parseFloat(formData.dailyQuantity || '0')
+
       const payload = {
         ...formData,
         ratePerLiter: parseFloat(formData.ratePerLiter),
-        dailyQuantity: parseFloat(formData.dailyQuantity)
+        dailyQuantity: computedDailyQuantity,
+        defaultMorningQuantity: morningQty,
+        defaultEveningQuantity: eveningQty,
       }
       
       if (editingId) {
@@ -75,7 +95,7 @@ export default function Customers() {
       
       setIsDialogOpen(false)
       setEditingId(null)
-      setFormData({ name: '', phone: '', address: '', milkType: 'COW', ratePerLiter: '60', dailyQuantity: '1' })
+      setFormData(emptyForm)
     } catch (err: any) {
       console.error(err)
       const errorMsg = err.response?.data?.message || "Failed to save customer. Please try again."
@@ -90,7 +110,10 @@ export default function Customers() {
       address: customer.address,
       milkType: customer.milkType,
       ratePerLiter: customer.ratePerLiter.toString(),
-      dailyQuantity: customer.dailyQuantity.toString()
+      dailyQuantity: customer.dailyQuantity?.toString() ?? '0',
+      autoEntryEnabled: customer.autoEntryEnabled ?? false,
+      defaultMorningQuantity: customer.defaultMorningQuantity?.toString() ?? '0',
+      defaultEveningQuantity: customer.defaultEveningQuantity?.toString() ?? '0',
     })
     setEditingId(customer.id)
     setIsDialogOpen(true)
@@ -127,7 +150,7 @@ export default function Customers() {
           setIsDialogOpen(open)
           if (!open) {
             setEditingId(null)
-            setFormData({ name: '', phone: '', address: '', milkType: 'COW', ratePerLiter: '60', dailyQuantity: '1' })
+            setFormData(emptyForm)
           }
         }}>
           <DialogTrigger asChild>
@@ -179,10 +202,14 @@ export default function Customers() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'dailyQuantity')}</label>
-                  <input 
-                    required type="number" step="0.5" value={formData.dailyQuantity}
+                  <input
+                    required={!formData.autoEntryEnabled}
+                    type="number"
+                    step="0.5"
+                    value={formData.autoEntryEnabled ? ((parseFloat(formData.defaultMorningQuantity || '0') || 0) + (parseFloat(formData.defaultEveningQuantity || '0') || 0)).toString() : formData.dailyQuantity}
                     onChange={e => setFormData({...formData, dailyQuantity: e.target.value})}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    disabled={formData.autoEntryEnabled}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-slate-100 disabled:text-slate-500"
                   />
                 </div>
                 <div>
@@ -192,6 +219,47 @@ export default function Customers() {
                     onChange={e => setFormData({...formData, ratePerLiter: e.target.value})}
                     className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
+                </div>
+                <div className="col-span-2 rounded-2xl border border-indigo-200 bg-indigo-50/70 p-4">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.autoEntryEnabled}
+                      onChange={e => setFormData({ ...formData, autoEntryEnabled: e.target.checked })}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold text-slate-800">{t(language, 'monthlyAutoEntry')}</span>
+                      <span className="block text-xs text-slate-600 mt-1">{t(language, 'monthlyAutoEntryDesc')}</span>
+                    </span>
+                  </label>
+
+                  {formData.autoEntryEnabled && (
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'defaultMorningQty')}</label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          value={formData.defaultMorningQuantity}
+                          onChange={e => setFormData({ ...formData, defaultMorningQuantity: e.target.value })}
+                          className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'defaultEveningQty')}</label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          value={formData.defaultEveningQuantity}
+                          onChange={e => setFormData({ ...formData, defaultEveningQuantity: e.target.value })}
+                          className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <Button type="submit" className="w-full rounded-xl mt-2">
@@ -247,6 +315,11 @@ export default function Customers() {
                             {customer.name.charAt(0)}
                           </div>
                           <span className="font-medium text-slate-800">{customer.name}</span>
+                          {customer.autoEntryEnabled && (
+                            <span className="ml-2 rounded-full bg-indigo-100 px-2 py-1 text-[11px] font-semibold text-indigo-700">
+                              {t(language, 'autoEntry930')}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-4">
