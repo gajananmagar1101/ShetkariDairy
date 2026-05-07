@@ -50,8 +50,8 @@ export default function Reports() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">{t(language, 'reportsTitle')}</h1>
-          <p className="text-slate-500 text-sm mt-1">{t(language, 'reportsDesc')}</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">{t(language, 'reportsTitle')}</h1>
+          <p className="text-slate-500 font-medium mt-1">{t(language, 'reportsDesc')}</p>
         </div>
 
         <div className="flex gap-3">
@@ -106,7 +106,7 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="bg-white/60 backdrop-blur-md rounded-3xl border border-white/60 shadow-sm p-6">
+      <div className="bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <h3 className="font-bold text-lg text-slate-800 mb-6">{t(language, 'monthlyProfitTrend')}</h3>
         <div className="h-[400px] w-full">
           {isLoading ? (

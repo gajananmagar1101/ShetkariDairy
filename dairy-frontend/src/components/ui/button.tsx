@@ -5,23 +5,23 @@ import { motion, type HTMLMotionProps } from "framer-motion"
 import { cn } from "../../lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary-500 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:pointer-events-none disabled:opacity-50 duration-300",
   {
     variants: {
       variant: {
-        default: "bg-primary-600 text-white shadow hover:bg-primary-700",
-        destructive: "bg-red-500 text-white shadow-sm hover:bg-red-600",
-        outline: "border border-slate-200 bg-white shadow-sm hover:bg-slate-100 text-slate-900",
-        secondary: "bg-slate-100 text-slate-900 shadow-sm hover:bg-slate-200",
-        ghost: "hover:bg-slate-100 hover:text-slate-900 text-slate-600",
+        default: "bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-[0_4px_14px_0_rgba(124,58,237,0.39)] hover:shadow-[0_6px_20px_rgba(124,58,237,0.23)]",
+        destructive: "bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-[0_4px_14px_0_rgba(244,63,94,0.39)] hover:shadow-[0_6px_20px_rgba(244,63,94,0.23)]",
+        outline: "border border-slate-200 bg-white/50 shadow-sm hover:bg-white/80 text-slate-900 backdrop-blur-sm",
+        secondary: "bg-primary-50 text-primary-900 shadow-sm hover:bg-primary-100",
+        ghost: "hover:bg-slate-100/50 hover:text-slate-900 text-slate-600",
         link: "text-primary-600 underline-offset-4 hover:underline",
-        glass: "glass text-slate-900 hover:bg-white/40",
+        glass: "glass text-slate-900 hover:bg-white/60",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-8 rounded-lg px-3 text-xs",
-        lg: "h-12 rounded-xl px-8",
-        icon: "h-10 w-10",
+        default: "h-11 px-6 py-2",
+        sm: "h-9 px-4 text-xs",
+        lg: "h-12 px-8 text-base",
+        icon: "h-11 w-11",
       },
     },
     defaultVariants: {

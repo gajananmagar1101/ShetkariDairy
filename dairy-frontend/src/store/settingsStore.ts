@@ -6,15 +6,19 @@ type Theme = 'light' | 'dark'
 interface SettingsState {
   language: Language
   theme: Theme
+  isMobileMenuOpen: boolean
   setLanguage: (lang: Language) => void
   setTheme: (theme: Theme) => void
   toggleLanguage: () => void
   toggleTheme: () => void
+  toggleMobileMenu: () => void
+  setMobileMenuOpen: (isOpen: boolean) => void
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
   language: 'en',
   theme: 'light',
+  isMobileMenuOpen: false,
   setLanguage: (lang) => set({ language: lang }),
   setTheme: (theme) => {
     if (theme === 'dark') {
@@ -34,4 +38,6 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     }
     return { theme: newTheme }
   }),
+  toggleMobileMenu: () => set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
+  setMobileMenuOpen: (isOpen) => set({ isMobileMenuOpen: isOpen }),
 }))

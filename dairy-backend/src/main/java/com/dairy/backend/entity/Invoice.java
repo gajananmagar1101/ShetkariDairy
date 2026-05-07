@@ -25,6 +25,10 @@ public class Invoice {
 
     private String customerId;
 
+    private LocalDate periodStartDate;
+
+    private LocalDate periodEndDate;
+
     private Integer invoiceMonth;
 
     private Integer invoiceYear;
@@ -34,8 +38,6 @@ public class Invoice {
     private BigDecimal paidAmount;
 
     private PaymentStatus status;
-
-    private LocalDate dueDate;
 
     @CreatedDate
     private LocalDateTime createdAt;

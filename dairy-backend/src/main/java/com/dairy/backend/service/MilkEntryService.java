@@ -2,6 +2,7 @@ package com.dairy.backend.service;
 
 import com.dairy.backend.dto.MilkEntryDto;
 import com.dairy.backend.entity.Customer;
+import com.dairy.backend.entity.DeliveryOverride;
 import com.dairy.backend.entity.MilkEntry;
 import com.dairy.backend.repository.CustomerRepository;
 import com.dairy.backend.repository.MilkEntryRepository;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -85,6 +87,44 @@ public class MilkEntryService {
                 .collect(Collectors.toList());
     }
 
+    public List<MilkEntryDto> getEntriesByCustomerAndDateRange(String customerId, LocalDate startDate, LocalDate endDate) {
+        String customerName = customerRepository.findById(customerId)
+                .map(Customer::getName).orElse("Unknown");
+
+        return milkEntryRepository.findByCustomerIdAndDateBetween(customerId, startDate, endDate).stream()
+                .map(entry -> mapToDto(entry, customerName))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public MilkEntryDto updateMilkEntry(String id, MilkEntryDto dto) {
+        MilkEntry entry = milkEntryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Milk entry not found"));
+
+        Customer customer = customerRepository.findById(entry.getCustomerId())
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        BigDecimal oldAmount = entry.getTotalAmount() != null ? entry.getTotalAmount() : BigDecimal.ZERO;
+        BigDecimal rate = dto.getRatePerLiter() != null ? dto.getRatePerLiter() : entry.getRatePerLiter();
+        BigDecimal morningQty = dto.getMorningQuantity() != null ? dto.getMorningQuantity() : BigDecimal.ZERO;
+        BigDecimal eveningQty = dto.getEveningQuantity() != null ? dto.getEveningQuantity() : BigDecimal.ZERO;
+        BigDecimal totalAmount = morningQty.add(eveningQty).multiply(rate);
+
+        entry.setMorningQuantity(morningQty);
+        entry.setEveningQuantity(eveningQty);
+        entry.setFat(dto.getFat());
+        entry.setSnf(dto.getSnf());
+        entry.setRatePerLiter(rate);
+        entry.setTotalAmount(totalAmount);
+
+        milkEntryRepository.save(entry);
+
+        customer.setBalance(customer.getBalance().subtract(oldAmount).add(totalAmount));
+        customerRepository.save(customer);
+
+        return mapToDto(entry, customer.getName());
+    }
+
     private MilkEntryDto mapToDto(MilkEntry entry, String customerName) {
         return MilkEntryDto.builder()
                 .id(entry.getId())
@@ -109,8 +149,15 @@ public class MilkEntryService {
             boolean hasLegacyDailyPlan = customer.getDailyQuantity() != null
                     && customer.getDailyQuantity().compareTo(BigDecimal.ZERO) > 0;
             boolean shouldAutoGenerate = customer.isAutoEntryEnabled() || hasLegacyDailyPlan;
+            List<LocalDate> skippedDates = customer.getSkippedDates() != null ? customer.getSkippedDates() : new ArrayList<>();
+            DeliveryOverride override = customer.getDeliveryOverrides() == null
+                    ? null
+                    : customer.getDeliveryOverrides().stream()
+                    .filter(item -> date.equals(item.getDate()))
+                    .findFirst()
+                    .orElse(null);
 
-            if (!shouldAutoGenerate || milkEntryRepository.existsByCustomerIdAndDate(customer.getId(), date)) {
+            if (!shouldAutoGenerate || skippedDates.contains(date) || milkEntryRepository.existsByCustomerIdAndDate(customer.getId(), date)) {
                 continue;
             }
 
@@ -122,6 +169,11 @@ public class MilkEntryService {
                     && eveningQty.compareTo(BigDecimal.ZERO) == 0
                     && hasLegacyDailyPlan) {
                 eveningQty = customer.getDailyQuantity();
+            }
+
+            if (override != null && override.getQuantity() != null) {
+                morningQty = BigDecimal.ZERO;
+                eveningQty = override.getQuantity();
             }
 
             BigDecimal totalQty = morningQty.add(eveningQty);

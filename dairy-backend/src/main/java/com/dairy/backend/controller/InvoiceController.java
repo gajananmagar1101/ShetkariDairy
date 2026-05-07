@@ -4,9 +4,11 @@ import com.dairy.backend.dto.ApiResponse;
 import com.dairy.backend.dto.InvoiceDto;
 import com.dairy.backend.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -19,9 +21,9 @@ public class InvoiceController {
     @PostMapping("/generate")
     public ResponseEntity<ApiResponse<InvoiceDto>> generateInvoice(
             @RequestParam String customerId,
-            @RequestParam int year,
-            @RequestParam int month) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Invoice generated", invoiceService.generateMonthlyInvoice(customerId, year, month)));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Invoice generated", invoiceService.generateInvoice(customerId, startDate, endDate)));
     }
 
     @GetMapping

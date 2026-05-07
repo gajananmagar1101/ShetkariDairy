@@ -9,6 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../components/ui/dialog'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 
@@ -34,6 +35,7 @@ export default function Customers() {
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const emptyForm = {
     name: '',
     phone: '',
@@ -41,11 +43,14 @@ export default function Customers() {
     milkType: 'COW',
     ratePerLiter: '60',
     dailyQuantity: '1',
-    autoEntryEnabled: false,
+    autoEntryEnabled: true,
     defaultMorningQuantity: '0',
-    defaultEveningQuantity: '1',
+    defaultEveningQuantity: '0',
   }
   const [formData, setFormData] = useState(emptyForm)
+  const effectiveDailyQuantity = parseFloat(formData.dailyQuantity || '0') || 0
+  const effectiveRate = parseFloat(formData.ratePerLiter || '0') || 0
+  const estimatedAmount = effectiveDailyQuantity * effectiveRate
 
   const fetchCustomers = async () => {
     try {
@@ -67,18 +72,15 @@ export default function Customers() {
   const handleSubmitCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const morningQty = parseFloat(formData.defaultMorningQuantity || '0') || 0
-      const eveningQty = parseFloat(formData.defaultEveningQuantity || '0') || 0
-      const computedDailyQuantity = formData.autoEntryEnabled
-        ? morningQty + eveningQty
-        : parseFloat(formData.dailyQuantity || '0')
+      const computedDailyQuantity = parseFloat(formData.dailyQuantity || '0') || 0
 
       const payload = {
         ...formData,
         ratePerLiter: parseFloat(formData.ratePerLiter),
         dailyQuantity: computedDailyQuantity,
-        defaultMorningQuantity: morningQty,
-        defaultEveningQuantity: eveningQty,
+        autoEntryEnabled: true,
+        defaultMorningQuantity: 0,
+        defaultEveningQuantity: 0,
       }
       
       if (editingId) {
@@ -111,24 +113,26 @@ export default function Customers() {
       milkType: customer.milkType,
       ratePerLiter: customer.ratePerLiter.toString(),
       dailyQuantity: customer.dailyQuantity?.toString() ?? '0',
-      autoEntryEnabled: customer.autoEntryEnabled ?? false,
-      defaultMorningQuantity: customer.defaultMorningQuantity?.toString() ?? '0',
-      defaultEveningQuantity: customer.defaultEveningQuantity?.toString() ?? '0',
+      autoEntryEnabled: true,
+      defaultMorningQuantity: '0',
+      defaultEveningQuantity: '0',
     })
     setEditingId(customer.id)
     setIsDialogOpen(true)
   }
 
-  const handleDeleteCustomer = async (id: string) => {
-    if (window.confirm(t(language, 'deleteConfirm'))) {
+  const handleDeleteCustomer = async () => {
+    if (deleteConfirmId) {
       try {
-        const res = await axios.delete(`/api/customers/${id}`)
+        const res = await axios.delete(`/api/customers/${deleteConfirmId}`)
         if (res.data.success) {
-          setCustomers(customers.filter(c => c.id !== id))
+          setCustomers(customers.filter(c => c.id !== deleteConfirmId))
         }
       } catch (err: any) {
         console.error(err)
         alert("Failed to delete customer")
+      } finally {
+        setDeleteConfirmId(null)
       }
     }
   }
@@ -142,8 +146,8 @@ export default function Customers() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">{t(language, 'customersTitle')}</h1>
-          <p className="text-slate-500 text-sm mt-1">{t(language, 'customersDesc')}</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">{t(language, 'customersTitle')}</h1>
+          <p className="text-slate-500 font-medium mt-1">{t(language, 'customersDesc')}</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -154,31 +158,34 @@ export default function Customers() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button className="gap-2 rounded-xl shadow-md">
+            <Button className="gap-2 shadow-[0_8px_20px_rgb(139,92,246,0.3)]">
               <Plus className="w-4 h-4" />
               {t(language, 'addCustomer')}
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-2xl rounded-3xl border border-slate-200/80 bg-white/95 p-0 shadow-2xl">
             <DialogHeader>
-              <DialogTitle>{editingId ? t(language, 'editCustomer') : t(language, 'addCustomer')}</DialogTitle>
+              <DialogTitle className="px-6 pt-6 text-2xl font-bold text-slate-900">
+                {editingId ? t(language, 'editCustomer') : t(language, 'addCustomer')}
+              </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmitCustomer} className="space-y-4 mt-4">
+            <form onSubmit={handleSubmitCustomer} className="space-y-5 px-6 pb-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'name')}</label>
                   <input 
                     required type="text" value={formData.name}
                     onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'mobile')}</label>
                   <input 
-                    required type="text" value={formData.phone}
+                    type="text" value={formData.phone}
                     onChange={e => setFormData({...formData, phone: e.target.value})}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Optional"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
                 <div>
@@ -186,91 +193,73 @@ export default function Customers() {
                   <select 
                     value={formData.milkType}
                     onChange={e => setFormData({...formData, milkType: e.target.value})}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
-                    <option value="COW">{t(language, 'cow')}</option>
                     <option value="BUFFALO">{t(language, 'buffalo')}</option>
+                    <option value="COW">{t(language, 'cow')}</option>
                   </select>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'address')}</label>
                   <input 
-                    required type="text" value={formData.address}
+                    type="text" value={formData.address}
                     onChange={e => setFormData({...formData, address: e.target.value})}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Optional"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'dailyQuantity')}</label>
                   <input
-                    required={!formData.autoEntryEnabled}
+                    required
                     type="number"
                     step="0.5"
-                    value={formData.autoEntryEnabled ? ((parseFloat(formData.defaultMorningQuantity || '0') || 0) + (parseFloat(formData.defaultEveningQuantity || '0') || 0)).toString() : formData.dailyQuantity}
+                    min="0"
+                    value={formData.dailyQuantity}
                     onChange={e => setFormData({...formData, dailyQuantity: e.target.value})}
-                    disabled={formData.autoEntryEnabled}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-slate-100 disabled:text-slate-500"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'ratePerLiter')}</label>
                   <input 
-                    required type="number" value={formData.ratePerLiter}
+                    required type="number" min="0" step="0.5" value={formData.ratePerLiter}
                     onChange={e => setFormData({...formData, ratePerLiter: e.target.value})}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
-                <div className="col-span-2 rounded-2xl border border-indigo-200 bg-indigo-50/70 p-4">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.autoEntryEnabled}
-                      onChange={e => setFormData({ ...formData, autoEntryEnabled: e.target.checked })}
-                      className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <span>
-                      <span className="block text-sm font-semibold text-slate-800">{t(language, 'monthlyAutoEntry')}</span>
-                      <span className="block text-xs text-slate-600 mt-1">{t(language, 'monthlyAutoEntryDesc')}</span>
+                <div className="col-span-2 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
+                  <div className="flex items-center justify-between text-sm text-slate-700">
+                    <span className="font-medium">Calculation</span>
+                    <span className="font-semibold">
+                      {effectiveDailyQuantity.toFixed(1)} L x ₹{effectiveRate.toFixed(2)}
                     </span>
-                  </label>
-
-                  {formData.autoEntryEnabled && (
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'defaultMorningQty')}</label>
-                        <input
-                          type="number"
-                          step="0.5"
-                          min="0"
-                          value={formData.defaultMorningQuantity}
-                          onChange={e => setFormData({ ...formData, defaultMorningQuantity: e.target.value })}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'defaultEveningQty')}</label>
-                        <input
-                          type="number"
-                          step="0.5"
-                          min="0"
-                          value={formData.defaultEveningQuantity}
-                          onChange={e => setFormData({ ...formData, defaultEveningQuantity: e.target.value })}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
-                    </div>
-                  )}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-sm text-slate-600">Estimated amount</span>
+                    <span className="text-xl font-bold text-emerald-700">₹{estimatedAmount.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
-              <Button type="submit" className="w-full rounded-xl mt-2">
+              <Button type="submit" className="w-full rounded-2xl py-6 text-lg font-bold shadow-lg">
                 {editingId ? t(language, 'updateCustomer') : t(language, 'saveCustomer')}
               </Button>
             </form>
           </DialogContent>
         </Dialog>
+
+        <ConfirmDialog 
+          isOpen={!!deleteConfirmId}
+          onClose={() => setDeleteConfirmId(null)}
+          onConfirm={handleDeleteCustomer}
+          title={t(language, 'confirmDeletionTitle')}
+          description={t(language, 'deleteConfirm')}
+          confirmText={t(language, 'delete')}
+          cancelText={t(language, 'cancel')}
+        />
       </div>
 
-      <div className="bg-white/60 backdrop-blur-md rounded-3xl border border-white/60 shadow-sm p-6">
+      <div className="bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -279,7 +268,7 @@ export default function Customers() {
               placeholder="Search customers..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white/60 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-80 shadow-sm transition-all focus:bg-white"
+              className="pl-10 pr-4 py-2 bg-white/40 border border-white/60 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-80 shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80"
             />
           </div>
         </div>
@@ -293,12 +282,12 @@ export default function Customers() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200/60 text-slate-500 text-sm">
-                  <th className="pb-3 font-medium">{t(language, 'name')}</th>
-                  <th className="pb-3 font-medium">{t(language, 'milkType')}</th>
-                  <th className="pb-3 font-medium">{t(language, 'dailyQuantity')}</th>
-                  <th className="pb-3 font-medium">{t(language, 'ratePerLiter')}</th>
-                  <th className="pb-3 font-medium text-right">Balance (₹)</th>
-                  <th className="pb-3 font-medium text-right">Actions</th>
+                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'name')}</th>
+                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'milkType')}</th>
+                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'dailyQuantity')}</th>
+                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'ratePerLiter')}</th>
+                  <th className="pb-3 px-4 font-medium text-right whitespace-nowrap">Balance (₹)</th>
+                  <th className="pb-3 px-4 font-medium text-right whitespace-nowrap">{t(language, 'actions')}</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
@@ -309,7 +298,7 @@ export default function Customers() {
                 ) : (
                   filteredCustomers.map((customer) => (
                     <tr key={customer.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
-                      <td className="py-4">
+                      <td className="py-4 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xs">
                             {customer.name.charAt(0)}
@@ -322,21 +311,21 @@ export default function Customers() {
                           )}
                         </div>
                       </td>
-                      <td className="py-4">
+                      <td className="py-4 px-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-md text-xs font-medium ${customer.milkType === 'COW' ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-700'}`}>
                           {customer.milkType}
                         </span>
                       </td>
-                      <td className="py-4 text-slate-600">{customer.dailyQuantity} L</td>
-                      <td className="py-4 text-slate-600">₹{customer.ratePerLiter}</td>
-                      <td className="py-4 text-right font-medium">
+                      <td className="py-4 px-4 text-slate-600 whitespace-nowrap">{customer.dailyQuantity} L</td>
+                      <td className="py-4 px-4 text-slate-600 whitespace-nowrap">₹{customer.ratePerLiter}</td>
+                      <td className="py-4 px-4 text-right font-medium whitespace-nowrap">
                         <span className={customer.balance > 0 ? 'text-emerald-600' : customer.balance < 0 ? 'text-red-500' : 'text-slate-600'}>
                           {customer.balance}
                         </span>
                       </td>
-                      <td className="py-4 text-right">
+                      <td className="py-4 px-4 text-right whitespace-nowrap">
                         <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 hover:text-primary-700">Edit</Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteCustomer(customer.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50 ml-2">
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(customer.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50 ml-2 rounded-full">
                           <Trash className="w-4 h-4" />
                         </Button>
                       </td>

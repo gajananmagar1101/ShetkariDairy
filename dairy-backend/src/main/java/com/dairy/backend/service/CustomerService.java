@@ -2,6 +2,7 @@ package com.dairy.backend.service;
 
 import com.dairy.backend.dto.CustomerDto;
 import com.dairy.backend.entity.Customer;
+import com.dairy.backend.entity.DeliveryOverride;
 import com.dairy.backend.repository.CustomerRepository;
 import com.dairy.backend.repository.InvoiceRepository;
 import com.dairy.backend.repository.MilkEntryRepository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,6 +49,8 @@ public class CustomerService {
                 .autoEntryEnabled(Boolean.TRUE.equals(dto.getAutoEntryEnabled()))
                 .defaultMorningQuantity(safe(dto.getDefaultMorningQuantity()))
                 .defaultEveningQuantity(safe(dto.getDefaultEveningQuantity()))
+                .skippedDates(dto.getSkippedDates() != null ? dto.getSkippedDates() : new ArrayList<>())
+                .deliveryOverrides(dto.getDeliveryOverrides() != null ? dto.getDeliveryOverrides() : new ArrayList<>())
                 .isActive(true)
                 .build();
 
@@ -78,7 +82,75 @@ public class CustomerService {
         customer.setAutoEntryEnabled(Boolean.TRUE.equals(dto.getAutoEntryEnabled()));
         customer.setDefaultMorningQuantity(safe(dto.getDefaultMorningQuantity()));
         customer.setDefaultEveningQuantity(safe(dto.getDefaultEveningQuantity()));
+        if (dto.getSkippedDates() != null) {
+            customer.setSkippedDates(dto.getSkippedDates());
+        }
+        if (dto.getDeliveryOverrides() != null) {
+            customer.setDeliveryOverrides(dto.getDeliveryOverrides());
+        }
         // Do not update balance or joinedDate during normal edit
+        return mapToDto(customerRepository.save(customer));
+    }
+
+    public CustomerDto markNoDelivery(String id, LocalDate startDate, LocalDate endDate) {
+        Customer customer = customerRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        List<LocalDate> skippedDates = customer.getSkippedDates() != null ? customer.getSkippedDates() : new ArrayList<>();
+        
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            if (!skippedDates.contains(date)) {
+                skippedDates.add(date);
+            }
+            LocalDate currentDate = date;
+            milkEntryRepository.findByCustomerIdAndDateBetween(id, currentDate, currentDate).stream().findFirst().ifPresent(entry -> {
+                customer.setBalance(customer.getBalance().subtract(entry.getTotalAmount()));
+                milkEntryRepository.delete(entry);
+            });
+        }
+        
+        customer.setSkippedDates(skippedDates);
+
+        return mapToDto(customerRepository.save(customer));
+    }
+
+    public CustomerDto setDeliveryOverride(String id, LocalDate startDate, LocalDate endDate, BigDecimal quantity) {
+        Customer customer = customerRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        List<DeliveryOverride> overrides = customer.getDeliveryOverrides() != null ? customer.getDeliveryOverrides() : new ArrayList<>();
+        List<LocalDate> skippedDates = customer.getSkippedDates() != null ? customer.getSkippedDates() : new ArrayList<>();
+
+        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+            LocalDate currentDate = date;
+            overrides.removeIf(override -> currentDate.equals(override.getDate()));
+            overrides.add(DeliveryOverride.builder().date(currentDate).quantity(quantity).build());
+            
+            skippedDates.removeIf(currentDate::equals);
+            
+            milkEntryRepository.findByCustomerIdAndDateBetween(id, currentDate, currentDate).stream().findFirst().ifPresent(entry -> {
+                customer.setBalance(customer.getBalance().subtract(entry.getTotalAmount()));
+                milkEntryRepository.delete(entry);
+            });
+        }
+        
+        customer.setDeliveryOverrides(overrides);
+        customer.setSkippedDates(skippedDates);
+
+        return mapToDto(customerRepository.save(customer));
+    }
+
+    public CustomerDto removeNoDelivery(String id, LocalDate date) {
+        Customer customer = customerRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
+        if (customer.getSkippedDates() != null) {
+            customer.getSkippedDates().removeIf(date::equals);
+        }
+        return mapToDto(customerRepository.save(customer));
+    }
+
+    public CustomerDto removeDeliveryOverride(String id, LocalDate date) {
+        Customer customer = customerRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
+        if (customer.getDeliveryOverrides() != null) {
+            customer.getDeliveryOverrides().removeIf(override -> date.equals(override.getDate()));
+        }
         return mapToDto(customerRepository.save(customer));
     }
 
@@ -95,6 +167,8 @@ public class CustomerService {
                 .autoEntryEnabled(customer.isAutoEntryEnabled())
                 .defaultMorningQuantity(customer.getDefaultMorningQuantity())
                 .defaultEveningQuantity(customer.getDefaultEveningQuantity())
+                .skippedDates(customer.getSkippedDates())
+                .deliveryOverrides(customer.getDeliveryOverrides())
                 .active(customer.isActive())
                 .build();
     }

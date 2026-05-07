@@ -11,6 +11,8 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -52,6 +54,12 @@ public class Customer {
     private boolean isActive = true;
 
     private String userId; // Optional link to User collection
+
+    @Builder.Default
+    private List<LocalDate> skippedDates = new ArrayList<>();
+
+    @Builder.Default
+    private List<DeliveryOverride> deliveryOverrides = new ArrayList<>();
 
     @CreatedDate
     private LocalDateTime createdAt;

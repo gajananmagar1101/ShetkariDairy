@@ -102,8 +102,8 @@ export default function Payments() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">{t(language, 'paymentsTitle')}</h1>
-          <p className="text-slate-500 text-sm mt-1">{t(language, 'paymentsDesc')}</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">{t(language, 'paymentsTitle')}</h1>
+          <p className="text-slate-500 font-medium mt-1">{t(language, 'paymentsDesc')}</p>
         </div>
         
         <div className="flex gap-2">
@@ -120,7 +120,7 @@ export default function Payments() {
               </DialogHeader>
               <div className="mt-4 mb-6 p-4 bg-white rounded-2xl border-2 border-emerald-100 shadow-sm">
                 <QRCodeSVG 
-                  value={`upi://pay?pa=8149101048-2@ybl&pn=Makhan%20Dairy&am=${qrAmount}&cu=INR`} 
+                  value={`upi://pay?pa=8149101048-2@ybl&pn=Gharcha%20Dudh&am=${qrAmount}&cu=INR`} 
                   size={200}
                   bgColor={"#ffffff"}
                   fgColor={"#0f172a"}
@@ -141,8 +141,8 @@ export default function Payments() {
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2 rounded-xl shadow-md bg-emerald-600 hover:bg-emerald-700">
-                <IndianRupee className="w-4 h-4" />
+              <Button className="gap-2 shadow-[0_8px_20px_rgb(139,92,246,0.3)]">
+                <Plus className="w-4 h-4" />
                 {t(language, 'recordPayment')}
               </Button>
             </DialogTrigger>
@@ -202,7 +202,7 @@ export default function Payments() {
         </div>
       </div>
 
-      <div className="bg-white/60 backdrop-blur-md rounded-3xl border border-white/60 shadow-sm p-6">
+      <div className="bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <div className="overflow-x-auto">
           {isLoading ? (
             <div className="flex justify-center py-8">
@@ -212,11 +212,11 @@ export default function Payments() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200/60 text-slate-500 text-sm">
-                  <th className="pb-3 font-medium">{t(language, 'customer')}</th>
-                  <th className="pb-3 font-medium">{t(language, 'date')}</th>
-                  <th className="pb-3 font-medium">{t(language, 'paymentMethod')}</th>
-                  <th className="pb-3 font-medium">{t(language, 'status')}</th>
-                  <th className="pb-3 font-medium text-right">{t(language, 'amountRs')}</th>
+                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'customer')}</th>
+                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'date')}</th>
+                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'paymentMethod')}</th>
+                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'status')}</th>
+                  <th className="pb-3 px-4 font-medium text-right whitespace-nowrap">{t(language, 'amountRs')}</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
@@ -227,24 +227,24 @@ export default function Payments() {
                 ) : (
                   payments.map((payment) => (
                     <tr key={payment.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
-                      <td className="py-4">
+                      <td className="py-4 px-4 whitespace-nowrap">
                         <span className="font-medium text-slate-800">{payment.customerName}</span>
                       </td>
-                      <td className="py-4 text-slate-600">{payment.paymentDate}</td>
-                      <td className="py-4">
+                      <td className="py-4 px-4 text-slate-600 whitespace-nowrap">{payment.paymentDate}</td>
+                      <td className="py-4 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5 text-slate-600">
                           <Wallet className="w-4 h-4" />
                           <span>{payment.paymentMethod}</span>
                         </div>
                       </td>
-                      <td className="py-4">
+                      <td className="py-4 px-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-md text-xs font-medium ${
                           payment.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
                         }`}>
                           {payment.status}
                         </span>
                       </td>
-                      <td className="py-4 text-right font-bold text-emerald-600">+₹{payment.amount}</td>
+                      <td className="py-4 px-4 text-right font-bold text-emerald-600 whitespace-nowrap">+₹{payment.amount}</td>
                     </tr>
                   ))
                 )}

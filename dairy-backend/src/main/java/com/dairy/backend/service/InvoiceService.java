@@ -11,9 +11,11 @@ import com.dairy.backend.repository.MilkEntryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Sort;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,15 +27,17 @@ public class InvoiceService {
     private final MilkEntryRepository milkEntryRepository;
     private final CustomerRepository customerRepository;
 
-    public InvoiceDto generateMonthlyInvoice(String customerId, int year, int month) {
+    public InvoiceDto generateInvoice(String customerId, LocalDate startDate, LocalDate endDate) {
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-        YearMonth ym = YearMonth.of(year, month);
-        LocalDate startDate = ym.atDay(1);
-        LocalDate endDate = ym.atEndOfMonth();
-
         List<MilkEntry> entries = milkEntryRepository.findByCustomerIdAndDateBetween(customerId, startDate, endDate);
+        List<LocalDate> skippedDates = customer.getSkippedDates() != null
+                ? customer.getSkippedDates().stream()
+                .filter(date -> !date.isBefore(startDate) && !date.isAfter(endDate))
+                .sorted()
+                .collect(Collectors.toList())
+                : new ArrayList<>();
         
         BigDecimal totalAmount = entries.stream()
                 .map(MilkEntry::getTotalAmount)
@@ -41,39 +45,55 @@ public class InvoiceService {
 
         Invoice invoice = Invoice.builder()
                 .customerId(customerId)
-                .invoiceYear(year)
-                .invoiceMonth(month)
+                .periodStartDate(startDate)
+                .periodEndDate(endDate)
+                .invoiceYear(startDate.getYear())
+                .invoiceMonth(startDate.getMonthValue())
                 .totalAmount(totalAmount)
                 .paidAmount(BigDecimal.ZERO)
                 .status(PaymentStatus.PENDING)
-                .dueDate(endDate.plusDays(5))
                 .build();
 
         invoice = invoiceRepository.save(invoice);
-        return mapToDto(invoice, customer.getName());
+        return mapToDto(invoice, customer.getName(), skippedDates);
     }
 
     public List<InvoiceDto> getAllInvoices() {
-        return invoiceRepository.findAll().stream()
+        return invoiceRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
                 .map(inv -> {
                     String name = customerRepository.findById(inv.getCustomerId())
                             .map(Customer::getName).orElse("Unknown");
-                    return mapToDto(inv, name);
+                    LocalDate startDate = inv.getPeriodStartDate() != null
+                            ? inv.getPeriodStartDate()
+                            : LocalDate.of(inv.getInvoiceYear(), inv.getInvoiceMonth(), 1);
+                    LocalDate endDate = inv.getPeriodEndDate() != null
+                            ? inv.getPeriodEndDate()
+                            : startDate.withDayOfMonth(startDate.lengthOfMonth());
+                    List<LocalDate> skippedDates = customerRepository.findById(inv.getCustomerId())
+                            .map(Customer::getSkippedDates)
+                            .orElseGet(ArrayList::new)
+                            .stream()
+                            .filter(date -> !date.isBefore(startDate) && !date.isAfter(endDate))
+                            .sorted()
+                            .collect(Collectors.toList());
+                    return mapToDto(inv, name, skippedDates);
                 })
                 .collect(Collectors.toList());
     }
 
-    private InvoiceDto mapToDto(Invoice invoice, String customerName) {
+    private InvoiceDto mapToDto(Invoice invoice, String customerName, List<LocalDate> skippedDates) {
         return InvoiceDto.builder()
                 .id(invoice.getId())
                 .customerId(invoice.getCustomerId())
                 .customerName(customerName)
+                .periodStartDate(invoice.getPeriodStartDate())
+                .periodEndDate(invoice.getPeriodEndDate())
                 .invoiceMonth(invoice.getInvoiceMonth())
                 .invoiceYear(invoice.getInvoiceYear())
                 .totalAmount(invoice.getTotalAmount())
                 .paidAmount(invoice.getPaidAmount())
                 .status(invoice.getStatus())
-                .dueDate(invoice.getDueDate())
+                .skippedDates(skippedDates)
                 .build();
     }
 

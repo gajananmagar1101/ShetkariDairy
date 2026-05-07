@@ -38,6 +38,19 @@ public class MilkEntryController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Milk entries fetched", milkEntryService.getEntriesByCustomerAndMonth(customerId, year, month)));
     }
 
+    @GetMapping("/customer-range")
+    public ResponseEntity<ApiResponse<List<MilkEntryDto>>> getEntriesByCustomerAndRange(
+            @RequestParam String customerId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Milk entries fetched", milkEntryService.getEntriesByCustomerAndDateRange(customerId, startDate, endDate)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<MilkEntryDto>> updateEntry(@PathVariable String id, @RequestBody MilkEntryDto dto) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Milk entry updated", milkEntryService.updateMilkEntry(id, dto)));
+    }
+
     @PostMapping("/auto-generate")
     public ResponseEntity<ApiResponse<Integer>> autoGenerateEntries(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
