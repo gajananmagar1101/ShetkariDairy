@@ -125,7 +125,7 @@ export default function Inventory() {
               <DialogTrigger asChild>
                 <Button className="gap-2 shadow-[0_8px_20px_rgb(139,92,246,0.3)]">
                   <Plus className="w-4 h-4" />
-                  {t(language, 'addInventory')}
+                  {t(language, 'addStock')}
                 </Button>
               </DialogTrigger>
               <DialogContent>

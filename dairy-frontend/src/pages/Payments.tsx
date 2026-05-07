@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Wallet, IndianRupee, Loader2, QrCode } from 'lucide-react'
+import { Wallet, Loader2, QrCode, Plus } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import axios from 'axios'
 import { Button } from '../components/ui/button'

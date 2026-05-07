@@ -2,7 +2,6 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import { useSettingsStore } from '../../store/settingsStore'
-import { X } from 'lucide-react'
 
 export default function AppLayout() {
   const { isMobileMenuOpen, setMobileMenuOpen } = useSettingsStore()
