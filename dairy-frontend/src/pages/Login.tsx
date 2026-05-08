@@ -2,7 +2,7 @@ import React from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import { useAuthStore } from '../store/useAuthStore'
 import { useNavigate } from 'react-router-dom'
-import { Droplets } from 'lucide-react'
+
 import axios from 'axios'
 
 const Login: React.FC = () => {
