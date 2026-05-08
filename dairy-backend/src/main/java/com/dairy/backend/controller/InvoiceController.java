@@ -36,4 +36,9 @@ public class InvoiceController {
         invoiceService.deleteInvoice(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "Invoice deleted", null));
     }
+
+    @PutMapping("/{id}/pay")
+    public ResponseEntity<ApiResponse<InvoiceDto>> markAsPaid(@PathVariable String id) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Invoice marked as paid", invoiceService.markAsPaid(id)));
+    }
 }

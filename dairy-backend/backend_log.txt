@@ -1,0 +1,78 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------------< com.dairy:backend >--------------------------
+[INFO] Building backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- clean:3.5.0:clean (default-clean) @ backend ---
+[INFO] Deleting /Users/gajananmagar004gmail.com/Desktop/project D/dairy-management-system/dairy-backend/target
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ backend ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 0 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ backend ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 63 source files with javac [debug parameters release 21] to target/classes
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by lombok.permit.Permit
+WARNING: Please consider reporting this to the maintainers of class lombok.permit.Permit
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[INFO] 
+[INFO] >>> spring-boot:4.0.6:run (default-cli) > test-compile @ backend >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ backend ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 0 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ backend ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ backend ---
+[INFO] skip non existing resourceDirectory /Users/gajananmagar004gmail.com/Desktop/project D/dairy-management-system/dairy-backend/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ backend ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 1 source file with javac [debug parameters release 21] to target/test-classes
+[INFO] 
+[INFO] <<< spring-boot:4.0.6:run (default-cli) < test-compile @ backend <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:4.0.6:run (default-cli) @ backend ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.6)
+
+2026-05-09T03:26:15.205+05:30  INFO 2550 --- [dairy-backend] [           main] com.dairy.backend.BackendApplication     : Starting BackendApplication using Java 25.0.2 with PID 2550 (/Users/gajananmagar004gmail.com/Desktop/project D/dairy-management-system/dairy-backend/target/classes started by gajananmagar004gmail.com in /Users/gajananmagar004gmail.com/Desktop/project D/dairy-management-system/dairy-backend)
+2026-05-09T03:26:15.207+05:30  INFO 2550 --- [dairy-backend] [           main] com.dairy.backend.BackendApplication     : No active profile set, falling back to 1 default profile: "default"
+2026-05-09T03:26:15.466+05:30  INFO 2550 --- [dairy-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data MongoDB repositories in DEFAULT mode.
+2026-05-09T03:26:15.488+05:30  INFO 2550 --- [dairy-backend] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 19 ms. Found 10 MongoDB repository interfaces.
+2026-05-09T03:26:15.668+05:30  INFO 2550 --- [dairy-backend] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-05-09T03:26:15.673+05:30  INFO 2550 --- [dairy-backend] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-05-09T03:26:15.673+05:30  INFO 2550 --- [dairy-backend] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.21]
+2026-05-09T03:26:15.691+05:30  INFO 2550 --- [dairy-backend] [           main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 461 ms
+2026-05-09T03:26:15.884+05:30  INFO 2550 --- [dairy-backend] [           main] org.mongodb.driver.client                : MongoClient with metadata {"application": {"name": "Cluster0"}, "driver": {"name": "mongo-java-driver|spring-boot|sync", "version": "5.6.5"}, "os": {"type": "Darwin", "name": "Mac OS X", "architecture": "aarch64", "version": "26.4"}, "platform": "Java/Homebrew/25.0.2"} created with settings MongoClientSettings{readPreference=primary, writeConcern=WriteConcern{w=null, wTimeout=null ms, journal=null}, retryWrites=true, retryReads=true, readConcern=ReadConcern{level=null}, credential=MongoCredential{mechanism=null, userName='gajananmagar004_db_user', source='admin', password=<hidden>, mechanismProperties=<hidden>}, transportSettings=null, commandListeners=[], codecRegistry=ProvidersCodecRegistry{codecProviders=[ValueCodecProvider{}, BsonValueCodecProvider{}, DBRefCodecProvider{}, DBObjectCodecProvider{}, DocumentCodecProvider{}, CollectionCodecProvider{}, IterableCodecProvider{}, MapCodecProvider{}, GeoJsonCodecProvider{}, GridFSFileCodecProvider{}, Jsr310CodecProvider{}, JsonObjectCodecProvider{}, BsonCodecProvider{}, com.mongodb.client.model.mql.ExpressionCodecProvider@6b2dd3df, com.mongodb.Jep395RecordCodecProvider@4db77402, com.mongodb.KotlinCodecProvider@73c48264, EnumCodecProvider{}]}, loggerSettings=LoggerSettings{maxDocumentLength=1000}, clusterSettings={hosts=[127.0.0.1:27017], srvHost=cluster0.eobdyd7.mongodb.net, srvServiceName=mongodb, mode=MULTIPLE, requiredClusterType=REPLICA_SET, requiredReplicaSetName='atlas-14oxri-shard-0', serverSelector='null', clusterListeners='[]', serverSelectionTimeout='5000 ms', localThreshold='15 ms'}, socketSettings=SocketSettings{connectTimeoutMS=5000, readTimeoutMS=10000, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, heartbeatSocketSettings=SocketSettings{connectTimeoutMS=5000, readTimeoutMS=5000, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, connectionPoolSettings=ConnectionPoolSettings{maxSize=100, minSize=0, maxWaitTimeMS=120000, maxConnectionLifeTimeMS=0, maxConnectionIdleTimeMS=0, maintenanceInitialDelayMS=0, maintenanceFrequencyMS=60000, connectionPoolListeners=[], maxConnecting=2}, serverSettings=ServerSettings{heartbeatFrequencyMS=10000, minHeartbeatFrequencyMS=500, serverMonitoringMode=AUTO, serverListeners='[]', serverMonitorListeners='[]'}, sslSettings=SslSettings{enabled=true, invalidHostNameAllowed=false, context=null}, applicationName='Cluster0', compressorList=[], uuidRepresentation=UNSPECIFIED, serverApi=null, autoEncryptionSettings=null, dnsClient=null, inetAddressResolver=null, contextProvider=null, timeoutMS=null}
+2026-05-09T03:26:15.969+05:30  INFO 2550 --- [dairy-backend] [yd7.mongodb.net] org.mongodb.driver.cluster               : Adding discovered server ac-ercibrw-shard-00-00.eobdyd7.mongodb.net:27017 to client view of cluster
+2026-05-09T03:26:15.978+05:30  INFO 2550 --- [dairy-backend] [yd7.mongodb.net] org.mongodb.driver.cluster               : Adding discovered server ac-ercibrw-shard-00-01.eobdyd7.mongodb.net:27017 to client view of cluster
+2026-05-09T03:26:15.978+05:30  INFO 2550 --- [dairy-backend] [yd7.mongodb.net] org.mongodb.driver.cluster               : Adding discovered server ac-ercibrw-shard-00-02.eobdyd7.mongodb.net:27017 to client view of cluster
+2026-05-09T03:26:16.165+05:30  INFO 2550 --- [dairy-backend] [           main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-05-09T03:26:16.165+05:30  WARN 2550 --- [dairy-backend] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used by Spring Security for automatically configuring username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider. If the current configuration is intentional, to turn off this warning, increase the logging level of 'org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer' to ERROR
+2026-05-09T03:26:16.471+05:30  INFO 2550 --- [dairy-backend] [ngodb.net:27017] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=ac-ercibrw-shard-00-00.eobdyd7.mongodb.net:27017, type=REPLICA_SET_SECONDARY, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=25, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=240790292, minRoundTripTimeNanos=0, setName='atlas-14oxri-shard-0', canonicalAddress=ac-ercibrw-shard-00-00.eobdyd7.mongodb.net:27017, hosts=[ac-ercibrw-shard-00-01.eobdyd7.mongodb.net:27017, ac-ercibrw-shard-00-00.eobdyd7.mongodb.net:27017, ac-ercibrw-shard-00-02.eobdyd7.mongodb.net:27017], passives=[], arbiters=[], primary='ac-ercibrw-shard-00-01.eobdyd7.mongodb.net:27017', tagSet=TagSet{[Tag{name='availabilityZone', value='aps1-az1'}, Tag{name='cacheState', value='READY'}, Tag{name='diskState', value='READY'}, Tag{name='nodeType', value='ELECTABLE'}, Tag{name='provider', value='AWS'}, Tag{name='region', value='AP_SOUTH_1'}, Tag{name='workloadType', value='OPERATIONAL'}]}, electionId=null, setVersion=228, topologyVersion=TopologyVersion{processId=69fe02175cf6e26257f273b7, counter=4}, lastWriteDate=Sat May 09 03:26:16 IST 2026, lastUpdateTimeNanos=218324931154416}
+2026-05-09T03:26:16.471+05:30  INFO 2550 --- [dairy-backend] [ngodb.net:27017] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=ac-ercibrw-shard-00-01.eobdyd7.mongodb.net:27017, type=REPLICA_SET_PRIMARY, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=25, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=240784500, minRoundTripTimeNanos=0, setName='atlas-14oxri-shard-0', canonicalAddress=ac-ercibrw-shard-00-01.eobdyd7.mongodb.net:27017, hosts=[ac-ercibrw-shard-00-01.eobdyd7.mongodb.net:27017, ac-ercibrw-shard-00-00.eobdyd7.mongodb.net:27017, ac-ercibrw-shard-00-02.eobdyd7.mongodb.net:27017], passives=[], arbiters=[], primary='ac-ercibrw-shard-00-01.eobdyd7.mongodb.net:27017', tagSet=TagSet{[Tag{name='availabilityZone', value='aps1-az3'}, Tag{name='cacheState', value='READY'}, Tag{name='diskState', value='READY'}, Tag{name='nodeType', value='ELECTABLE'}, Tag{name='provider', value='AWS'}, Tag{name='region', value='AP_SOUTH_1'}, Tag{name='workloadType', value='OPERATIONAL'}]}, electionId=7fffffff00000000000001c0, setVersion=228, topologyVersion=TopologyVersion{processId=69fe04a506b36af71c7a7115, counter=6}, lastWriteDate=Sat May 09 03:26:16 IST 2026, lastUpdateTimeNanos=218324931152000}
+2026-05-09T03:26:16.471+05:30  INFO 2550 --- [dairy-backend] [ngodb.net:27017] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=ac-ercibrw-shard-00-02.eobdyd7.mongodb.net:27017, type=REPLICA_SET_SECONDARY, cryptd=false, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=25, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=208276000, minRoundTripTimeNanos=0, setName='atlas-14oxri-shard-0', canonicalAddress=ac-ercibrw-shard-00-02.eobdyd7.mongodb.net:27017, hosts=[ac-ercibrw-shard-00-01.eobdyd7.mongodb.net:27017, ac-ercibrw-shard-00-00.eobdyd7.mongodb.net:27017, ac-ercibrw-shard-00-02.eobdyd7.mongodb.net:27017], passives=[], arbiters=[], primary='ac-ercibrw-shard-00-01.eobdyd7.mongodb.net:27017', tagSet=TagSet{[Tag{name='availabilityZone', value='aps1-az2'}, Tag{name='cacheState', value='READY'}, Tag{name='diskState', value='READY'}, Tag{name='nodeType', value='ELECTABLE'}, Tag{name='provider', value='AWS'}, Tag{name='region', value='AP_SOUTH_1'}, Tag{name='workloadType', value='OPERATIONAL'}]}, electionId=null, setVersion=228, topologyVersion=TopologyVersion{processId=69fe07610b5b55f3108f6c7b, counter=3}, lastWriteDate=Sat May 09 03:26:16 IST 2026, lastUpdateTimeNanos=218324931154416}
+2026-05-09T03:26:16.472+05:30  INFO 2550 --- [dairy-backend] [ngodb.net:27017] org.mongodb.driver.cluster               : Discovered replica set primary ac-ercibrw-shard-00-01.eobdyd7.mongodb.net:27017 with max election id 7fffffff00000000000001c0 and max set version 228
+2026-05-09T03:26:16.476+05:30  INFO 2550 --- [dairy-backend] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-05-09T03:26:16.479+05:30  INFO 2550 --- [dairy-backend] [           main] com.dairy.backend.BackendApplication     : Started BackendApplication in 1.432 seconds (process running for 1.57)
+2026-05-09T03:26:39.955+05:30  INFO 2550 --- [dairy-backend] [nio-8080-exec-1] o.apache.tomcat.util.http.parser.Cookie  : A cookie header was received [g_state={"i_l":0,"i_ll":1778276582038,"i_e":{"enable_itp_optimization":20},"i_et":1778274420605}] that contained an invalid cookie. That cookie will be ignored.
+ Note: further occurrences of this error will be logged at DEBUG level.
+2026-05-09T03:26:39.958+05:30  INFO 2550 --- [dairy-backend] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-09T03:26:39.958+05:30  INFO 2550 --- [dairy-backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-05-09T03:26:39.961+05:30  INFO 2550 --- [dairy-backend] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms

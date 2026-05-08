@@ -1,5 +1,7 @@
 package com.dairy.backend.service;
 
+import com.dairy.backend.util.SecurityUtils;
+
 import com.dairy.backend.dto.InvoiceDto;
 import com.dairy.backend.entity.Customer;
 import com.dairy.backend.entity.Invoice;
@@ -8,6 +10,8 @@ import com.dairy.backend.entity.PaymentStatus;
 import com.dairy.backend.repository.CustomerRepository;
 import com.dairy.backend.repository.InvoiceRepository;
 import com.dairy.backend.repository.MilkEntryRepository;
+import com.dairy.backend.repository.PaymentRepository;
+import com.dairy.backend.entity.Payment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,12 +30,13 @@ public class InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final MilkEntryRepository milkEntryRepository;
     private final CustomerRepository customerRepository;
+    private final PaymentRepository paymentRepository;
 
     public InvoiceDto generateInvoice(String customerId, LocalDate startDate, LocalDate endDate) {
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-        List<MilkEntry> entries = milkEntryRepository.findByCustomerIdAndDateBetween(customerId, startDate, endDate);
+        List<MilkEntry> entries = milkEntryRepository.findByUserIdAndCustomerIdAndDateBetween(SecurityUtils.getCurrentUserId(), customerId, startDate, endDate);
         List<LocalDate> skippedDates = customer.getSkippedDates() != null
                 ? customer.getSkippedDates().stream()
                 .filter(date -> !date.isBefore(startDate) && !date.isAfter(endDate))
@@ -44,6 +49,7 @@ public class InvoiceService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         Invoice invoice = Invoice.builder()
+                .userId(SecurityUtils.getCurrentUserId())
                 .customerId(customerId)
                 .periodStartDate(startDate)
                 .periodEndDate(endDate)
@@ -59,7 +65,7 @@ public class InvoiceService {
     }
 
     public List<InvoiceDto> getAllInvoices() {
-        return invoiceRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
+        return invoiceRepository.findByUserId(SecurityUtils.getCurrentUserId(), Sort.by(Sort.Direction.DESC, "createdAt")).stream()
                 .map(inv -> {
                     String name = customerRepository.findById(inv.getCustomerId())
                             .map(Customer::getName).orElse("Unknown");
@@ -99,5 +105,31 @@ public class InvoiceService {
 
     public void deleteInvoice(String id) {
         invoiceRepository.deleteById(id);
+    }
+
+    public InvoiceDto markAsPaid(String id) {
+        Invoice invoice = invoiceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+
+        if (invoice.getStatus() == PaymentStatus.PAID) {
+            throw new RuntimeException("Invoice is already paid");
+        }
+
+        invoice.setStatus(PaymentStatus.PAID);
+        invoice.setPaidAmount(invoice.getTotalAmount());
+        invoice = invoiceRepository.save(invoice);
+
+        // Record the payment
+        Payment payment = Payment.builder()
+                .userId(SecurityUtils.getCurrentUserId())
+                .customerId(invoice.getCustomerId())
+                .amount(invoice.getTotalAmount())
+                .paymentDate(LocalDate.now())
+                .paymentMethod("ONLINE")
+                .status(PaymentStatus.PAID)
+                .build();
+        paymentRepository.save(payment);
+
+        return mapToDto(invoice, "Updated", new ArrayList<>());
     }
 }

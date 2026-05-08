@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Download, MessageCircle, Calculator, Loader2, Trash2 } from 'lucide-react'
+import { Download, MessageCircle, Calculator, Loader2, Trash2, CheckCircle } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import QRCode from 'qrcode'
@@ -109,6 +109,19 @@ export default function Billing() {
     }
   }
 
+  const handleMarkAsPaid = async (invoiceId: string) => {
+    try {
+      const res = await axios.put(`/api/invoices/${invoiceId}/pay`)
+      if (res.data.success) {
+        setInvoices(invoices.map(inv => inv.id === invoiceId ? { ...inv, status: 'PAID' } : inv))
+        toast.success('Invoice marked as paid and added to payments!')
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error("Failed to mark as paid")
+    }
+  }
+
   const handleDeleteInvoice = async () => {
     if (!deleteConfirmId) return;
     try {
@@ -190,6 +203,7 @@ export default function Billing() {
     let totalLiters = 0
     let deliveredDays = 0
     let lineItems: string[][] = []
+    let computedSkippedDates: string[] = []
     
     try {
       const res = await axios.get(`/api/milk-entries/customer-range?customerId=${invoice.customerId}&startDate=${invoice.periodStartDate}&endDate=${invoice.periodEndDate}`)
@@ -214,16 +228,26 @@ export default function Billing() {
           ]
         })
 
-        invoice.skippedDates?.forEach((date) => {
-          lineItems.push([
-            '-',
-            formatDate(date),
-            '-',
-            '-',
-            '0.0 L',
-            'No delivery'
-          ])
-        })
+        const entryDates = new Set(entries.map((e: any) => e.date))
+        const startDate = new Date(invoice.periodStartDate)
+        const endDate = new Date(invoice.periodEndDate)
+        const todayDate = new Date()
+        const actualEndDate = endDate > todayDate ? todayDate : endDate
+
+        for (let d = new Date(startDate); d <= actualEndDate; d.setDate(d.getDate() + 1)) {
+          const dateStr = d.toISOString().split('T')[0]
+          if (!entryDates.has(dateStr)) {
+            computedSkippedDates.push(dateStr)
+            lineItems.push([
+              '-',
+              formatDate(dateStr),
+              '-',
+              '-',
+              '0.0 L',
+              'No delivery'
+            ])
+          }
+        }
       }
     } catch (err) {
       console.error("Failed to fetch detailed entries for bill", err)
@@ -268,23 +292,33 @@ export default function Billing() {
 
     const finalY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 8 : 150
 
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(9)
+    let skippedDatesTextArray: string[] = []
+    if (computedSkippedDates.length > 0) {
+      const textStr = `No delivery dates: ${computedSkippedDates.map(formatDate).join(', ')}`
+      skippedDatesTextArray = doc.splitTextToSize(textStr, pageWidth - 36)
+    }
+
+    const boxHeight = skippedDatesTextArray.length > 0 ? 12 + (skippedDatesTextArray.length * 4) : 16
+
     doc.setFillColor(239, 246, 255)
     doc.setDrawColor(191, 219, 254)
-    doc.roundedRect(12, finalY, pageWidth - 24, 20, 4, 4, 'FD')
+    doc.roundedRect(12, finalY, pageWidth - 24, boxHeight, 4, 4, 'FD')
     doc.setTextColor(37, 99, 235)
     doc.setFontSize(10)
     doc.setFont("helvetica", "normal")
     doc.text(`Delivered Days: ${deliveredDays}`, 18, finalY + 8)
-    doc.text(`Skipped Days: ${invoice.skippedDates?.length || 0}`, 70, finalY + 8)
+    doc.text(`Skipped Days: ${computedSkippedDates.length}`, 70, finalY + 8)
     doc.text(`Total Liters: ${totalLiters.toFixed(1)} L`, 120, finalY + 8)
     doc.setFont("helvetica", "bold")
     doc.text(`Total Amount: Rs. ${Number(invoice.totalAmount).toFixed(2)}`, pageWidth - 18, finalY + 8, { align: "right" })
 
-    if (invoice.skippedDates?.length > 0) {
+    if (skippedDatesTextArray.length > 0) {
       doc.setFont("helvetica", "normal")
       doc.setFontSize(9)
       doc.setTextColor(180, 83, 9)
-      doc.text(`No delivery dates: ${invoice.skippedDates.map(formatDate).join(', ')}`, 18, finalY + 15)
+      doc.text(skippedDatesTextArray, 18, finalY + 15)
     }
 
     // Generate UPI QR Code
@@ -296,7 +330,7 @@ export default function Billing() {
         margin: 1,
         color: { dark: '#0F172A', light: '#FFFFFF' }
       })
-      const qrY = Math.min(finalY + 24, pageHeight - 48)
+      const qrY = Math.min(finalY + boxHeight + 4, pageHeight - 48)
       doc.setDrawColor(226, 232, 240)
       doc.roundedRect(12, qrY - 4, pageWidth - 24, 34, 4, 4, 'S')
       doc.addImage(qrDataUrl, 'PNG', 18, qrY, 24, 24)
@@ -320,8 +354,8 @@ export default function Billing() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">{t(language, 'billingTitle')}</h1>
-          <p className="text-slate-500 font-medium mt-1">{t(language, 'billingDesc')}</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">{t(language, 'billingTitle')}</h1>
+          <p className="text-slate-500 dark:text-slate-300 font-medium mt-1">{t(language, 'billingDesc')}</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -375,7 +409,7 @@ export default function Billing() {
         </Dialog>
       </div>
 
-      <div className="bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
+      <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <div className="overflow-x-auto">
           {isLoading ? (
             <div className="flex justify-center py-8">
@@ -384,7 +418,7 @@ export default function Billing() {
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200/60 text-slate-500 text-sm">
+                <tr className="border-b border-slate-200/60 dark:border-slate-600 text-slate-500 dark:text-slate-300 text-sm">
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'customer')}</th>
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'billingPeriod')}</th>
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'totalValue')}</th>
@@ -395,18 +429,18 @@ export default function Billing() {
               <tbody className="text-sm">
                 {invoices.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-500">{t(language, 'noBills')}</td>
+                    <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-300">{t(language, 'noBills')}</td>
                   </tr>
                 ) : (
                   invoices.map((inv) => (
-                    <tr key={inv.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                    <tr key={inv.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="py-4 px-4 whitespace-nowrap">
-                        <span className="font-medium text-slate-800">{inv.customerName}</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-200">{inv.customerName}</span>
                       </td>
-                      <td className="py-4 px-4 text-slate-600 whitespace-nowrap">
+                      <td className="py-4 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                         {getInvoiceRangeLabel(inv)}
                       </td>
-                      <td className="py-4 px-4 font-bold text-slate-700 whitespace-nowrap">₹{inv.totalAmount}</td>
+                      <td className="py-4 px-4 font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">₹{inv.totalAmount}</td>
                       <td className="py-4 px-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-md text-xs font-medium ${
                           inv.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
@@ -415,6 +449,16 @@ export default function Billing() {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right flex justify-end gap-2 whitespace-nowrap">
+                        {inv.status !== 'PAID' && (
+                          <Button 
+                            variant="outline" size="icon" 
+                            className="h-8 w-8 text-emerald-600 rounded-lg border-emerald-200 hover:bg-emerald-50"
+                            title="Mark as Paid"
+                            onClick={() => handleMarkAsPaid(inv.id)}
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </Button>
+                        )}
                         <Button 
                           variant="outline" size="icon" 
                           className="h-8 w-8 text-blue-600 rounded-lg border-blue-200 hover:bg-blue-50"

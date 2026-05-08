@@ -9,6 +9,7 @@ import java.util.List;
 
 @Repository
 public interface AttendanceRepository extends MongoRepository<Attendance, String> {
-    List<Attendance> findByWorkerIdAndDateBetween(String workerId, LocalDate startDate, LocalDate endDate);
-    List<Attendance> findByDate(LocalDate date);
+List<Attendance> findByUserIdAndWorkerIdAndDateBetween(String userId, String workerId, LocalDate startDate, LocalDate endDate);
+List<Attendance> findByUserIdAndDate(String userId, LocalDate date);
+    List<Attendance> findByUserId(String userId);
 }

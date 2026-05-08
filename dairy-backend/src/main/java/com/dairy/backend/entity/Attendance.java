@@ -18,6 +18,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Document(collection = "attendance")
 public class Attendance {
+    private String userId;
+
 
     @Id
     private String id;

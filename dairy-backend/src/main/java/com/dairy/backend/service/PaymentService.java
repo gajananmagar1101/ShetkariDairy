@@ -1,5 +1,7 @@
 package com.dairy.backend.service;
 
+import com.dairy.backend.util.SecurityUtils;
+
 import com.dairy.backend.dto.PaymentDto;
 import com.dairy.backend.entity.Customer;
 import com.dairy.backend.entity.Payment;
@@ -44,7 +46,7 @@ public class PaymentService {
     }
 
     public List<PaymentDto> getAllPayments() {
-        return paymentRepository.findAll().stream()
+        return paymentRepository.findByUserId(SecurityUtils.getCurrentUserId()).stream()
                 .map(p -> {
                     String name = customerRepository.findById(p.getCustomerId())
                             .map(Customer::getName).orElse("Unknown");

@@ -1,0 +1,478 @@
+
+> dairy-frontend@0.0.0 dev
+> vite
+
+
+  VITE v8.0.10  ready in 307 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+3:12:55 AM [vite] (client) hmr update /src/pages/Profile.tsx, /src/index.css
+3:13:02 AM [vite] (client) [console.error] [GSI_LOGGER]: FedCM get() rejects with AbortError: signal is aborted without reason
+3:13:07 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+3:13:07 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+3:14:33 AM [vite] (client) hmr update /src/pages/Login.tsx, /src/index.css
+3:19:24 AM [vite] http proxy error: /api/customers
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:24 AM [vite] http proxy error: /api/milk-entries?date=2026-05-08
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:24 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:24 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:24 AM [vite] http proxy error: /api/customers
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:24 AM [vite] http proxy error: /api/milk-entries?date=2026-05-08
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:24 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:24 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:25 AM [vite] http proxy error: /api/customers
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:25 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:25 AM [vite] http proxy error: /api/customers
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:25 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:26 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:26 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:26 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:26 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:53 AM [vite] (client) hmr update /src/pages/Profile.tsx, /src/index.css
+3:19:53 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:53 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:53 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:53 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:54 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:55 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:55 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:55 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:58 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:58 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:58 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:58 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:59 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:59 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:19:59 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:19:59 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:20:03 AM [vite] http proxy error: /api/customers
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:20:03 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:20:03 AM [vite] http proxy error: /api/customers
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:20:03 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:20:06 AM [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+3:20:06 AM [vite] (client) [console.warn] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+3:20:09 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:20:09 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:20:09 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:20:09 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:22:04 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:22:04 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:22:04 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:22:04 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:22:13 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:22:13 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:22:13 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:22:13 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:25:23 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:25:23 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:25:23 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:25:23 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:25:25 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:25:25 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:25:25 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:25:25 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:25:26 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:25:26 AM [vite] http proxy error: /api/dashboard/summary
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1193:18)
+    at afterConnectMultiple (node:net:1783:7)
+3:25:26 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:25:26 AM [vite] (client) [console.error] AxiosError: Request failed with status code 502
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:26:40 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:26:40 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:26:40 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:26:40 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:26:41 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:26:41 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:26:51 AM [vite] (client) hmr update /src/pages/Profile.tsx, /src/index.css
+3:26:52 AM [vite] Internal server error: Transform failed with 1 error:
+
+[31m[PARSE_ERROR] Error:[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+     [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/pages/Profile.tsx:238:1 [38;5;246m][0m
+     [38;5;246m│[0m
+ [38;5;246m238 │[0m [38;5;249m}[0m
+ [38;5;240m    │[0m │ 
+ [38;5;240m    │[0m ╰─ 
+[38;5;246m─────╯[0m
+
+  Plugin: vite:oxc
+  File: /Users/gajananmagar004gmail.com/Desktop/project D/dairy-management-system/dairy-frontend/src/pages/Profile.tsx
+      at transformWithOxc (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:3343:19)
+      at TransformPluginContext.transform (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:3411:26)
+      at EnvironmentPluginContainer.transform (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:30164:51)
+      at async loadAndTransform (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:24512:26)
+      at async viteTransformMiddleware (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:24306:20)
+3:26:52 AM [vite] (client) [console.error] [vite] Failed to reload /src/pages/Profile.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+3:26:52 AM [vite] Internal server error: Transform failed with 1 error:
+
+[31m[PARSE_ERROR] Error:[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+     [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/pages/Profile.tsx:238:1 [38;5;246m][0m
+     [38;5;246m│[0m
+ [38;5;246m238 │[0m [38;5;249m}[0m
+ [38;5;240m    │[0m │ 
+ [38;5;240m    │[0m ╰─ 
+[38;5;246m─────╯[0m
+
+  Plugin: vite:oxc
+  File: /Users/gajananmagar004gmail.com/Desktop/project D/dairy-management-system/dairy-frontend/src/pages/Profile.tsx
+      at transformWithOxc (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:3343:19)
+      at TransformPluginContext.transform (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:3411:26)
+      at EnvironmentPluginContainer.transform (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:30164:51)
+      at async loadAndTransform (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:24512:26)
+      at async viteTransformMiddleware (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:24306:20)
+3:26:52 AM [vite] (client) [console.error] [vite] Failed to reload /src/pages/Profile.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above)
+3:27:22 AM [vite] (client) Pre-transform error: Transform failed with 1 error:
+
+[31m[PARSE_ERROR] Error:[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+     [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/pages/Profile.tsx:238:1 [38;5;246m][0m
+     [38;5;246m│[0m
+ [38;5;246m238 │[0m [38;5;249m}[0m
+ [38;5;240m    │[0m │ 
+ [38;5;240m    │[0m ╰─ 
+[38;5;246m─────╯[0m
+
+  Plugin: vite:oxc
+  File: /Users/gajananmagar004gmail.com/Desktop/project D/dairy-management-system/dairy-frontend/src/pages/Profile.tsx
+3:27:22 AM [vite] Internal server error: Transform failed with 1 error:
+
+[31m[PARSE_ERROR] Error:[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+     [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/pages/Profile.tsx:238:1 [38;5;246m][0m
+     [38;5;246m│[0m
+ [38;5;246m238 │[0m [38;5;249m}[0m
+ [38;5;240m    │[0m │ 
+ [38;5;240m    │[0m ╰─ 
+[38;5;246m─────╯[0m
+
+  Plugin: vite:oxc
+  File: /Users/gajananmagar004gmail.com/Desktop/project D/dairy-management-system/dairy-frontend/src/pages/Profile.tsx
+      at transformWithOxc (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:3343:19)
+      at TransformPluginContext.transform (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:3411:26)
+      at EnvironmentPluginContainer.transform (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:30164:51)
+      at async loadAndTransform (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:24512:26)
+      at async viteTransformMiddleware (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:24306:20)
+3:27:25 AM [vite] Internal server error: Transform failed with 1 error:
+
+[31m[PARSE_ERROR] Error:[0m Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+     [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/pages/Profile.tsx:238:1 [38;5;246m][0m
+     [38;5;246m│[0m
+ [38;5;246m238 │[0m [38;5;249m}[0m
+ [38;5;240m    │[0m │ 
+ [38;5;240m    │[0m ╰─ 
+[38;5;246m─────╯[0m
+
+  Plugin: vite:oxc
+  File: /Users/gajananmagar004gmail.com/Desktop/project D/dairy-management-system/dairy-frontend/src/pages/Profile.tsx
+      at transformWithOxc (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:3343:19)
+      at TransformPluginContext.transform (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:3411:26)
+      at EnvironmentPluginContainer.transform (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:30164:51)
+      at async loadAndTransform (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:24512:26)
+      at async viteTransformMiddleware (file:///Users/gajananmagar004gmail.com/Desktop/project%20D/dairy-management-system/dairy-frontend/node_modules/vite/dist/node/chunks/node.js:24306:20)
+3:28:15 AM [vite] (client) hmr update /src/pages/Profile.tsx, /src/index.css
+3:28:16 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:28:16 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:28:40 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:28:40 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:29:06 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:29:06 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:29:08 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:29:08 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:30:39 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:30:39 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:31:19 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:31:19 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:31:36 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:31:36 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:32:33 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:32:33 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:32:54 AM [vite] (client) page reload src/lib/api.ts
+3:32:55 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:32:55 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:32:55 AM [vite] (client) [console.warn] [GSI_LOGGER]: google.accounts.id.initialize() is called multiple times. This could cause unexpected behavior and only the last initialized instance will be used.
+3:32:55 AM [vite] (client) [console.error] AxiosError: Request failed with status code 403
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:1725:14)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=ecb88d5e:2077:4)
+3:33:02 AM [vite] (client) [console.error] [GSI_LOGGER]: FedCM get() rejects with AbortError: signal is aborted without reason
+3:33:08 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+3:33:08 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+3:33:16 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+3:33:16 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+3:35:23 AM [vite] (client) hmr update /src/pages/Profile.tsx, /src/index.css
+3:35:46 AM [vite] (client) hmr update /src/pages/Profile.tsx, /src/index.css
+3:36:04 AM [vite] (client) hmr update /src/index.css, /src/components/layout/Header.tsx
+3:36:09 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+3:36:09 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+3:36:15 AM [vite] (client) hmr update /src/index.css, /src/components/layout/Header.tsx
+3:37:07 AM [vite] (client) hmr update /src/pages/Profile.tsx, /src/index.css
+3:37:31 AM [vite] (client) hmr update /src/pages/Profile.tsx, /src/index.css
+3:40:14 AM [vite] (client) hmr update /src/pages/Profile.tsx, /src/index.css
+3:41:31 AM [vite] (client) [console.warn] [GSI_LOGGER]: google.accounts.id.initialize() is called multiple times. This could cause unexpected behavior and only the last initialized instance will be used.
+3:41:31 AM [vite] (client) [console.warn] [GSI_LOGGER]: google.accounts.id.initialize() is called multiple times. This could cause unexpected behavior and only the last initialized instance will be used.
+3:41:31 AM [vite] (client) [console.error] [GSI_LOGGER]: FedCM get() rejects with NotAllowedError: Only one navigator.credentials.get request may be outstanding at one time.
+3:41:33 AM [vite] (client) [console.error] [GSI_LOGGER]: FedCM get() rejects with AbortError: signal is aborted without reason
+3:42:50 AM [vite] (client) hmr update /src/pages/Login.tsx, /src/index.css
+3:42:51 AM [vite] (client) [console.warn] [GSI_LOGGER]: google.accounts.id.initialize() is called multiple times. This could cause unexpected behavior and only the last initialized instance will be used.
+3:42:51 AM [vite] (client) [console.warn] [GSI_LOGGER]: google.accounts.id.initialize() is called multiple times. This could cause unexpected behavior and only the last initialized instance will be used.
+3:42:51 AM [vite] (client) [console.warn] [GSI_LOGGER]: google.accounts.id.initialize() is called multiple times. This could cause unexpected behavior and only the last initialized instance will be used.
+3:42:51 AM [vite] (client) [console.warn] [GSI_LOGGER]: google.accounts.id.initialize() is called multiple times. This could cause unexpected behavior and only the last initialized instance will be used.
+3:42:51 AM [vite] (client) [console.error] [GSI_LOGGER]: FedCM get() rejects with AbortError: signal is aborted without reason
+3:42:51 AM [vite] (client) [console.error] [GSI_LOGGER]: FedCM get() rejects with NotAllowedError: Only one navigator.credentials.get request may be outstanding at one time.
+3:42:51 AM [vite] (client) [console.error] [GSI_LOGGER]: FedCM get() rejects with NotAllowedError: Only one navigator.credentials.get request may be outstanding at one time.
+3:47:52 AM [vite] (client) [console.error] [GSI_LOGGER]: FedCM get() rejects with NetworkError: Error retrieving a token.
+3:49:02 AM [vite] (client) hmr update /src/index.css
+3:51:56 AM [vite] (client) hmr update /src/pages/Login.tsx, /src/index.css
+3:53:28 AM [vite] (client) hmr update /src/pages/Login.tsx, /src/index.css
+3:54:07 AM [vite] (client) hmr update /src/pages/Login.tsx, /src/index.css
+3:55:10 AM [vite] (client) hmr update /src/pages/Login.tsx, /src/index.css
+3:56:04 AM [vite] (client) [console.error] [GSI_LOGGER]: FedCM get() rejects with AbortError: signal is aborted without reason
+4:05:51 AM [vite] (client) hmr update /src/pages/Login.tsx, /src/index.css
+4:13:53 AM [vite] (client) hmr update /src/index.css
+4:14:02 AM [vite] (client) hmr update /src/pages/Login.tsx, /src/index.css
+4:15:02 AM [vite] (client) hmr update /src/index.css
+4:15:11 AM [vite] (client) hmr update /src/pages/Login.tsx, /src/index.css
+4:16:18 AM [vite] (client) hmr update /src/pages/Login.tsx, /src/index.css
+4:17:20 AM [vite] (client) hmr update /src/pages/Login.tsx, /src/index.css
+4:17:51 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+4:17:51 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+4:17:59 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+4:17:59 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+4:18:23 AM [vite] (client) [console.warn] [GSI_LOGGER]: google.accounts.id.initialize() is called multiple times. This could cause unexpected behavior and only the last initialized instance will be used.
+4:18:23 AM [vite] (client) [console.error] [GSI_LOGGER]: FedCM get() rejects with NotAllowedError: Only one navigator.credentials.get request may be outstanding at one time.
+4:18:38 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+4:18:38 AM [vite] (client) [console.warn] The width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.

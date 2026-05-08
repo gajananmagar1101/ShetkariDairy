@@ -102,8 +102,8 @@ export default function Payments() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">{t(language, 'paymentsTitle')}</h1>
-          <p className="text-slate-500 font-medium mt-1">{t(language, 'paymentsDesc')}</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">{t(language, 'paymentsTitle')}</h1>
+          <p className="text-slate-500 dark:text-slate-300 font-medium mt-1">{t(language, 'paymentsDesc')}</p>
         </div>
         
         <div className="flex gap-2">
@@ -202,7 +202,7 @@ export default function Payments() {
         </div>
       </div>
 
-      <div className="bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
+      <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <div className="overflow-x-auto">
           {isLoading ? (
             <div className="flex justify-center py-8">
@@ -211,7 +211,7 @@ export default function Payments() {
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200/60 text-slate-500 text-sm">
+                <tr className="border-b border-slate-200/60 dark:border-slate-600 text-slate-500 dark:text-slate-300 text-sm">
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'customer')}</th>
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'date')}</th>
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'paymentMethod')}</th>
@@ -222,17 +222,17 @@ export default function Payments() {
               <tbody className="text-sm">
                 {payments.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-500">{t(language, 'noPayments')}</td>
+                    <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-300">{t(language, 'noPayments')}</td>
                   </tr>
                 ) : (
                   payments.map((payment) => (
-                    <tr key={payment.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                    <tr key={payment.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="py-4 px-4 whitespace-nowrap">
-                        <span className="font-medium text-slate-800">{payment.customerName}</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-200">{payment.customerName}</span>
                       </td>
-                      <td className="py-4 px-4 text-slate-600 whitespace-nowrap">{payment.paymentDate}</td>
+                      <td className="py-4 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{payment.paymentDate}</td>
                       <td className="py-4 px-4 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 text-slate-600">
+                        <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                           <Wallet className="w-4 h-4" />
                           <span>{payment.paymentMethod}</span>
                         </div>
@@ -244,7 +244,7 @@ export default function Payments() {
                           {payment.status}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-right font-bold text-emerald-600 whitespace-nowrap">+₹{payment.amount}</td>
+                      <td className="py-4 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">+₹{payment.amount}</td>
                     </tr>
                   ))
                 )}

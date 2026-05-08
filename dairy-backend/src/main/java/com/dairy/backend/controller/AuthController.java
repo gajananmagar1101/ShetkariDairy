@@ -28,4 +28,9 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody AuthRequest request) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", authService.login(request)));
     }
+
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<AuthResponse>> googleLogin(@RequestBody java.util.Map<String, String> request) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Google Login successful", authService.googleLogin(request)));
+    }
 }

@@ -50,15 +50,15 @@ export default function Reports() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">{t(language, 'reportsTitle')}</h1>
-          <p className="text-slate-500 font-medium mt-1">{t(language, 'reportsDesc')}</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">{t(language, 'reportsTitle')}</h1>
+          <p className="text-slate-500 dark:text-slate-300 font-medium mt-1">{t(language, 'reportsDesc')}</p>
         </div>
 
         <div className="flex gap-3">
           <select 
             value={month}
             onChange={e => setMonth(parseInt(e.target.value))}
-            className="px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/60 shadow-sm"
+            className="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/60 dark:bg-slate-900/60 dark:text-white shadow-sm"
           >
             {[...Array(12)].map((_, i) => (
               <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
@@ -67,38 +67,38 @@ export default function Reports() {
           <input 
             type="number" value={year}
             onChange={e => setYear(parseInt(e.target.value))}
-            className="w-24 px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/60 shadow-sm"
+            className="w-24 px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/60 dark:bg-slate-900/60 dark:text-white shadow-sm"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white/60 backdrop-blur-md rounded-3xl border border-white/60 shadow-sm p-6 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600">
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-white/60 dark:border-slate-700 shadow-sm p-6 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
             <IndianRupee className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-slate-500 text-sm font-medium">{t(language, 'totalMilkSales')}</p>
-            <h3 className="text-2xl font-bold text-slate-800">₹{totalRevenue.toFixed(2)}</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t(language, 'totalMilkSales')}</p>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">₹{totalRevenue.toFixed(2)}</h3>
           </div>
         </div>
 
-        <div className="bg-white/60 backdrop-blur-md rounded-3xl border border-white/60 shadow-sm p-6 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-600">
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-white/60 dark:border-slate-700 shadow-sm p-6 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
             <TrendingDown className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-slate-500 text-sm font-medium">{t(language, 'totalExpenses')}</p>
-            <h3 className="text-2xl font-bold text-slate-800">₹{totalExpenses.toFixed(2)}</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t(language, 'totalExpenses')}</p>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white">₹{totalExpenses.toFixed(2)}</h3>
           </div>
         </div>
 
-        <div className="bg-white/60 backdrop-blur-md rounded-3xl border border-white/60 shadow-sm p-6 flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${totalProfit >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-white/60 dark:border-slate-700 shadow-sm p-6 flex items-center gap-4">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${totalProfit >= 0 ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400'}`}>
             <TrendingUp className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-slate-500 text-sm font-medium">{t(language, 'netProfitLoss')}</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t(language, 'netProfitLoss')}</p>
             <h3 className={`text-2xl font-bold ${totalProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               ₹{totalProfit.toFixed(2)}
             </h3>
@@ -106,8 +106,8 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
-        <h3 className="font-bold text-lg text-slate-800 mb-6">{t(language, 'monthlyProfitTrend')}</h3>
+      <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
+        <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-6">{t(language, 'monthlyProfitTrend')}</h3>
         <div className="h-[400px] w-full">
           {isLoading ? (
             <div className="w-full h-full flex items-center justify-center">

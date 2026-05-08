@@ -1,5 +1,7 @@
 package com.dairy.backend.service;
 
+import com.dairy.backend.util.SecurityUtils;
+
 import com.dairy.backend.dto.DashboardSummaryDto;
 import com.dairy.backend.entity.MilkEntry;
 import com.dairy.backend.repository.CustomerRepository;
@@ -32,10 +34,10 @@ public class DashboardService {
         LocalDate yesterday = today.minusDays(1);
 
         // Active Customers
-        long activeCustomers = customerRepository.countByIsActiveTrue();
+        long activeCustomers = customerRepository.countByUserIdAndIsActiveTrue(SecurityUtils.getCurrentUserId());
 
         // Today's Stats
-        List<MilkEntry> todaysEntries = milkEntryRepository.findByDate(today);
+        List<MilkEntry> todaysEntries = milkEntryRepository.findByUserIdAndDate(SecurityUtils.getCurrentUserId(), today);
         BigDecimal totalMilkToday = BigDecimal.ZERO;
         BigDecimal todaysCollection = BigDecimal.ZERO;
 
@@ -45,7 +47,7 @@ public class DashboardService {
         }
 
         // Yesterday's Stats for Growth Calculation
-        List<MilkEntry> yesterdaysEntries = milkEntryRepository.findByDate(yesterday);
+        List<MilkEntry> yesterdaysEntries = milkEntryRepository.findByUserIdAndDate(SecurityUtils.getCurrentUserId(), yesterday);
         BigDecimal yesterdaysCollection = BigDecimal.ZERO;
         for (MilkEntry entry : yesterdaysEntries) {
             yesterdaysCollection = yesterdaysCollection.add(nz(entry.getTotalAmount()));
@@ -70,7 +72,7 @@ public class DashboardService {
 
         // Weekly Trends (Last 7 days)
         LocalDate startDate = today.minusDays(6);
-        List<MilkEntry> weeklyEntries = milkEntryRepository.findByDateBetween(startDate, today);
+        List<MilkEntry> weeklyEntries = milkEntryRepository.findByUserIdAndDateBetween(SecurityUtils.getCurrentUserId(), startDate, today);
         
         Map<LocalDate, DashboardSummaryDto.WeeklyTrend> trendMap = new TreeMap<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE"); // "Mon", "Tue"

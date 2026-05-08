@@ -19,6 +19,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Document(collection = "milk_entries")
 public class MilkEntry {
+    private String userId;
+
 
     private String id;
 

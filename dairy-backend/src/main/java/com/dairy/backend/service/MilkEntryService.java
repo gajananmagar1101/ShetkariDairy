@@ -1,5 +1,7 @@
 package com.dairy.backend.service;
 
+import com.dairy.backend.util.SecurityUtils;
+
 import com.dairy.backend.dto.MilkEntryDto;
 import com.dairy.backend.entity.Customer;
 import com.dairy.backend.entity.DeliveryOverride;
@@ -65,7 +67,7 @@ public class MilkEntryService {
     }
 
     public List<MilkEntryDto> getEntriesByDate(LocalDate date) {
-        return milkEntryRepository.findByDate(date).stream()
+        return milkEntryRepository.findByUserIdAndDate(SecurityUtils.getCurrentUserId(), date).stream()
                 .map(entry -> {
                     String name = customerRepository.findById(entry.getCustomerId())
                             .map(Customer::getName).orElse("Unknown");
@@ -82,7 +84,7 @@ public class MilkEntryService {
         String customerName = customerRepository.findById(customerId)
                 .map(Customer::getName).orElse("Unknown");
 
-        return milkEntryRepository.findByCustomerIdAndDateBetween(customerId, startDate, endDate).stream()
+        return milkEntryRepository.findByUserIdAndCustomerIdAndDateBetween(SecurityUtils.getCurrentUserId(), customerId, startDate, endDate).stream()
                 .map(entry -> mapToDto(entry, customerName))
                 .collect(Collectors.toList());
     }
@@ -91,7 +93,7 @@ public class MilkEntryService {
         String customerName = customerRepository.findById(customerId)
                 .map(Customer::getName).orElse("Unknown");
 
-        return milkEntryRepository.findByCustomerIdAndDateBetween(customerId, startDate, endDate).stream()
+        return milkEntryRepository.findByUserIdAndCustomerIdAndDateBetween(SecurityUtils.getCurrentUserId(), customerId, startDate, endDate).stream()
                 .map(entry -> mapToDto(entry, customerName))
                 .collect(Collectors.toList());
     }
@@ -142,7 +144,7 @@ public class MilkEntryService {
 
     @Transactional
     public int autoGenerateEntries(LocalDate date) {
-        List<Customer> activeCustomers = customerRepository.findByIsActiveTrue();
+        List<Customer> activeCustomers = customerRepository.findByUserIdAndIsActiveTrue(SecurityUtils.getCurrentUserId());
         int generatedCount = 0;
 
         for (Customer customer : activeCustomers) {
@@ -157,7 +159,7 @@ public class MilkEntryService {
                     .findFirst()
                     .orElse(null);
 
-            if (!shouldAutoGenerate || skippedDates.contains(date) || milkEntryRepository.existsByCustomerIdAndDate(customer.getId(), date)) {
+            if (!shouldAutoGenerate || skippedDates.contains(date) || milkEntryRepository.existsByUserIdAndCustomerIdAndDate(SecurityUtils.getCurrentUserId(), customer.getId(), date)) {
                 continue;
             }
 
@@ -174,6 +176,12 @@ public class MilkEntryService {
             if (override != null && override.getQuantity() != null) {
                 morningQty = BigDecimal.ZERO;
                 eveningQty = override.getQuantity();
+            } else if (customer.getSpecialCondition() != null &&
+                    customer.getSpecialCondition().isActive() &&
+                    !date.isBefore(customer.getSpecialCondition().getStartDate()) &&
+                    !date.isAfter(customer.getSpecialCondition().getEndDate())) {
+                morningQty = BigDecimal.ZERO;
+                eveningQty = customer.getSpecialCondition().getQuantity();
             }
 
             BigDecimal totalQty = morningQty.add(eveningQty);

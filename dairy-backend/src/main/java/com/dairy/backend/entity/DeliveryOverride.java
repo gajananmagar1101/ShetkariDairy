@@ -13,6 +13,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DeliveryOverride {
+    private String userId;
+
     private LocalDate date;
     private BigDecimal quantity;
 }

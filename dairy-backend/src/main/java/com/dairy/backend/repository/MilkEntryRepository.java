@@ -10,9 +10,10 @@ import java.util.List;
 
 @Repository
 public interface MilkEntryRepository extends MongoRepository<MilkEntry, String> {
-    List<MilkEntry> findByCustomerIdAndDateBetween(String customerId, LocalDate startDate, LocalDate endDate);
-    List<MilkEntry> findByDateBetween(LocalDate startDate, LocalDate endDate);
-    List<MilkEntry> findByDate(LocalDate date);
-    boolean existsByCustomerIdAndDate(String customerId, LocalDate date);
-    void deleteByCustomerId(String customerId);
+List<MilkEntry> findByUserIdAndCustomerIdAndDateBetween(String userId, String customerId, LocalDate startDate, LocalDate endDate);
+List<MilkEntry> findByUserIdAndDateBetween(String userId, LocalDate startDate, LocalDate endDate);
+List<MilkEntry> findByUserIdAndDate(String userId, LocalDate date);
+boolean existsByUserIdAndCustomerIdAndDate(String userId, String customerId, LocalDate date);
+void deleteByUserIdAndCustomerId(String userId, String customerId);
+    List<MilkEntry> findByUserId(String userId);
 }

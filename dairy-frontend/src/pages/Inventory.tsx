@@ -107,17 +107,17 @@ export default function Inventory() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">{t(language, 'inventoryTitle')}</h1>
-          <p className="text-slate-500 font-medium mt-1">{t(language, 'inventoryDesc')}</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">{t(language, 'inventoryTitle')}</h1>
+          <p className="text-slate-500 dark:text-slate-300 font-medium mt-1">{t(language, 'inventoryDesc')}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Inventory Section */}
-        <div className="bg-white/60 backdrop-blur-md rounded-[2rem] border border-white/60 shadow-sm p-4 sm:p-8">
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-[2rem] border border-white/60 dark:border-slate-700 shadow-sm p-4 sm:p-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
               <Package className="w-5 h-5 text-primary-500" />
               {t(language, 'stockItems')}
             </h2>
@@ -176,7 +176,7 @@ export default function Inventory() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-200/60 text-slate-500 text-sm">
+                <tr className="border-b border-slate-200/60 dark:border-slate-600 text-slate-500 dark:text-slate-300 text-sm">
                   <th className="pb-2 px-4 font-medium whitespace-nowrap">{t(language, 'name')}</th>
                   <th className="pb-2 px-4 font-medium whitespace-nowrap">{t(language, 'category')}</th>
                   <th className="pb-2 px-4 font-medium text-right whitespace-nowrap">{t(language, 'stock')}</th>
@@ -185,11 +185,11 @@ export default function Inventory() {
               </thead>
               <tbody className="text-sm">
                 {items.length === 0 ? (
-                  <tr><td colSpan={4} className="py-4 text-center text-slate-500">{t(language, 'noItems')}</td></tr>
+                  <tr><td colSpan={4} className="py-4 text-center text-slate-500 dark:text-slate-300">{t(language, 'noItems')}</td></tr>
                 ) : items.map(item => (
-                  <tr key={item.id} className="border-b border-slate-100 last:border-0">
-                    <td className="py-3 px-4 font-medium text-slate-800 whitespace-nowrap">{item.name}</td>
-                    <td className="py-3 px-4 whitespace-nowrap"><span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">{item.category}</span></td>
+                  <tr key={item.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0">
+                    <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">{item.name}</td>
+                    <td className="py-3 px-4 whitespace-nowrap"><span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs">{item.category}</span></td>
                     <td className="py-3 px-4 text-right font-bold text-primary-600 whitespace-nowrap">{item.quantity} {item.unit}</td>
                     <td className="py-3 px-4 text-right whitespace-nowrap">
                       <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(item.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50 ml-2 rounded-full">
@@ -204,9 +204,9 @@ export default function Inventory() {
         </div>
 
         {/* Expenses Section */}
-        <div className="bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
+        <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
               <IndianRupee className="w-5 h-5 text-red-500" />
               {t(language, 'expensesTitle')}
             </h2>
@@ -249,7 +249,7 @@ export default function Inventory() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-200/60 text-slate-500 text-sm">
+                <tr className="border-b border-slate-200/60 dark:border-slate-600 text-slate-500 dark:text-slate-300 text-sm">
                   <th className="pb-2 px-4 font-medium whitespace-nowrap">{t(language, 'date')}</th>
                   <th className="pb-2 px-4 font-medium whitespace-nowrap">{t(language, 'desc')}</th>
                   <th className="pb-2 px-4 font-medium text-right whitespace-nowrap">{t(language, 'amount')}</th>
@@ -257,12 +257,12 @@ export default function Inventory() {
               </thead>
               <tbody className="text-sm">
                 {expenses.length === 0 ? (
-                  <tr><td colSpan={3} className="py-4 text-center text-slate-500">{t(language, 'noExpenses')}</td></tr>
+                  <tr><td colSpan={3} className="py-4 text-center text-slate-500 dark:text-slate-300">{t(language, 'noExpenses')}</td></tr>
                 ) : expenses.map(exp => (
-                  <tr key={exp.id} className="border-b border-slate-100 last:border-0">
-                    <td className="py-3 px-4 text-slate-600 whitespace-nowrap">{exp.date}</td>
+                  <tr key={exp.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0">
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{exp.date}</td>
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <p className="font-medium text-slate-800">{exp.description}</p>
+                      <p className="font-medium text-slate-800 dark:text-slate-200">{exp.description}</p>
                       <p className="text-xs text-slate-400">{exp.category}</p>
                     </td>
                     <td className="py-3 px-4 text-right font-bold text-red-500 whitespace-nowrap">₹{exp.amount}</td>

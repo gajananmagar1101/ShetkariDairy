@@ -19,6 +19,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Document(collection = "expenses")
 public class Expense {
+    private String userId;
+
     @Id
     private String id;
     private String category; // FEED, MEDICINE, ELECTRICITY, TRANSPORT, OTHER

@@ -8,7 +8,8 @@ import java.util.List;
 
 @Repository
 public interface InvoiceRepository extends MongoRepository<Invoice, String> {
-    List<Invoice> findByCustomerId(String customerId);
-    List<Invoice> findByInvoiceMonthAndInvoiceYear(Integer month, Integer year);
-    void deleteByCustomerId(String customerId);
+List<Invoice> findByUserIdAndCustomerId(String userId, String customerId);
+List<Invoice> findByUserIdAndInvoiceMonthAndInvoiceYear(String userId, Integer month, Integer year);
+void deleteByUserIdAndCustomerId(String userId, String customerId);
+    List<Invoice> findByUserId(String userId, org.springframework.data.domain.Sort sort);
 }

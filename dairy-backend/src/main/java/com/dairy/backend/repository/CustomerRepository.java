@@ -9,7 +9,8 @@ import java.util.List;
 
 @Repository
 public interface CustomerRepository extends MongoRepository<Customer, String> {
-    Optional<Customer> findByPhone(String phone);
-    long countByIsActiveTrue();
-    List<Customer> findByIsActiveTrue();
+Optional<Customer> findByUserIdAndPhone(String userId, String phone);
+long countByUserIdAndIsActiveTrue(String userId);
+List<Customer> findByUserIdAndIsActiveTrue(String userId);
+    List<Customer> findByUserId(String userId);
 }

@@ -23,7 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
@@ -39,13 +39,13 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/customers/**").permitAll()
-                .requestMatchers("/api/milk-entries/**").permitAll()
-                .requestMatchers("/api/invoices/**").permitAll()
-                .requestMatchers("/api/payments/**").permitAll()
-                .requestMatchers("/api/inventory/**").permitAll()
-                .requestMatchers("/api/reports/**").permitAll()
-                .requestMatchers("/api/dashboard/**").permitAll()
+                .requestMatchers("/api/customers/**").authenticated()
+                .requestMatchers("/api/milk-entries/**").authenticated()
+                .requestMatchers("/api/invoices/**").authenticated()
+                .requestMatchers("/api/payments/**").authenticated()
+                .requestMatchers("/api/inventory/**").authenticated()
+                .requestMatchers("/api/reports/**").authenticated()
+                .requestMatchers("/api/dashboard/**").authenticated()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()
             )

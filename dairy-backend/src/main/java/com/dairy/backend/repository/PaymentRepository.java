@@ -8,6 +8,7 @@ import java.util.List;
 
 @Repository
 public interface PaymentRepository extends MongoRepository<Payment, String> {
-    List<Payment> findByCustomerId(String customerId);
-    void deleteByCustomerId(String customerId);
+List<Payment> findByUserIdAndCustomerId(String userId, String customerId);
+void deleteByUserIdAndCustomerId(String userId, String customerId);
+    List<Payment> findByUserId(String userId);
 }

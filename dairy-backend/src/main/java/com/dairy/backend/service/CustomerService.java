@@ -1,5 +1,7 @@
 package com.dairy.backend.service;
 
+import com.dairy.backend.util.SecurityUtils;
+
 import com.dairy.backend.dto.CustomerDto;
 import com.dairy.backend.entity.Customer;
 import com.dairy.backend.entity.DeliveryOverride;
@@ -51,6 +53,7 @@ public class CustomerService {
                 .defaultEveningQuantity(safe(dto.getDefaultEveningQuantity()))
                 .skippedDates(dto.getSkippedDates() != null ? dto.getSkippedDates() : new ArrayList<>())
                 .deliveryOverrides(dto.getDeliveryOverrides() != null ? dto.getDeliveryOverrides() : new ArrayList<>())
+                .specialCondition(dto.getSpecialCondition())
                 .isActive(true)
                 .build();
 
@@ -59,15 +62,15 @@ public class CustomerService {
     }
 
     public List<CustomerDto> getAllCustomers() {
-        return customerRepository.findAll().stream()
+        return customerRepository.findByUserId(SecurityUtils.getCurrentUserId()).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
     public void deleteCustomer(String id) {
-        milkEntryRepository.deleteByCustomerId(id);
-        invoiceRepository.deleteByCustomerId(id);
-        paymentRepository.deleteByCustomerId(id);
+        milkEntryRepository.deleteByUserIdAndCustomerId(SecurityUtils.getCurrentUserId(), id);
+        invoiceRepository.deleteByUserIdAndCustomerId(SecurityUtils.getCurrentUserId(), id);
+        paymentRepository.deleteByUserIdAndCustomerId(SecurityUtils.getCurrentUserId(), id);
         customerRepository.deleteById(id);
     }
 
@@ -88,6 +91,9 @@ public class CustomerService {
         if (dto.getDeliveryOverrides() != null) {
             customer.setDeliveryOverrides(dto.getDeliveryOverrides());
         }
+        if (dto.getSpecialCondition() != null) {
+            customer.setSpecialCondition(dto.getSpecialCondition());
+        }
         // Do not update balance or joinedDate during normal edit
         return mapToDto(customerRepository.save(customer));
     }
@@ -102,7 +108,7 @@ public class CustomerService {
                 skippedDates.add(date);
             }
             LocalDate currentDate = date;
-            milkEntryRepository.findByCustomerIdAndDateBetween(id, currentDate, currentDate).stream().findFirst().ifPresent(entry -> {
+            milkEntryRepository.findByUserIdAndCustomerIdAndDateBetween(SecurityUtils.getCurrentUserId(), id, currentDate, currentDate).stream().findFirst().ifPresent(entry -> {
                 customer.setBalance(customer.getBalance().subtract(entry.getTotalAmount()));
                 milkEntryRepository.delete(entry);
             });
@@ -126,7 +132,7 @@ public class CustomerService {
             
             skippedDates.removeIf(currentDate::equals);
             
-            milkEntryRepository.findByCustomerIdAndDateBetween(id, currentDate, currentDate).stream().findFirst().ifPresent(entry -> {
+            milkEntryRepository.findByUserIdAndCustomerIdAndDateBetween(SecurityUtils.getCurrentUserId(), id, currentDate, currentDate).stream().findFirst().ifPresent(entry -> {
                 customer.setBalance(customer.getBalance().subtract(entry.getTotalAmount()));
                 milkEntryRepository.delete(entry);
             });
@@ -169,6 +175,7 @@ public class CustomerService {
                 .defaultEveningQuantity(customer.getDefaultEveningQuantity())
                 .skippedDates(customer.getSkippedDates())
                 .deliveryOverrides(customer.getDeliveryOverrides())
+                .specialCondition(customer.getSpecialCondition())
                 .active(customer.isActive())
                 .build();
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Loader2, Trash } from 'lucide-react'
+import { Plus, Search, Loader2, Trash, Clock, PencilLine, Ban } from 'lucide-react'
+import toast from 'react-hot-toast'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
 import {
@@ -22,10 +23,17 @@ interface Customer {
   milkType: string
   ratePerLiter: number
   dailyQuantity: number
+  skippedDates?: string[]
   autoEntryEnabled: boolean
   defaultMorningQuantity: number
   defaultEveningQuantity: number
   active: boolean
+  specialCondition?: {
+    startDate: string
+    endDate: string
+    quantity: number
+    active: boolean
+  } | null
 }
 
 export default function Customers() {
@@ -36,6 +44,7 @@ export default function Customers() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  
   const emptyForm = {
     name: '',
     phone: '',
@@ -101,7 +110,7 @@ export default function Customers() {
     } catch (err: any) {
       console.error(err)
       const errorMsg = err.response?.data?.message || "Failed to save customer. Please try again."
-      alert(errorMsg)
+      toast.error(errorMsg)
     }
   }
 
@@ -130,7 +139,7 @@ export default function Customers() {
         }
       } catch (err: any) {
         console.error(err)
-        alert("Failed to delete customer")
+        toast.error("Failed to delete customer")
       } finally {
         setDeleteConfirmId(null)
       }
@@ -146,8 +155,8 @@ export default function Customers() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">{t(language, 'customersTitle')}</h1>
-          <p className="text-slate-500 font-medium mt-1">{t(language, 'customersDesc')}</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">{t(language, 'customersTitle')}</h1>
+          <p className="text-slate-500 dark:text-slate-300 font-medium mt-1">{t(language, 'customersDesc')}</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -259,7 +268,7 @@ export default function Customers() {
         />
       </div>
 
-      <div className="bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
+      <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -268,7 +277,7 @@ export default function Customers() {
               placeholder="Search customers..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white/40 border border-white/60 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-80 shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80"
+              className="pl-10 pr-4 py-2 bg-white/40 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/80 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-80 shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80 dark:focus:bg-slate-800 dark:text-white"
             />
           </div>
         </div>
@@ -281,7 +290,7 @@ export default function Customers() {
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200/60 text-slate-500 text-sm">
+                <tr className="border-b border-slate-200/60 dark:border-slate-600 text-slate-500 dark:text-slate-300 text-sm">
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'name')}</th>
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'milkType')}</th>
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'dailyQuantity')}</th>
@@ -293,20 +302,30 @@ export default function Customers() {
               <tbody className="text-sm">
                 {filteredCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-500">No customers found.</td>
+                    <td colSpan={6} className="py-8 text-center text-slate-500 dark:text-slate-300">No customers found.</td>
                   </tr>
                 ) : (
                   filteredCustomers.map((customer) => (
-                    <tr key={customer.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors">
+                    <tr key={customer.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="py-4 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xs">
                             {customer.name.charAt(0)}
                           </div>
-                          <span className="font-medium text-slate-800">{customer.name}</span>
+                          <span className="font-medium text-slate-800 dark:text-slate-200">{customer.name}</span>
                           {customer.autoEntryEnabled && (
-                            <span className="ml-2 rounded-full bg-indigo-100 px-2 py-1 text-[11px] font-semibold text-indigo-700">
-                              {t(language, 'autoEntry930')}
+                            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700" title={t(language, 'autoEntry930')}>
+                              <Clock className="w-3 h-3" /> Auto
+                            </span>
+                          )}
+                          {customer.specialCondition?.active && (
+                            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700" title="Special Quantity Active">
+                              <PencilLine className="w-3 h-3" /> {t(language, 'specialQtyShort')}
+                            </span>
+                          )}
+                          {customer.skippedDates?.includes(new Date().toISOString().split('T')[0]) && (
+                            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-700" title="No Delivery Today">
+                              <Ban className="w-3 h-3" /> {t(language, 'skipShort')}
                             </span>
                           )}
                         </div>
@@ -316,16 +335,16 @@ export default function Customers() {
                           {customer.milkType}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-slate-600 whitespace-nowrap">{customer.dailyQuantity} L</td>
-                      <td className="py-4 px-4 text-slate-600 whitespace-nowrap">₹{customer.ratePerLiter}</td>
+                      <td className="py-4 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{customer.dailyQuantity} L</td>
+                      <td className="py-4 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">₹{customer.ratePerLiter}</td>
                       <td className="py-4 px-4 text-right font-medium whitespace-nowrap">
-                        <span className={customer.balance > 0 ? 'text-emerald-600' : customer.balance < 0 ? 'text-red-500' : 'text-slate-600'}>
+                        <span className={customer.balance > 0 ? 'text-emerald-600 dark:text-emerald-400' : customer.balance < 0 ? 'text-red-500 dark:text-red-400' : 'text-slate-600 dark:text-slate-300'}>
                           {customer.balance}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right whitespace-nowrap">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 hover:text-primary-700">Edit</Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(customer.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50 ml-2 rounded-full">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(customer.id)} className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 ml-2 rounded-full">
                           <Trash className="w-4 h-4" />
                         </Button>
                       </td>

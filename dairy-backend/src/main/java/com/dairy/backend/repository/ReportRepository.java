@@ -9,5 +9,6 @@ import java.util.List;
 
 @Repository
 public interface ReportRepository extends MongoRepository<Report, String> {
-    List<Report> findByTypeAndReportDateBetween(String type, LocalDate startDate, LocalDate endDate);
+List<Report> findByUserIdAndTypeAndReportDateBetween(String userId, String type, LocalDate startDate, LocalDate endDate);
+    List<Report> findByUserId(String userId);
 }

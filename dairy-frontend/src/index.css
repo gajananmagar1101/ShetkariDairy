@@ -1,5 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Nunito:wght@700;800;900&family=Montserrat:wght@500;600;700&display=swap');
 @import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme {
   --color-primary-50: #f5f3ff;
@@ -15,6 +17,19 @@
   
   --color-background: #fafafc;
   --color-surface: #ffffff;
+  
+  --animate-bounce-slow: bounce-slow 3s infinite;
+  
+  @keyframes bounce-slow {
+    0%, 100% {
+      transform: translateY(-5%);
+      animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+    50% {
+      transform: translateY(0);
+      animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
 }
 
 @layer base {
@@ -35,11 +50,11 @@
 }
 
 .glass-dark {
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(15, 23, 42, 0.8);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
 }
 
 ::-webkit-scrollbar {

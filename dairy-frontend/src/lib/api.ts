@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { useAuthStore } from '../store/useAuthStore'
 
 const REQUEST_TIMEOUT_MS = 10000
 
@@ -28,6 +29,14 @@ if (configuredApiUrl) {
   axios.defaults.baseURL = configuredApiUrl
 }
 
+axios.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -35,8 +44,16 @@ axios.interceptors.response.use(
       if (error.code === 'ECONNABORTED') {
         error.message =
           'API request timed out. Check whether the backend is deployed and reachable.'
-      } else if (error.response?.data?.message) {
-        error.message = error.response.data.message
+      } else if (error.response) {
+        if (error.response.status === 401 || error.response.status === 403) {
+          useAuthStore.getState().logout();
+          window.location.href = '/login';
+          error.message = 'Session expired. Please log in again.';
+        } else if (error.response.data?.message) {
+          error.message = error.response.data.message;
+        } else {
+          error.message = `Request failed with status ${error.response.status}`;
+        }
       } else if (error.request) {
         error.message =
           'Could not reach the API server. If frontend and backend are deployed separately, set VITE_API_URL in the frontend deployment.'

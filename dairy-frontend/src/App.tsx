@@ -7,20 +7,28 @@ import Billing from './pages/Billing'
 import Payments from './pages/Payments'
 import Inventory from './pages/Inventory'
 import Reports from './pages/Reports'
+import Login from './pages/Login'
+import Profile from './pages/Profile'
+import AuthGuard from './components/auth/AuthGuard'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<AppLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="customers" element={<Customers />} />
-          <Route path="milk-entries" element={<MilkEntries />} />
-          <Route path="billing" element={<Billing />} />
-          <Route path="payments" element={<Payments />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="settings" element={<div className="p-4">Settings Page (Coming Soon)</div>} />
+        <Route path="/login" element={<Login />} />
+        
+        <Route element={<AuthGuard />}>
+          <Route path="/" element={<AppLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="customers" element={<Customers />} />
+            <Route path="milk-entries" element={<MilkEntries />} />
+            <Route path="billing" element={<Billing />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="settings" element={<div className="p-4">Settings Page (Coming Soon)</div>} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

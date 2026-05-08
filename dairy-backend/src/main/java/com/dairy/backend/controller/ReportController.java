@@ -1,5 +1,7 @@
 package com.dairy.backend.controller;
 
+import com.dairy.backend.util.SecurityUtils;
+
 import com.dairy.backend.dto.ApiResponse;
 import com.dairy.backend.entity.Expense;
 import com.dairy.backend.entity.MilkEntry;
@@ -42,8 +44,8 @@ public class ReportController {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
-        List<MilkEntry> entries = milkEntryRepository.findByDateBetween(startDate, endDate);
-        List<Expense> expenses = expenseRepository.findByDateBetween(startDate, endDate);
+        List<MilkEntry> entries = milkEntryRepository.findByUserIdAndDateBetween(SecurityUtils.getCurrentUserId(), startDate, endDate);
+        List<Expense> expenses = expenseRepository.findByUserIdAndDateBetween(SecurityUtils.getCurrentUserId(), startDate, endDate);
 
         Map<String, DailySummary> map = new TreeMap<>();
         for (int i = 1; i <= startDate.lengthOfMonth(); i++) {

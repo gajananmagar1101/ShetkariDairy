@@ -19,6 +19,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Document(collection = "payments")
 public class Payment {
+    private String userId;
+
 
     @Id
     private String id;

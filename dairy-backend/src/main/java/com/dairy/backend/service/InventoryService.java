@@ -1,5 +1,7 @@
 package com.dairy.backend.service;
 
+import com.dairy.backend.util.SecurityUtils;
+
 import com.dairy.backend.dto.ExpenseDto;
 import com.dairy.backend.dto.InventoryItemDto;
 import com.dairy.backend.entity.Expense;
@@ -33,7 +35,7 @@ public class InventoryService {
     }
 
     public List<InventoryItemDto> getAllInventoryItems() {
-        return inventoryItemRepository.findAll().stream()
+        return inventoryItemRepository.findByUserId(SecurityUtils.getCurrentUserId()).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
@@ -51,7 +53,7 @@ public class InventoryService {
     }
 
     public List<ExpenseDto> getAllExpenses() {
-        return expenseRepository.findAll().stream()
+        return expenseRepository.findByUserId(SecurityUtils.getCurrentUserId()).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
