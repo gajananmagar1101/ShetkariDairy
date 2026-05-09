@@ -81,7 +81,7 @@ export default function Customers() {
   }, [])
 
   const startVoiceTyping = () => {
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       toast.error(language === 'mr' ? 'तुमच्या ब्राउझरला व्हॉइस टायपिंगचा सपोर्ट नाही.' : 'Your browser does not support voice typing.');
       return;
