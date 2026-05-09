@@ -70,6 +70,9 @@ export default function MilkEntries() {
 
   useEffect(() => {
     fetchCustomers()
+  }, [])
+
+  useEffect(() => {
     fetchEntries(date)
   }, [date])
 
