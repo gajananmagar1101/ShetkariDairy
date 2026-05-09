@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Calendar as CalendarIcon, Loader2, MessageCircle, Trash2, Ban, PencilLine, SquarePen, X, ChevronLeft, ChevronRight, ChevronDown, AlertCircle } from 'lucide-react'
+import { Calendar as CalendarIcon, Loader2, MessageCircle, Trash2, Ban, PencilLine, SquarePen, X, ChevronLeft, ChevronRight, ChevronDown, AlertCircle, Play } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
@@ -90,6 +90,27 @@ export default function MilkEntries() {
     d.setDate(d.getDate() + 1);
     setDate(d.toISOString().split('T')[0]);
   };
+
+  const handleAutoGenerate = async () => {
+    try {
+      setIsSubmitting(true)
+      const res = await axios.post(`/api/milk-entries/auto-generate?date=${date}`)
+      if (res.data.success) {
+        const count = res.data.data
+        if (count > 0) {
+          toast.success(language === 'mr' ? `${count} नोंदी यशस्वीरित्या जनरेट झाल्या!` : `Successfully generated ${count} entries!`)
+          fetchEntries(date)
+        } else {
+          toast.success(language === 'mr' ? 'कोणतीही नवीन नोंदणी आवश्यक नाही' : 'No new entries needed')
+        }
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error(language === 'mr' ? 'ऑटो जनरेट करण्यात त्रुटी' : 'Failed to auto-generate entries')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   const fetchCustomers = async () => {
     try {
@@ -438,6 +459,16 @@ export default function MilkEntries() {
           </Dialog>
 
           <div className="flex w-full min-w-0 flex-wrap items-center gap-2 xl:w-auto xl:justify-end">
+            <Button 
+              variant="outline" 
+              onClick={handleAutoGenerate}
+              disabled={isSubmitting}
+              className="h-auto min-w-0 flex-1 gap-2 rounded-[1.25rem] border-emerald-200 bg-emerald-50 px-4 py-2 text-emerald-700 hover:bg-emerald-100 xl:flex-none"
+            >
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              <span className="hidden lg:inline">{language === 'mr' ? 'ऑटो जनरेट' : 'Auto Generate'}</span>
+              <span className="lg:hidden">{language === 'mr' ? 'ऑटो' : 'Auto'}</span>
+            </Button>
             <Dialog open={isOverrideDialogOpen} onOpenChange={(open) => { setIsOverrideDialogOpen(open); if(open) setOverrideError(''); }}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="h-auto min-w-0 flex-1 gap-2 rounded-[1.25rem] border-blue-200 bg-blue-50 px-4 py-2 text-blue-700 hover:bg-blue-100 xl:flex-none">
