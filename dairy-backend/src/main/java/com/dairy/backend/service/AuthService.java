@@ -94,8 +94,12 @@ public class AuthService {
                 User user;
                 if (userOptional.isPresent()) {
                     user = userOptional.get();
-                    user.setPicture(pictureUrl);
-                    user.setName(name);
+                    if (user.getPicture() == null || user.getPicture().startsWith("http")) {
+                        user.setPicture(pictureUrl);
+                    }
+                    if (user.getName() == null || user.getName().trim().isEmpty()) {
+                        user.setName(name);
+                    }
                     userRepository.save(user);
                 } else {
                     // Fallback to find by email if registered manually before
@@ -103,7 +107,9 @@ public class AuthService {
                     if (emailUser.isPresent()) {
                         user = emailUser.get();
                         user.setGoogleId(userId);
-                        user.setPicture(pictureUrl);
+                        if (user.getPicture() == null || user.getPicture().startsWith("http")) {
+                            user.setPicture(pictureUrl);
+                        }
                     } else {
                         user = User.builder()
                             .googleId(userId)

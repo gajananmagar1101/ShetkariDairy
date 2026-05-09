@@ -40,6 +40,7 @@ export default function Billing() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null)
   
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
@@ -114,6 +115,8 @@ export default function Billing() {
   }
 
   const handleMarkAsPaid = async (invoiceId: string) => {
+    if (payingInvoiceId) return;
+    setPayingInvoiceId(invoiceId)
     try {
       const res = await axios.put(`/api/invoices/${invoiceId}/pay`)
       if (res.data.success) {
@@ -123,6 +126,8 @@ export default function Billing() {
     } catch (err) {
       console.error(err)
       toast.error("Failed to mark as paid")
+    } finally {
+      setPayingInvoiceId(null)
     }
   }
 
@@ -481,11 +486,12 @@ export default function Billing() {
                         {inv.status !== 'PAID' && (
                           <Button 
                             variant="outline" size="icon" 
-                            className="h-8 w-8 text-emerald-600 rounded-lg border-emerald-200 hover:bg-emerald-50"
+                            disabled={payingInvoiceId === inv.id}
+                            className="h-8 w-8 text-emerald-600 rounded-lg border-emerald-200 hover:bg-emerald-50 disabled:opacity-50"
                             title="Mark as Paid"
                             onClick={() => handleMarkAsPaid(inv.id)}
                           >
-                            <CheckCircle className="w-4 h-4" />
+                            {payingInvoiceId === inv.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                           </Button>
                         )}
                         <Button 
