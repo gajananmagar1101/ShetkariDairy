@@ -33,9 +33,13 @@ interface MilkEntry {
   totalAmount: number
 }
 
+const getLocalDataString = (d: Date) => {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export default function MilkEntries() {
   const { language } = useSettingsStore()
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState(getLocalDataString(new Date()))
   const [customers, setCustomers] = useState<Customer[]>([])
   const [entries, setEntries] = useState<MilkEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -64,6 +68,21 @@ export default function MilkEntries() {
   const [isSpecialQuantitiesExpanded, setIsSpecialQuantitiesExpanded] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Auto-switch date at midnight
+  useEffect(() => {
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const msUntilMidnight = tomorrow.getTime() - now.getTime() + 1000; // Add 1 second buffer
+
+    const timer = setTimeout(() => {
+      // Only auto-switch if the user was currently looking at "today"
+      if (date === getLocalDataString(now)) {
+        setDate(getLocalDataString(new Date()));
+      }
+    }, msUntilMidnight);
+
+    return () => clearTimeout(timer);
+  }, [date]);
   useEffect(() => {
     setOverrideStartDate(date)
     setOverrideEndDate(date)
@@ -353,18 +372,27 @@ export default function MilkEntries() {
     [entries]
   )
   
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayDate = new Date();
+  const todayStr = getLocalDataString(todayDate);
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayStr = getLocalDataString(yesterdayDate);
+
   const activeNoDeliveryCustomers = useMemo(
     () => customers.filter(customer => {
       if (!customer.skippedDates || customer.skippedDates.length === 0) return false;
-      return customer.skippedDates.some(d => d >= todayStr);
+      return customer.skippedDates.includes(date);
     }),
-    [customers, todayStr]
+    [customers, date]
   )
   
   const activeSpecialConditions = useMemo(
-    () => customers.filter(customer => customer.specialCondition?.active),
-    [customers]
+    () => customers.filter(customer => {
+      const cond = customer.specialCondition;
+      if (!cond || !cond.active) return false;
+      return date >= cond.startDate && date <= cond.endDate;
+    }),
+    [customers, date]
   )
   
   const allDisplayEntries = useMemo(() => {
@@ -670,7 +698,13 @@ export default function MilkEntries() {
 
       <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6 min-w-0">
-            <h3 className="font-bold text-lg text-slate-800 dark:text-white">{t(language, 'todaysCollection')}</h3>
+            <h3 className="font-bold text-lg text-slate-800 dark:text-white">
+              {date === todayStr 
+                ? t(language, 'todaysCollection') 
+                : date === yesterdayStr 
+                  ? (language === 'mr' ? 'कालचे संकलन' : "Yesterday's Collection")
+                  : (language === 'mr' ? `${date.split('-').reverse().join('/')} चे संकलन` : `Collection for ${date.split('-').reverse().join('/')}`)}
+            </h3>
             <div className="flex gap-4 self-start sm:self-auto">
               <div className="text-right">
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">{t(language, 'totalLiters')}</p>
