@@ -28,6 +28,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.Map;
 
 @RestController
@@ -47,16 +49,15 @@ public class UserController {
 
         User user = findCurrentUser(currentIdentifier);
         String oldPhone = user.getPhone();
-        boolean shouldRotatePhoneIdentity = false;
+        String email = user.getEmail();
+        boolean phoneChanged = false;
 
         if (request.containsKey("name")) {
             user.setName(request.get("name"));
         }
         if (request.containsKey("phone")) {
             String newPhone = request.get("phone");
-            shouldRotatePhoneIdentity = oldPhone != null
-                    && !oldPhone.equals(newPhone)
-                    && oldPhone.equals(currentIdentifier);
+            phoneChanged = newPhone != null && !newPhone.equals(oldPhone);
             user.setPhone(newPhone);
         }
         if (request.containsKey("picture")) {
@@ -66,8 +67,13 @@ public class UserController {
         User updatedUser = userRepository.save(user);
         String token = null;
 
-        if (shouldRotatePhoneIdentity) {
-            migrateUserDataOwnership(currentIdentifier, updatedUser.getPhone());
+        if (phoneChanged && updatedUser.getPhone() != null && !updatedUser.getPhone().isBlank()) {
+            Set<String> legacyUserIds = new LinkedHashSet<>();
+            legacyUserIds.add(currentIdentifier);
+            legacyUserIds.add(oldPhone);
+            legacyUserIds.add(email);
+
+            migrateUserDataOwnership(legacyUserIds, updatedUser.getPhone());
             UserDetails userDetails = userDetailsService.loadUserByUsername(updatedUser.getPhone());
             token = jwtUtil.generateToken(userDetails);
         }
@@ -101,12 +107,20 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    private void migrateUserDataOwnership(String oldUserId, String newUserId) {
-        if (oldUserId == null || newUserId == null || oldUserId.equals(newUserId)) {
+    private void migrateUserDataOwnership(Set<String> oldUserIds, String newUserId) {
+        if (newUserId == null || newUserId.isBlank()) {
             return;
         }
 
-        Query query = Query.query(Criteria.where("userId").is(oldUserId));
+        Set<String> validOldUserIds = oldUserIds.stream()
+                .filter(id -> id != null && !id.isBlank() && !id.equals(newUserId))
+                .collect(java.util.stream.Collectors.toSet());
+
+        if (validOldUserIds.isEmpty()) {
+            return;
+        }
+
+        Query query = Query.query(Criteria.where("userId").in(validOldUserIds));
         Update update = new Update().set("userId", newUserId);
 
         mongoTemplate.updateMulti(query, update, Customer.class);
