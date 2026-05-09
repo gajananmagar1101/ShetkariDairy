@@ -354,13 +354,13 @@ export default function MilkEntries() {
 
   return (
     <div className="space-y-6 min-w-0">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 min-w-0">
+      <div className="flex min-w-0 flex-col justify-between gap-4 xl:flex-row xl:items-center">
         <div className="min-w-0">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white break-words">{t(language, 'dailyMilkEntry')}</h1>
           <p className="text-slate-500 dark:text-slate-300 font-medium mt-1 break-words">{t(language, 'recordMilkDesc')}</p>
         </div>
         
-        <div className="flex w-full min-w-0 flex-col gap-3 md:w-auto md:flex-row md:items-center">
+        <div className="flex w-full min-w-0 flex-col gap-3 xl:w-auto xl:items-end">
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
@@ -420,13 +420,13 @@ export default function MilkEntries() {
             </DialogContent>
           </Dialog>
 
-          <div className="flex w-full flex-wrap gap-2 items-center min-w-0 md:w-auto md:flex-nowrap">
+          <div className="flex w-full min-w-0 flex-wrap items-center gap-2 xl:w-auto xl:justify-end">
             <Dialog open={isOverrideDialogOpen} onOpenChange={(open) => { setIsOverrideDialogOpen(open); if(open) setOverrideError(''); }}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="h-auto min-w-0 flex-1 gap-2 rounded-[1.25rem] border-blue-200 bg-blue-50 px-4 py-2 text-blue-700 hover:bg-blue-100 md:flex-none">
+                <Button variant="outline" className="h-auto min-w-0 flex-1 gap-2 rounded-[1.25rem] border-blue-200 bg-blue-50 px-4 py-2 text-blue-700 hover:bg-blue-100 xl:flex-none">
                   <PencilLine className="h-4 w-4" />
-                  <span className="hidden md:inline">{t(language, 'specialQuantity')}</span>
-                  <span className="md:hidden">{t(language, 'specialQtyShort')}</span>
+                  <span className="hidden lg:inline">{t(language, 'specialQuantity')}</span>
+                  <span className="lg:hidden">{t(language, 'specialQtyShort')}</span>
                 </Button>
               </DialogTrigger>
             <DialogContent className="sm:max-w-md">
@@ -520,10 +520,10 @@ export default function MilkEntries() {
 
             <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(open) setNoDeliveryError(''); }}>
               <DialogTrigger asChild>
-              <Button variant="outline" className="h-auto min-w-0 flex-1 gap-2 rounded-[1.25rem] border-rose-200 bg-rose-50 px-4 py-2 text-rose-700 hover:bg-rose-100 md:flex-none">
+              <Button variant="outline" className="h-auto min-w-0 flex-1 gap-2 rounded-[1.25rem] border-rose-200 bg-rose-50 px-4 py-2 text-rose-700 hover:bg-rose-100 xl:flex-none">
                 <Ban className="h-4 w-4" />
-                <span className="hidden md:inline">{t(language, 'noDelivery')}</span>
-                <span className="md:hidden">{t(language, 'skipShort')}</span>
+                <span className="hidden lg:inline">{t(language, 'noDelivery')}</span>
+                <span className="lg:hidden">{t(language, 'skipShort')}</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
@@ -601,16 +601,16 @@ export default function MilkEntries() {
           </Dialog>
           </div>
 
-          <div className="flex w-full min-w-0 max-w-full items-center justify-between gap-1 rounded-[1.25rem] border border-white/80 bg-white/60 p-1.5 shadow-sm backdrop-blur-sm md:w-auto md:min-w-[210px] md:justify-start">
+          <div className="flex w-full min-w-0 max-w-full items-center justify-between gap-1 rounded-[1.25rem] border border-white/80 bg-white/60 p-1.5 shadow-sm backdrop-blur-sm xl:w-auto xl:min-w-[210px] xl:justify-start">
             <button onClick={handlePrevDay} className="p-1.5 hover:bg-white rounded-xl transition-colors text-slate-500 hover:text-slate-800">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <div className="flex flex-1 items-center justify-center px-1 min-w-0 md:flex-initial">
+            <div className="flex min-w-0 flex-1 items-center justify-center px-1 xl:flex-initial">
               <input 
                 type="date" 
                 value={date}
                 onChange={e => setDate(e.target.value)}
-                className="w-full min-w-0 max-w-[150px] cursor-pointer border-none bg-transparent text-center font-medium text-slate-700 focus:outline-none md:max-w-[135px]"
+                className="w-full min-w-0 max-w-[150px] cursor-pointer border-none bg-transparent text-center font-medium text-slate-700 focus:outline-none xl:max-w-[135px]"
               />
             </div>
             <button onClick={handleNextDay} className="p-1.5 hover:bg-white rounded-xl transition-colors text-slate-500 hover:text-slate-800">
