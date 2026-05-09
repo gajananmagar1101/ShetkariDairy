@@ -34,6 +34,7 @@ export default function Payments() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false)
@@ -76,10 +77,12 @@ export default function Payments() {
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return;
     if (!formData.customerId) {
       alert("Please select a customer")
       return
     }
+    setIsSubmitting(true)
     try {
       const payload = {
         ...formData,
@@ -95,6 +98,8 @@ export default function Payments() {
     } catch (err) {
       console.error(err)
       alert("Failed to record payment")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -195,7 +200,9 @@ export default function Payments() {
                   </select>
                 </div>
               </div>
-              <Button type="submit" className="w-full rounded-xl mt-2 bg-emerald-600 hover:bg-emerald-700">{t(language, 'savePayment')}</Button>
+              <Button type="submit" disabled={isSubmitting} className="w-full rounded-xl mt-2 bg-emerald-600 hover:bg-emerald-700">
+                {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : t(language, 'savePayment')}
+              </Button>
             </form>
           </DialogContent>
         </Dialog>

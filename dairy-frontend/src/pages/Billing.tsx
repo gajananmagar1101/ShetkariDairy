@@ -39,6 +39,7 @@ export default function Billing() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
@@ -88,6 +89,8 @@ export default function Billing() {
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return;
+    setIsSubmitting(true)
     if (!selectedCustomer) {
       alert("Please select a customer")
       return
@@ -105,6 +108,8 @@ export default function Billing() {
     } catch (err) {
       console.error(err)
       alert("Failed to generate bill")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -425,7 +430,9 @@ export default function Billing() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full rounded-xl mt-2">{t(language, 'generateBill')}</Button>
+              <Button type="submit" disabled={isSubmitting} className="w-full rounded-xl mt-2">
+                {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : t(language, 'generateBill')}
+              </Button>
             </form>
           </DialogContent>
         </Dialog>

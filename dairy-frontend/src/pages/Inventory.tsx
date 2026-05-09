@@ -41,6 +41,8 @@ export default function Inventory() {
 
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
   const [expenseForm, setExpenseForm] = useState({ category: 'TRANSPORT', description: '', amount: '', date: new Date().toISOString().split('T')[0] })
+  
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -61,6 +63,8 @@ export default function Inventory() {
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return;
+    setIsSubmitting(true)
     try {
       const res = await axios.post('/api/inventory/items', { ...itemForm, quantity: parseFloat(itemForm.quantity) })
       if (res.data.success) {
@@ -70,11 +74,15 @@ export default function Inventory() {
       }
     } catch (err) {
       console.error(err)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return;
+    setIsSubmitting(true)
     try {
       const res = await axios.post('/api/inventory/expenses', { ...expenseForm, amount: parseFloat(expenseForm.amount) })
       if (res.data.success) {
@@ -84,6 +92,8 @@ export default function Inventory() {
       }
     } catch (err) {
       console.error(err)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -157,7 +167,9 @@ export default function Inventory() {
                       </select>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full rounded-xl mt-2">{t(language, 'saveItem')}</Button>
+                  <Button type="submit" disabled={isSubmitting} className="w-full rounded-xl mt-2">
+                    {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : t(language, 'saveItem')}
+                  </Button>
                 </form>
               </DialogContent>
             </Dialog>
@@ -240,7 +252,9 @@ export default function Inventory() {
                       <input required type="date" value={expenseForm.date} onChange={e => setExpenseForm({...expenseForm, date: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-xl" />
                     </div>
                   </div>
-                  <Button type="submit" variant="destructive" className="w-full rounded-xl mt-2 bg-red-500">{t(language, 'saveExpense')}</Button>
+                  <Button type="submit" variant="destructive" disabled={isSubmitting} className="w-full rounded-xl mt-2 bg-red-500">
+                    {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : t(language, 'saveExpense')}
+                  </Button>
                 </form>
               </DialogContent>
             </Dialog>

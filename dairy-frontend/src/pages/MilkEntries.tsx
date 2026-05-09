@@ -59,6 +59,7 @@ export default function MilkEntries() {
   const [overrideError, setOverrideError] = useState('')
   const [noDeliveryError, setNoDeliveryError] = useState('')
   const [isOverridesExpanded, setIsOverridesExpanded] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     setOverrideStartDate(date)
@@ -136,8 +137,8 @@ export default function MilkEntries() {
 
   const handleEditEntry = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editingEntry) return
-
+    if (!editingEntry || isSubmitting) return
+    setIsSubmitting(true)
     try {
       const res = await axios.put(`/api/milk-entries/${editingEntry.id}`, {
         morningQuantity: editMorning ? parseFloat(editMorning) : 0,
@@ -155,15 +156,20 @@ export default function MilkEntries() {
     } catch (err) {
       console.error(err)
       alert('Failed to update entry.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleNoDelivery = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
     if (!selectedCustomerId) {
       toast.error('Please select a customer')
       return
     }
+
+    setIsSubmitting(true)
 
     const customer = customers.find(c => c.id === selectedCustomerId);
     if (!customer) return;
@@ -192,6 +198,8 @@ export default function MilkEntries() {
     } catch (err) {
       console.error(err)
       toast.error('Failed to mark no delivery.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -224,10 +232,13 @@ export default function MilkEntries() {
 
   const handleDeliveryOverride = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
     if (!overrideCustomerId || !overrideQuantity) {
       toast.error('Please select customer and quantity')
       return
     }
+
+    setIsSubmitting(true)
 
     const customer = customers.find(c => c.id === overrideCustomerId);
     if (!customer) return;
@@ -269,6 +280,8 @@ export default function MilkEntries() {
     } catch (err) {
       console.error(err)
       toast.error('Failed to save special quantity.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -395,7 +408,9 @@ export default function MilkEntries() {
                     />
                   </div>
                 </div>
-                <Button type="submit" className="w-full rounded-2xl">{t(language, 'saveChanges')}</Button>
+                <Button type="submit" disabled={isSubmitting} className="w-full rounded-2xl">
+                  {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : t(language, 'saveChanges')}
+                </Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -491,7 +506,9 @@ export default function MilkEntries() {
                     className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
-                <Button type="submit" className="w-full rounded-2xl">{t(language, 'saveSpecialQuantity')}</Button>
+                <Button type="submit" disabled={isSubmitting} className="w-full rounded-2xl">
+                  {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : t(language, 'saveSpecialQuantity')}
+                </Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -571,7 +588,9 @@ export default function MilkEntries() {
                     ))}
                   </select>
                 </div>
-                <Button type="submit" className="w-full rounded-2xl">{t(language, 'saveNoDelivery')}</Button>
+                <Button type="submit" disabled={isSubmitting} className="w-full rounded-2xl">
+                  {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : t(language, 'saveNoDelivery')}
+                </Button>
               </form>
             </DialogContent>
           </Dialog>
