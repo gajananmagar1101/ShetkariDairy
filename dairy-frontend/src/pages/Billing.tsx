@@ -244,6 +244,8 @@ export default function Billing() {
       ? `<div style="margin-top: 15px; color: #b45309; font-size: 13px;">${t(language, 'noDeliveryBill')}: ${computedSkippedDates.map(formatDate).join(', ')}</div>`
       : '';
 
+    const logoUrl = window.location.origin + '/logo.png';
+
     const html = `
       <!DOCTYPE html>
       <html lang="${language}">
@@ -259,6 +261,19 @@ export default function Billing() {
             padding: 40px;
             max-width: 800px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
+          }
+          .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.06;
+            pointer-events: none;
+            z-index: -1;
+            width: 70%;
+            max-width: 500px;
           }
           .header {
             display: flex;
@@ -268,8 +283,9 @@ export default function Billing() {
             padding-bottom: 20px;
             margin-bottom: 30px;
           }
-          .header-left h1 { margin: 0; font-size: 28px; color: #1e293b; }
-          .header-left p { margin: 5px 0 0 0; color: #64748b; font-size: 14px; }
+          .header-left { display: flex; align-items: center; gap: 15px; }
+          .header-left-text h1 { margin: 0; font-size: 28px; color: #1e293b; }
+          .header-left-text p { margin: 5px 0 0 0; color: #64748b; font-size: 14px; }
           .header-right { text-align: right; }
           .header-right h2 { margin: 0; font-size: 20px; color: #3b82f6; }
           .header-right p { margin: 5px 0 0 0; font-weight: 600; }
@@ -314,10 +330,14 @@ export default function Billing() {
         </style>
       </head>
       <body>
+        <img src="${logoUrl}" class="watermark" alt="Watermark" />
         <div class="header">
           <div class="header-left">
-            <h1>${t(language, 'dairyName')}</h1>
-            <p>${t(language, 'milkBillStatement')}</p>
+            <img src="${logoUrl}" alt="Logo" style="width: 60px; height: 60px; object-fit: contain;" />
+            <div class="header-left-text">
+              <h1>${t(language, 'dairyName')}</h1>
+              <p>${t(language, 'milkBillStatement')}</p>
+            </div>
           </div>
           <div class="header-right">
             <h2>₹${Number(invoice.totalAmount).toFixed(2)}</h2>
