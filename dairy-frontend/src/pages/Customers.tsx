@@ -44,6 +44,7 @@ export default function Customers() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   const emptyForm = {
     name: '',
@@ -80,6 +81,8 @@ export default function Customers() {
 
   const handleSubmitCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return;
+    setIsSubmitting(true)
     try {
       if (!editingId) {
         const isDuplicate = customers.some(c => c.name.trim().toLowerCase() === formData.name.trim().toLowerCase())
@@ -119,6 +122,8 @@ export default function Customers() {
       console.error(err)
       const errorMsg = err.response?.data?.message || "Failed to save customer. Please try again."
       toast.error(errorMsg)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -258,8 +263,12 @@ export default function Customers() {
                   </div>
                 </div>
               </div>
-              <Button type="submit" className="w-full rounded-2xl py-6 text-lg font-bold shadow-lg">
-                {editingId ? t(language, 'updateCustomer') : t(language, 'saveCustomer')}
+              <Button type="submit" disabled={isSubmitting} className="w-full rounded-2xl py-6 text-lg font-bold shadow-lg">
+                {isSubmitting ? (
+                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Saving...</>
+                ) : (
+                  editingId ? t(language, 'updateCustomer') : t(language, 'saveCustomer')
+                )}
               </Button>
             </form>
           </DialogContent>
