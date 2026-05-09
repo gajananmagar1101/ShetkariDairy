@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Mail, Phone, User as UserIcon, Camera, Edit2, Check, X, Loader2 } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { resizeImage } from '../utils/imageUtils'
@@ -15,6 +15,30 @@ const Profile: React.FC = () => {
   const [editPicture, setEditPicture] = useState(user?.picture || '')
   
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!token) return;
+      try {
+        const res = await axios.get('/api/users/profile')
+        if (res.data.success) {
+          const fetchedUser = res.data.data;
+          setAuth({ ...user, ...fetchedUser }, token as string)
+        }
+      } catch (error) {
+        console.error("Failed to fetch latest profile", error)
+      }
+    }
+    fetchProfile()
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      setEditName(user.name || '')
+      setEditPhone(user.phone || '')
+      setEditPicture(user.picture || '')
+    }
+  }, [user])
 
   if (!user) return null
 
