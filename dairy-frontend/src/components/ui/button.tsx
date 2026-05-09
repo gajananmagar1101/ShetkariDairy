@@ -1,7 +1,6 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
-import { motion, type HTMLMotionProps } from "framer-motion"
 import { cn } from "../../lib/utils"
 
 const buttonVariants = cva(
@@ -37,10 +36,7 @@ export interface ButtonProps
   asChild?: boolean
 }
 
-// Custom type combining Framer Motion props and our Button props
-type MotionButtonProps = ButtonProps & HTMLMotionProps<"button">
-
-const Button = React.forwardRef<HTMLButtonElement, MotionButtonProps>(
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     if (asChild) {
       return (
@@ -53,11 +49,9 @@ const Button = React.forwardRef<HTMLButtonElement, MotionButtonProps>(
     }
 
     return (
-      <motion.button
+      <button
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
-        whileTap={{ scale: 0.97 }}
-        whileHover={{ scale: 1.01 }}
         {...props}
       />
     )

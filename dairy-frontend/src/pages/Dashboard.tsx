@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { Droplets, Users, IndianRupee, TrendingUp, Loader2 } from 'lucide-react'
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import axios from 'axios'
 import { getApiBaseUrl } from '../lib/api'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
+
+const DashboardChart = lazy(() => import('../components/dashboard/DashboardChart'))
 
 interface WeeklyTrend {
   name: string
@@ -84,11 +84,8 @@ export default function Dashboard() {
           { label: t(language, 'todaysCollectionDash'), value: `₹${data.todaysCollection.toFixed(2)}`, icon: IndianRupee, color: 'text-emerald-500 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-500/10' },
           { label: t(language, 'growth'), value: data.growth, icon: TrendingUp, color: 'text-orange-500 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-500/10' },
         ].map((stat, i) => (
-          <motion.div
+          <div
             key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
             className="p-4 sm:p-6 rounded-[2rem] bg-white/40 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:bg-white/60 dark:hover:bg-slate-800/80 group"
           >
             <div className="flex items-center gap-5">
@@ -100,35 +97,23 @@ export default function Dashboard() {
                 <h3 className="text-3xl font-extrabold text-slate-800 dark:text-white mt-1">{stat.value}</h3>
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 
       {/* Chart Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="p-4 sm:p-8 rounded-[2rem] bg-white/40 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl h-[400px] sm:h-[450px]"
-      >
+      <div className="p-4 sm:p-8 rounded-[2rem] bg-white/40 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl h-[400px] sm:h-[450px]">
         <h3 className="text-xl font-extrabold text-slate-800 dark:text-white mb-4 sm:mb-8">{t(language, 'weeklyTrends')}</h3>
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data.weeklyTrends} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorMilk" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
-                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b'}} dy={10} />
-            <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b'}} dx={-10} />
-            <Tooltip 
-              contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-            />
-            <Area type="monotone" dataKey="milk" stroke="#8b5cf6" strokeWidth={4} fillOpacity={1} fill="url(#colorMilk)" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </motion.div>
+        <Suspense
+          fallback={
+            <div className="flex h-[calc(100%-3rem)] items-center justify-center">
+              <Loader2 className="h-7 w-7 animate-spin text-primary-500" />
+            </div>
+          }
+        >
+          <DashboardChart data={data.weeklyTrends} />
+        </Suspense>
+      </div>
     </div>
   )
 }

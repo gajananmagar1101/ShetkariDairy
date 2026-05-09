@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Calendar as CalendarIcon, Loader2, MessageCircle, Trash2, Ban, PencilLine, SquarePen, X, ChevronLeft, ChevronRight, ChevronDown, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
+import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
 
 interface Customer {
   id: string
@@ -92,10 +93,7 @@ export default function MilkEntries() {
 
   const fetchCustomers = async () => {
     try {
-      const res = await axios.get('/api/customers')
-      if (res.data.success) {
-        setCustomers(res.data.data)
-      }
+      setCustomers(await fetchCustomersWithCache<Customer>())
     } catch (err) {
       console.error(err)
     }
@@ -195,6 +193,7 @@ export default function MilkEntries() {
     try {
       const res = await axios.post(`/api/customers/${selectedCustomerId}/no-delivery?startDate=${start}&endDate=${end}`)
       if (res.data.success) {
+        invalidateCustomerCache()
         setIsDialogOpen(false)
         setSelectedCustomerId('')
         fetchEntries(date)
@@ -212,6 +211,7 @@ export default function MilkEntries() {
     try {
       const res = await axios.delete(`/api/customers/${customerId}/no-delivery?date=${date}`)
       if (res.data.success) {
+        invalidateCustomerCache()
         fetchCustomers()
       }
     } catch (err) {
@@ -276,6 +276,7 @@ export default function MilkEntries() {
 
       const res = await axios.put(`/api/customers/${overrideCustomerId}`, payload)
       if (res.data.success) {
+        invalidateCustomerCache()
         setIsOverrideDialogOpen(false)
         setOverrideCustomerId('')
         setOverrideQuantity('')
@@ -304,6 +305,7 @@ export default function MilkEntries() {
       }
       const res = await axios.put(`/api/customers/${customerId}`, payload);
       if (res.data.success) {
+        invalidateCustomerCache()
         fetchCustomers();
       }
     } catch (err) {
@@ -321,35 +323,50 @@ export default function MilkEntries() {
     setIsOverrideDialogOpen(true);
   }
 
-  const totalLiters = entries.reduce((acc, curr) => acc + curr.morningQuantity + curr.eveningQuantity, 0)
-  const totalAmount = entries.reduce((acc, curr) => acc + curr.totalAmount, 0)
+  const totalLiters = useMemo(
+    () => entries.reduce((acc, curr) => acc + curr.morningQuantity + curr.eveningQuantity, 0),
+    [entries]
+  )
+  const totalAmount = useMemo(
+    () => entries.reduce((acc, curr) => acc + curr.totalAmount, 0),
+    [entries]
+  )
   
   const todayStr = new Date().toISOString().split('T')[0];
-  const activeNoDeliveryCustomers = customers.filter(customer => {
-    if (!customer.skippedDates || customer.skippedDates.length === 0) return false;
-    return customer.skippedDates.some(d => d >= todayStr);
-  });
+  const activeNoDeliveryCustomers = useMemo(
+    () => customers.filter(customer => {
+      if (!customer.skippedDates || customer.skippedDates.length === 0) return false;
+      return customer.skippedDates.some(d => d >= todayStr);
+    }),
+    [customers, todayStr]
+  )
   
-  const activeSpecialConditions = customers.filter(customer => customer.specialCondition?.active)
+  const activeSpecialConditions = useMemo(
+    () => customers.filter(customer => customer.specialCondition?.active),
+    [customers]
+  )
   
-  const actualCustomerIds = new Set(entries.map(e => e.customerId));
-  const customersSkippedForSelectedDate = customers.filter(customer => customer.skippedDates?.includes(date));
-  const virtualSkippedEntries = customersSkippedForSelectedDate
-    .filter(c => !actualCustomerIds.has(c.id))
-    .map(c => ({
-      id: `virtual-skipped-${c.id}`,
-      customerId: c.id,
-      customerName: c.name,
-      morningQuantity: 0,
-      eveningQuantity: 0,
-      fat: 0,
-      snf: 0,
-      ratePerLiter: 0,
-      totalAmount: 0,
-      isVirtualSkipped: true
-    }));
+  const allDisplayEntries = useMemo(() => {
+    const actualCustomerIds = new Set(entries.map(e => e.customerId));
+    const customersSkippedForSelectedDate = customers.filter(customer => customer.skippedDates?.includes(date));
+    const virtualSkippedEntries = customersSkippedForSelectedDate
+      .filter(c => !actualCustomerIds.has(c.id))
+      .map(c => ({
+        id: `virtual-skipped-${c.id}`,
+        customerId: c.id,
+        customerName: c.name,
+        morningQuantity: 0,
+        eveningQuantity: 0,
+        fat: 0,
+        snf: 0,
+        ratePerLiter: 0,
+        totalAmount: 0,
+        isVirtualSkipped: true
+      }));
 
-  const allDisplayEntries = [...entries, ...virtualSkippedEntries];
+    return [...entries, ...virtualSkippedEntries];
+  }, [customers, date, entries]);
+
   const totalOverridesCount = activeNoDeliveryCustomers.length + activeSpecialConditions.length;
 
   return (
@@ -900,9 +917,6 @@ export default function MilkEntries() {
               <div className="py-8 text-center text-slate-500">{t(language, 'noEntries')}</div>
             ) : (
               <div className="overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch]">
-                <div className="mb-2 px-1 text-xs font-medium text-slate-400">
-                  Left-right swipe kara to see more
-                </div>
                 <table className="min-w-[720px] w-full border-collapse text-left">
                   <thead>
                     <tr className="border-b border-slate-200/60 text-sm text-slate-500 dark:border-slate-600 dark:text-slate-300">

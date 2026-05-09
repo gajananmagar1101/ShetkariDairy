@@ -14,6 +14,7 @@ import {
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
+import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
 
 interface Invoice {
   id: string
@@ -79,10 +80,7 @@ export default function Billing() {
 
   const fetchCustomers = async () => {
     try {
-      const res = await axios.get('/api/customers')
-      if (res.data.success) {
-        setCustomers(res.data.data)
-      }
+      setCustomers(await fetchCustomersWithCache<Customer>())
     } catch (err) {
       console.error(err)
     }
@@ -103,6 +101,7 @@ export default function Billing() {
     try {
       const res = await axios.post(`/api/invoices/generate?customerId=${selectedCustomer}&startDate=${startDate}&endDate=${endDate}`)
       if (res.data.success) {
+        invalidateCustomerCache()
         setInvoices([res.data.data, ...invoices])
         setIsDialogOpen(false)
       }

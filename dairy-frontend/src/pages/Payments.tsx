@@ -12,6 +12,7 @@ import {
 } from '../components/ui/dialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
+import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
 
 interface Payment {
   id: string
@@ -66,10 +67,7 @@ export default function Payments() {
 
   const fetchCustomers = async () => {
     try {
-      const res = await axios.get('/api/customers')
-      if (res.data.success) {
-        setCustomers(res.data.data)
-      }
+      setCustomers(await fetchCustomersWithCache<Customer>())
     } catch (err) {
       console.error(err)
     }
@@ -92,6 +90,7 @@ export default function Payments() {
       if (res.data.success) {
         setPayments([res.data.data, ...payments]) // Prepend new payment
         setIsDialogOpen(false)
+        invalidateCustomerCache()
         fetchCustomers() // Refresh balances
         setFormData({ ...formData, amount: '', customerId: '' })
       }
