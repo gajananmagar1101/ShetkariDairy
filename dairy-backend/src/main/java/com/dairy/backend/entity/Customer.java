@@ -8,6 +8,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.index.Indexed;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -52,6 +53,7 @@ public class Customer {
     @Builder.Default
     private boolean isActive = true;
 
+    @Indexed
     private String userId; // Optional link to User collection
 
     @Builder.Default

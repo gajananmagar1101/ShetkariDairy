@@ -8,6 +8,9 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -18,7 +21,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "milk_entries")
+@CompoundIndexes({
+    @CompoundIndex(name = "user_date_idx", def = "{'userId': 1, 'date': 1}"),
+    @CompoundIndex(name = "user_customer_idx", def = "{'userId': 1, 'customerId': 1}")
+})
 public class MilkEntry {
+    @Indexed
     private String userId;
 
 
