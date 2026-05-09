@@ -41,4 +41,15 @@ public class UserController {
 
         return ResponseEntity.ok(new ApiResponse<>(true, "Profile updated successfully", updatedUser));
     }
+    @GetMapping("/profile")
+    public ResponseEntity<ApiResponse<User>> getProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        User user = userRepository.findByEmail(username)
+                .orElseGet(() -> userRepository.findByPhone(username)
+                        .orElseThrow(() -> new RuntimeException("User not found")));
+
+        return ResponseEntity.ok(new ApiResponse<>(true, "Profile fetched successfully", user));
+    }
 }

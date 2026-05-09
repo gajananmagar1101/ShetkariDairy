@@ -1,11 +1,31 @@
 import { Outlet } from 'react-router-dom'
+import { useEffect } from 'react'
+import axios from 'axios'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useAuthStore } from '../../store/useAuthStore'
 import { Toaster } from 'react-hot-toast'
 
 export default function AppLayout() {
   const { isMobileMenuOpen, setMobileMenuOpen } = useSettingsStore()
+  const { user, token, setAuth } = useAuthStore()
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!token || !user) return;
+      try {
+        const res = await axios.get('/api/users/profile')
+        if (res.data.success) {
+          const fetchedUser = res.data.data;
+          setAuth({ ...user, ...fetchedUser }, token)
+        }
+      } catch (error) {
+        console.error("Failed to fetch latest profile", error)
+      }
+    }
+    fetchProfile()
+  }, [])
 
   return (
     <div className="flex h-screen bg-[#fafafc] dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-500 overflow-hidden relative">
