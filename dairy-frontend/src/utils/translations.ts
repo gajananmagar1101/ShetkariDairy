@@ -80,6 +80,9 @@ export const translations = {
     defaultMorningQty: 'Default Morning (L)',
     defaultEveningQty: 'Default Evening (L)',
     autoEntry930: '9:30 PM auto entry enabled',
+    searchCustomers: 'Search customers...',
+    noCustomersFound: 'No customers found.',
+    totalCustomerMilk: 'Total customer milk',
     // Dashboard
     dashboardOverview: 'Dashboard Overview',
     dashboardDesc: 'Here is the summary of your dairy business today.',
@@ -238,6 +241,9 @@ export const translations = {
     defaultMorningQty: 'डिफॉल्ट सकाळ (L)',
     defaultEveningQty: 'डिफॉल्ट संध्याकाळ (L)',
     autoEntry930: 'रोज रात्री 9:30 ला ऑटो एंट्री',
+    searchCustomers: 'ग्राहक शोधा...',
+    noCustomersFound: 'एकही ग्राहक सापडला नाही.',
+    totalCustomerMilk: 'सर्व ग्राहकांचे एकूण दूध',
     // Dashboard
     dashboardOverview: 'डॅशबोर्ड माहिती',
     dashboardDesc: 'येथे तुमच्या आजच्या डेअरी व्यवसायाचा गोषवारा आहे.',

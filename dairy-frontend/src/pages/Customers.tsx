@@ -202,6 +202,13 @@ export default function Customers() {
     c.name.toLowerCase().includes(search.toLowerCase()) || 
     c.phone.includes(search)
   )
+  const totalCustomerMilk = filteredCustomers.reduce((sum, customer) => sum + (customer.dailyQuantity || 0), 0)
+
+  const getMilkTypeLabel = (milkType: string) => {
+    if (milkType === 'COW') return t(language, 'cow')
+    if (milkType === 'BUFFALO') return t(language, 'buffalo')
+    return milkType
+  }
 
   return (
     <div className="space-y-6">
@@ -340,7 +347,7 @@ export default function Customers() {
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text" 
-              placeholder="Search customers..." 
+              placeholder={t(language, 'searchCustomers')} 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 pr-4 py-2 bg-white/40 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/80 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-80 shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80 dark:focus:bg-slate-800 dark:text-white"
@@ -368,7 +375,7 @@ export default function Customers() {
               <tbody className="text-sm">
                 {filteredCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-500 dark:text-slate-300">No customers found.</td>
+                    <td colSpan={6} className="py-8 text-center text-slate-500 dark:text-slate-300">{t(language, 'noCustomersFound')}</td>
                   </tr>
                 ) : (
                   filteredCustomers.map((customer) => (
@@ -398,7 +405,7 @@ export default function Customers() {
                       </td>
                       <td className="py-4 px-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-md text-xs font-medium ${customer.milkType === 'COW' ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-700'}`}>
-                          {customer.milkType}
+                          {getMilkTypeLabel(customer.milkType)}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{customer.dailyQuantity} L</td>
@@ -420,6 +427,13 @@ export default function Customers() {
               </tbody>
             </table>
           )}
+        </div>
+
+        <div className="mt-6 rounded-[1.75rem] border border-white/70 bg-white/45 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)] backdrop-blur-xl dark:border-slate-700/80 dark:bg-slate-900/60">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">{t(language, 'totalCustomerMilk')}</p>
+            <p className="text-2xl font-extrabold text-primary-700 dark:text-primary-300">{totalCustomerMilk.toFixed(1)} L</p>
+          </div>
         </div>
       </div>
     </div>

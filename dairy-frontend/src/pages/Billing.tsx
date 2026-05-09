@@ -429,14 +429,14 @@ export default function Billing() {
             <DialogHeader>
               <DialogTitle>{t(language, 'generateBill')}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleGenerate} className="space-y-4 mt-4">
+            <form onSubmit={handleGenerate} className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'customer')}</label>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">{t(language, 'customer')}</label>
                 <select 
                   required
                   value={selectedCustomer}
                   onChange={e => setSelectedCustomer(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 py-3.5 text-slate-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/40"
                 >
                   <option value="" disabled>Select Customer</option>
                   {customers.map(c => (
@@ -444,26 +444,26 @@ export default function Billing() {
                   ))}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'fromDate')}</label>
+                  <label className="mb-1.5 block text-sm font-semibold text-slate-700">{t(language, 'fromDate')}</label>
                   <input
                     type="date"
                     value={startDate}
                     onChange={e => setStartDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 pr-11 py-3.5 text-[15px] text-slate-800 [font-variant-numeric:tabular-nums] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/40 sm:text-base"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'toDate')}</label>
+                  <label className="mb-1.5 block text-sm font-semibold text-slate-700">{t(language, 'toDate')}</label>
                   <input 
                     type="date" value={endDate}
                     onChange={e => setEndDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 pr-11 py-3.5 text-[15px] text-slate-800 [font-variant-numeric:tabular-nums] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/40 sm:text-base"
                   />
                 </div>
               </div>
-              <Button type="submit" disabled={isSubmitting} className="w-full rounded-xl mt-2">
+              <Button type="submit" disabled={isSubmitting} className="mt-2 h-14 w-full rounded-[1.6rem] shadow-[0_12px_30px_rgba(139,92,246,0.28)]">
                 {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : t(language, 'generateBill')}
               </Button>
             </form>
