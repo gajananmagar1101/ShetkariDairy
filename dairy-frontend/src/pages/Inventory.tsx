@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Package, IndianRupee, Plus, Trash } from 'lucide-react'
+import { Package, IndianRupee, Plus, Trash, Loader2 } from 'lucide-react'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
 import {
