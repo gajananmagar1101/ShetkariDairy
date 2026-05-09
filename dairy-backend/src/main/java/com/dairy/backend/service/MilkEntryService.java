@@ -16,7 +16,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -84,7 +86,7 @@ public class MilkEntryService {
         String customerName = customerRepository.findById(customerId)
                 .map(Customer::getName).orElse("Unknown");
 
-        return milkEntryRepository.findByUserIdAndCustomerIdAndDateBetween(SecurityUtils.getCurrentUserId(), customerId, startDate, endDate).stream()
+        return findEntriesByCustomerAndDateRange(SecurityUtils.getCurrentUserId(), customerId, startDate, endDate).stream()
                 .map(entry -> mapToDto(entry, customerName))
                 .collect(Collectors.toList());
     }
@@ -93,8 +95,16 @@ public class MilkEntryService {
         String customerName = customerRepository.findById(customerId)
                 .map(Customer::getName).orElse("Unknown");
 
-        return milkEntryRepository.findByUserIdAndCustomerIdAndDateBetween(SecurityUtils.getCurrentUserId(), customerId, startDate, endDate).stream()
+        return findEntriesByCustomerAndDateRange(SecurityUtils.getCurrentUserId(), customerId, startDate, endDate).stream()
                 .map(entry -> mapToDto(entry, customerName))
+                .collect(Collectors.toList());
+    }
+
+    public List<MilkEntry> findEntriesByCustomerAndDateRange(String userId, String customerId, LocalDate startDate, LocalDate endDate) {
+        return milkEntryRepository.findByUserIdAndCustomerId(userId, customerId).stream()
+                .filter(entry -> entry.getDate() != null)
+                .filter(entry -> !entry.getDate().isBefore(startDate) && !entry.getDate().isAfter(endDate))
+                .sorted(java.util.Comparator.comparing(MilkEntry::getDate))
                 .collect(Collectors.toList());
     }
 
@@ -144,7 +154,30 @@ public class MilkEntryService {
 
     @Transactional
     public int autoGenerateEntries(LocalDate date) {
-        List<Customer> activeCustomers = customerRepository.findByUserIdAndIsActiveTrue(SecurityUtils.getCurrentUserId());
+        return autoGenerateEntriesForUser(SecurityUtils.getCurrentUserId(), date);
+    }
+
+    @Transactional
+    public int autoGenerateEntriesForAllUsers(LocalDate date) {
+        Map<String, List<Customer>> customersByUser = customerRepository.findAll().stream()
+                .filter(Customer::isActive)
+                .filter(customer -> customer.getUserId() != null && !customer.getUserId().isBlank())
+                .collect(Collectors.groupingBy(Customer::getUserId, LinkedHashMap::new, Collectors.toList()));
+
+        int totalGenerated = 0;
+        for (Map.Entry<String, List<Customer>> entry : customersByUser.entrySet()) {
+            totalGenerated += autoGenerateEntriesForCustomers(entry.getKey(), entry.getValue(), date);
+        }
+        return totalGenerated;
+    }
+
+    @Transactional
+    public int autoGenerateEntriesForUser(String userId, LocalDate date) {
+        List<Customer> activeCustomers = customerRepository.findByUserIdAndIsActiveTrue(userId);
+        return autoGenerateEntriesForCustomers(userId, activeCustomers, date);
+    }
+
+    private int autoGenerateEntriesForCustomers(String userId, List<Customer> activeCustomers, LocalDate date) {
         int generatedCount = 0;
 
         for (Customer customer : activeCustomers) {
@@ -159,7 +192,7 @@ public class MilkEntryService {
                     .findFirst()
                     .orElse(null);
 
-            if (!shouldAutoGenerate || skippedDates.contains(date) || milkEntryRepository.existsByUserIdAndCustomerIdAndDate(SecurityUtils.getCurrentUserId(), customer.getId(), date)) {
+            if (!shouldAutoGenerate || skippedDates.contains(date) || milkEntryRepository.existsByUserIdAndCustomerIdAndDate(userId, customer.getId(), date)) {
                 continue;
             }
 
@@ -193,6 +226,7 @@ public class MilkEntryService {
             BigDecimal totalAmount = totalQty.multiply(rate);
 
             MilkEntry entry = MilkEntry.builder()
+                    .userId(userId)
                     .customerId(customer.getId())
                     .date(date)
                     .morningQuantity(morningQty)

@@ -1,6 +1,8 @@
 package com.dairy.backend.controller;
 
 import com.dairy.backend.dto.ApiResponse;
+import com.dairy.backend.dto.AutoEntrySettingsDto;
+import com.dairy.backend.dto.AutoEntrySettingsRequest;
 import com.dairy.backend.dto.AuthResponse;
 import com.dairy.backend.entity.Attendance;
 import com.dairy.backend.entity.Customer;
@@ -31,11 +33,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
+
+    private static final String DEFAULT_AUTO_ENTRY_TIME = "21:30";
+    private static final String AUTO_ENTRY_TIME_ZONE = "Asia/Kolkata";
+    private static final Pattern TIME_PATTERN = Pattern.compile("^([01]\\d|2[0-3]):([0-5]\\d)$");
+    private static final Pattern UPI_PATTERN = Pattern.compile("^[A-Za-z0-9._-]{2,}@[A-Za-z]{2,}$");
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
@@ -100,11 +108,81 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Profile fetched successfully", user));
     }
 
+    @GetMapping("/auto-entry-settings")
+    public ResponseEntity<ApiResponse<AutoEntrySettingsDto>> getAutoEntrySettings() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = findCurrentUser(username);
+
+        return ResponseEntity.ok(new ApiResponse<>(
+                true,
+                "Auto entry settings fetched successfully",
+                AutoEntrySettingsDto.builder()
+                        .autoEntryTime(resolveAutoEntryTime(user))
+                        .timezone(AUTO_ENTRY_TIME_ZONE)
+                        .upiId(resolveUpiId(user))
+                        .build()
+        ));
+    }
+
+    @PutMapping("/auto-entry-settings")
+    public ResponseEntity<ApiResponse<AutoEntrySettingsDto>> updateAutoEntrySettings(@RequestBody AutoEntrySettingsRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = findCurrentUser(username);
+
+        String normalizedTime = normalizeAutoEntryTime(request.getAutoEntryTime());
+        String normalizedUpiId = normalizeUpiId(request.getUpiId());
+        user.setAutoEntryTime(normalizedTime);
+        user.setUpiId(normalizedUpiId);
+        User updatedUser = userRepository.save(user);
+
+        return ResponseEntity.ok(new ApiResponse<>(
+                true,
+                "App settings updated successfully",
+                AutoEntrySettingsDto.builder()
+                        .autoEntryTime(resolveAutoEntryTime(updatedUser))
+                        .timezone(AUTO_ENTRY_TIME_ZONE)
+                        .upiId(resolveUpiId(updatedUser))
+                        .build()
+        ));
+    }
+
     private User findCurrentUser(String identifier) {
         return userRepository.findById(identifier)
                 .or(() -> userRepository.findByEmail(identifier))
                 .or(() -> userRepository.findByPhone(identifier))
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    private String resolveAutoEntryTime(User user) {
+        if (user.getAutoEntryTime() == null || user.getAutoEntryTime().isBlank()) {
+            return DEFAULT_AUTO_ENTRY_TIME;
+        }
+        return user.getAutoEntryTime();
+    }
+
+    private String normalizeAutoEntryTime(String autoEntryTime) {
+        String normalized = autoEntryTime != null ? autoEntryTime.trim() : "";
+        if (!TIME_PATTERN.matcher(normalized).matches()) {
+            throw new RuntimeException("Auto entry time must be in HH:mm format");
+        }
+        return normalized;
+    }
+
+    private String resolveUpiId(User user) {
+        return user.getUpiId() != null ? user.getUpiId() : "";
+    }
+
+    private String normalizeUpiId(String upiId) {
+        String normalized = upiId != null ? upiId.trim() : "";
+        if (normalized.isEmpty()) {
+            return "";
+        }
+        if (!UPI_PATTERN.matcher(normalized).matches()) {
+            throw new RuntimeException("UPI ID must look like name@bank");
+        }
+        return normalized;
     }
 
     private void migrateUserDataOwnership(Set<String> oldUserIds, String newUserId) {

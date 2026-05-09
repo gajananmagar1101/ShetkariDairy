@@ -12,6 +12,7 @@ const Inventory = lazy(() => import('./pages/Inventory'))
 const Reports = lazy(() => import('./pages/Reports'))
 const Login = lazy(() => import('./pages/Login'))
 const Profile = lazy(() => import('./pages/Profile'))
+const Settings = lazy(() => import('./pages/Settings'))
 
 function PageLoader() {
   return (
@@ -38,7 +39,7 @@ function App() {
               <Route path="inventory" element={<Inventory />} />
               <Route path="reports" element={<Reports />} />
               <Route path="profile" element={<Profile />} />
-              <Route path="settings" element={<div className="p-4">Settings Page (Coming Soon)</div>} />
+              <Route path="settings" element={<Settings />} />
             </Route>
           </Route>
         </Routes>

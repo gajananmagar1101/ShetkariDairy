@@ -13,6 +13,7 @@ import {
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
+import { fetchAppSettings } from '../lib/userSettings'
 
 interface Payment {
   id: string
@@ -40,6 +41,7 @@ export default function Payments() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false)
   const [qrAmount, setQrAmount] = useState('1000')
+  const [upiId, setUpiId] = useState('')
   const [formData, setFormData] = useState({
     customerId: '',
     amount: '',
@@ -50,6 +52,7 @@ export default function Payments() {
   useEffect(() => {
     fetchPayments()
     fetchCustomers()
+    fetchUpiSettings()
   }, [])
 
   const fetchPayments = async () => {
@@ -68,6 +71,15 @@ export default function Payments() {
   const fetchCustomers = async () => {
     try {
       setCustomers(await fetchCustomersWithCache<Customer>())
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const fetchUpiSettings = async () => {
+    try {
+      const data = await fetchAppSettings()
+      setUpiId(data.upiId || '')
     } catch (err) {
       console.error(err)
     }
@@ -122,24 +134,33 @@ export default function Payments() {
               <DialogHeader>
                 <DialogTitle>{t(language, 'receiveUPI')}</DialogTitle>
               </DialogHeader>
-              <div className="mt-4 mb-6 p-4 bg-white rounded-2xl border-2 border-emerald-100 shadow-sm">
-                <QRCodeSVG 
-                  value={`upi://pay?pa=8149101048-2@ybl&pn=Gharcha%20Dudh&am=${qrAmount}&cu=INR`} 
-                  size={200}
-                  bgColor={"#ffffff"}
-                  fgColor={"#0f172a"}
-                  level={"L"}
-                />
-              </div>
-              <div className="w-full space-y-2">
-                <label className="block text-sm font-medium text-slate-700 text-center">{t(language, 'amountToReceive')}</label>
-                <input 
-                  type="number" value={qrAmount}
-                  onChange={e => setQrAmount(e.target.value)}
-                  className="w-full px-3 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-center text-xl font-bold bg-slate-50"
-                />
-              </div>
-              <p className="text-slate-500 text-xs mt-4 text-center">{t(language, 'scanQRMsg')}</p>
+              {upiId ? (
+                <>
+                  <div className="mt-4 mb-6 p-4 bg-white rounded-2xl border-2 border-emerald-100 shadow-sm">
+                    <QRCodeSVG 
+                      value={`upi://pay?pa=${encodeURIComponent(upiId)}&pn=Gharcha%20Dudh&am=${qrAmount}&cu=INR`} 
+                      size={200}
+                      bgColor={"#ffffff"}
+                      fgColor={"#0f172a"}
+                      level={"L"}
+                    />
+                  </div>
+                  <div className="w-full space-y-2">
+                    <label className="block text-sm font-medium text-slate-700 text-center">{t(language, 'amountToReceive')}</label>
+                    <input 
+                      type="number" value={qrAmount}
+                      onChange={e => setQrAmount(e.target.value)}
+                      className="w-full px-3 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-center text-xl font-bold bg-slate-50"
+                    />
+                  </div>
+                  <p className="text-slate-500 text-xs mt-4 text-center">{t(language, 'scanQRMsg')}</p>
+                  <p className="text-slate-500 text-xs text-center">{upiId}</p>
+                </>
+              ) : (
+                <p className="mt-4 text-center text-sm font-medium text-amber-600">
+                  {t(language, 'upiIdMissing')}
+                </p>
+              )}
             </DialogContent>
           </Dialog>
 

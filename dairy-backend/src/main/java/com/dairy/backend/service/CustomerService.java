@@ -24,6 +24,7 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final MilkEntryRepository milkEntryRepository;
+    private final MilkEntryService milkEntryService;
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
 
@@ -108,7 +109,7 @@ public class CustomerService {
                 skippedDates.add(date);
             }
             LocalDate currentDate = date;
-            milkEntryRepository.findByUserIdAndCustomerIdAndDateBetween(SecurityUtils.getCurrentUserId(), id, currentDate, currentDate).stream().findFirst().ifPresent(entry -> {
+            milkEntryService.findEntriesByCustomerAndDateRange(SecurityUtils.getCurrentUserId(), id, currentDate, currentDate).stream().findFirst().ifPresent(entry -> {
                 customer.setBalance(customer.getBalance().subtract(entry.getTotalAmount()));
                 milkEntryRepository.delete(entry);
             });
@@ -132,7 +133,7 @@ public class CustomerService {
             
             skippedDates.removeIf(currentDate::equals);
             
-            milkEntryRepository.findByUserIdAndCustomerIdAndDateBetween(SecurityUtils.getCurrentUserId(), id, currentDate, currentDate).stream().findFirst().ifPresent(entry -> {
+            milkEntryService.findEntriesByCustomerAndDateRange(SecurityUtils.getCurrentUserId(), id, currentDate, currentDate).stream().findFirst().ifPresent(entry -> {
                 customer.setBalance(customer.getBalance().subtract(entry.getTotalAmount()));
                 milkEntryRepository.delete(entry);
             });

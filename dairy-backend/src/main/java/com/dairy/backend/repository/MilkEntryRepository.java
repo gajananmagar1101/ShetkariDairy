@@ -11,6 +11,7 @@ import java.util.List;
 @Repository
 public interface MilkEntryRepository extends MongoRepository<MilkEntry, String> {
 List<MilkEntry> findByUserIdAndCustomerIdAndDateBetween(String userId, String customerId, LocalDate startDate, LocalDate endDate);
+List<MilkEntry> findByUserIdAndCustomerId(String userId, String customerId);
 List<MilkEntry> findByUserIdAndDateBetween(String userId, LocalDate startDate, LocalDate endDate);
 List<MilkEntry> findByUserIdAndDate(String userId, LocalDate date);
 boolean existsByUserIdAndCustomerIdAndDate(String userId, String customerId, LocalDate date);

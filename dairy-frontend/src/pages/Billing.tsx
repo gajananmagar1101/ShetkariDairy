@@ -15,6 +15,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
+import { fetchAppSettings } from '../lib/userSettings'
 
 interface Invoice {
   id: string
@@ -35,6 +36,14 @@ interface Customer {
   name: string
 }
 
+interface MilkEntryRow {
+  date: string
+  morningQuantity?: number
+  eveningQuantity?: number
+  totalAmount?: number
+  normalizedDate: string
+}
+
 export default function Billing() {
   const { language } = useSettingsStore()
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -46,12 +55,24 @@ export default function Billing() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [selectedCustomer, setSelectedCustomer] = useState('')
+  const [upiId, setUpiId] = useState('')
   const today = new Date()
-  const [startDate, setStartDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0])
-  const [endDate, setEndDate] = useState(new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0])
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+  const [startDate, setStartDate] = useState(formatLocalDate(new Date(today.getFullYear(), today.getMonth(), 1)))
+  const [endDate, setEndDate] = useState(formatLocalDate(new Date(today.getFullYear(), today.getMonth() + 1, 0)))
 
   const formatDisplayDate = (value?: string) =>
-    value ? new Date(value).toLocaleDateString('en-GB') : 'N/A'
+    value ? value.split('-').reverse().join('/') : 'N/A'
+  const normalizeApiDate = (value?: string) => (value ? value.slice(0, 10) : '')
+  const parseDateInput = (value: string) => {
+    const [year, month, day] = value.split('-').map(Number)
+    return new Date(year, month - 1, day)
+  }
   const getInvoiceRangeLabel = (invoice: Invoice) =>
     invoice.periodStartDate && invoice.periodEndDate
       ? `${formatDisplayDate(invoice.periodStartDate)} - ${formatDisplayDate(invoice.periodEndDate)}`
@@ -60,13 +81,46 @@ export default function Billing() {
   useEffect(() => {
     fetchInvoices()
     fetchCustomers()
+    fetchUpiSettings()
   }, [])
+
+  const fetchUpiSettings = async () => {
+    try {
+      const data = await fetchAppSettings()
+      setUpiId(data.upiId || '')
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const reconcileInvoiceTotal = async (invoice: Invoice) => {
+    if (Number(invoice.totalAmount || 0) > 0 || !invoice.periodStartDate || !invoice.periodEndDate) {
+      return invoice
+    }
+
+    try {
+      const res = await axios.get(`/api/milk-entries/customer-range?customerId=${invoice.customerId}&startDate=${invoice.periodStartDate}&endDate=${invoice.periodEndDate}`)
+      if (!res.data.success) {
+        return invoice
+      }
+
+      const totalAmount = (res.data.data ?? []).reduce((sum: number, entry: any) => sum + Number(entry.totalAmount || 0), 0)
+      return {
+        ...invoice,
+        totalAmount,
+      }
+    } catch (error) {
+      console.error('Failed to reconcile invoice total', error)
+      return invoice
+    }
+  }
 
   const fetchInvoices = async () => {
     try {
       const res = await axios.get('/api/invoices')
       if (res.data.success) {
-        setInvoices(res.data.data.sort((a: Invoice, b: Invoice) => {
+        const reconciledInvoices = await Promise.all((res.data.data as Invoice[]).map(reconcileInvoiceTotal))
+        setInvoices(reconciledInvoices.sort((a: Invoice, b: Invoice) => {
           // ObjectIDs can be sorted chronologically
           return b.id.localeCompare(a.id);
         }))
@@ -161,31 +215,37 @@ export default function Billing() {
     let deliveredDays = 0
     let lineItemsHTML = ''
     let computedSkippedDates: string[] = []
+    let computedTotalAmount = 0
     
     try {
       const res = await axios.get(`/api/milk-entries/customer-range?customerId=${invoice.customerId}&startDate=${invoice.periodStartDate}&endDate=${invoice.periodEndDate}`)
       if (res.data.success) {
-        const entries = res.data.data ?? []
-        entries.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        const entries: MilkEntryRow[] = (res.data.data ?? []).map((entry: any) => ({
+          ...entry,
+          normalizedDate: normalizeApiDate(entry.date),
+        }))
+        entries.sort((a, b) => a.normalizedDate.localeCompare(b.normalizedDate))
+        const entriesByDate = new Map<string, MilkEntryRow>(entries.map((entry) => [entry.normalizedDate, entry]))
 
-        const startDate = new Date(invoice.periodStartDate)
-        const endDate = new Date(invoice.periodEndDate)
+        const startDate = parseDateInput(invoice.periodStartDate)
+        const endDate = parseDateInput(invoice.periodEndDate)
         const todayDate = new Date()
         const actualEndDate = endDate > todayDate ? todayDate : endDate
 
         const allDays = [];
         for (let d = new Date(startDate); d <= actualEndDate; d.setDate(d.getDate() + 1)) {
-          allDays.push(d.toISOString().split('T')[0]);
+          allDays.push(formatLocalDate(d));
         }
 
         allDays.forEach((dateStr, index) => {
-          const entry = entries.find((e: any) => e.date === dateStr);
+          const entry = entriesByDate.get(dateStr)
           if (entry) {
             const morning = Number(entry.morningQuantity || 0)
             const evening = Number(entry.eveningQuantity || 0)
             const liters = morning + evening
             totalLiters += liters
             deliveredDays += 1
+            computedTotalAmount += Number(entry.totalAmount || 0)
             lineItemsHTML += `
               <tr>
                 <td>${index + 1}</td>
@@ -218,8 +278,11 @@ export default function Billing() {
     // Generate QR
     let qrHtml = '';
     try {
-      const upiId = "8149101048-2@ybl"
-      const upiString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(t(language, 'dairyName'))}&am=${invoice.totalAmount}&cu=INR`
+      if (!upiId) {
+        throw new Error('UPI ID not configured')
+      }
+      const payableAmount = computedTotalAmount || Number(invoice.totalAmount || 0)
+      const upiString = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(t(language, 'dairyName'))}&am=${payableAmount}&cu=INR`
       const qrDataUrl = await QRCode.toDataURL(upiString, { 
         width: 150, 
         margin: 1,
@@ -231,6 +294,7 @@ export default function Billing() {
           <div>
             <h3 style="margin: 0 0 5px 0; font-size: 18px; color: #0f172a;">${t(language, 'payViaUpi')}</h3>
             <p style="margin: 0 0 5px 0; color: #64748b; font-size: 14px;">${t(language, 'scanQrMsg')}</p>
+            <p style="margin: 0 0 5px 0; color: #64748b; font-size: 13px;">${upiId}</p>
             <p style="margin: 0; color: #64748b; font-size: 14px;">${t(language, 'thankYou')}</p>
           </div>
         </div>
@@ -347,7 +411,7 @@ export default function Billing() {
             </div>
           </div>
           <div class="header-right">
-            <h2>₹${Number(invoice.totalAmount).toFixed(2)}</h2>
+            <h2>₹${(computedTotalAmount || Number(invoice.totalAmount || 0)).toFixed(2)}</h2>
             <p>${rangeLabel}</p>
           </div>
         </div>
@@ -387,7 +451,7 @@ export default function Billing() {
           </div>
           <div class="summary-total">
             <span>${t(language, 'totalBill')}</span>
-            <strong>₹${Number(invoice.totalAmount).toFixed(2)}</strong>
+            <strong>₹${(computedTotalAmount || Number(invoice.totalAmount || 0)).toFixed(2)}</strong>
           </div>
         </div>
         
@@ -534,8 +598,11 @@ export default function Billing() {
                           className="h-8 w-8 text-green-600 rounded-lg border-green-200 hover:bg-green-50"
                           title="Send via WhatsApp"
                           onClick={() => {
-                            const upiId = "8149101048-2@ybl";
-                            const upiString = `upi://pay?pa=${upiId}&pn=Gharcha%20Dudh&am=${inv.totalAmount}&cu=INR`;
+                            if (!upiId) {
+                              alert(t(language, 'upiIdMissing'))
+                              return
+                            }
+                            const upiString = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=Gharcha%20Dudh&am=${inv.totalAmount}&cu=INR`;
                             const encodedUpi = encodeURIComponent(upiString);
                             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedUpi}`;
                             const skippedNote = inv.skippedDates?.length

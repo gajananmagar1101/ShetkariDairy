@@ -85,7 +85,13 @@ export default function Header() {
                   <User className="w-4 h-4" />
                   Profile
                 </button>
-                <button className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-xl transition-colors flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setIsProfileOpen(false)
+                    navigate('/settings')
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-xl transition-colors flex items-center gap-2"
+                >
                   <Settings className="w-4 h-4" />
                   Settings
                 </button>

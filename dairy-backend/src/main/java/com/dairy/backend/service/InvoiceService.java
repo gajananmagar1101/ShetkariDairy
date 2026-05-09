@@ -9,7 +9,6 @@ import com.dairy.backend.entity.MilkEntry;
 import com.dairy.backend.entity.PaymentStatus;
 import com.dairy.backend.repository.CustomerRepository;
 import com.dairy.backend.repository.InvoiceRepository;
-import com.dairy.backend.repository.MilkEntryRepository;
 import com.dairy.backend.repository.PaymentRepository;
 import com.dairy.backend.entity.Payment;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,9 @@ import org.springframework.data.domain.Sort;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
-    private final MilkEntryRepository milkEntryRepository;
+    private final MilkEntryService milkEntryService;
     private final CustomerRepository customerRepository;
     private final PaymentRepository paymentRepository;
 
@@ -36,17 +37,9 @@ public class InvoiceService {
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-        List<MilkEntry> entries = milkEntryRepository.findByUserIdAndCustomerIdAndDateBetween(SecurityUtils.getCurrentUserId(), customerId, startDate, endDate);
-        List<LocalDate> skippedDates = customer.getSkippedDates() != null
-                ? customer.getSkippedDates().stream()
-                .filter(date -> !date.isBefore(startDate) && !date.isAfter(endDate))
-                .sorted()
-                .collect(Collectors.toList())
-                : new ArrayList<>();
-        
-        BigDecimal totalAmount = entries.stream()
-                .map(MilkEntry::getTotalAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<MilkEntry> entries = milkEntryService.findEntriesByCustomerAndDateRange(SecurityUtils.getCurrentUserId(), customerId, startDate, endDate);
+        List<LocalDate> skippedDates = resolveSkippedDates(customer, entries, startDate, endDate);
+        BigDecimal totalAmount = resolveTotalAmount(entries);
 
         Invoice invoice = Invoice.builder()
                 .userId(SecurityUtils.getCurrentUserId())
@@ -75,19 +68,50 @@ public class InvoiceService {
                     LocalDate endDate = inv.getPeriodEndDate() != null
                             ? inv.getPeriodEndDate()
                             : startDate.withDayOfMonth(startDate.lengthOfMonth());
+                    List<MilkEntry> entries = milkEntryService.findEntriesByCustomerAndDateRange(SecurityUtils.getCurrentUserId(), inv.getCustomerId(), startDate, endDate);
                     List<LocalDate> skippedDates = customerRepository.findById(inv.getCustomerId())
-                            .map(Customer::getSkippedDates)
-                            .orElseGet(ArrayList::new)
-                            .stream()
-                            .filter(date -> !date.isBefore(startDate) && !date.isAfter(endDate))
-                            .sorted()
-                            .collect(Collectors.toList());
-                    return mapToDto(inv, name, skippedDates);
+                            .map(customer -> resolveSkippedDates(customer, entries, startDate, endDate))
+                            .orElseGet(ArrayList::new);
+                    BigDecimal recalculatedTotalAmount = resolveTotalAmount(entries);
+                    if (inv.getTotalAmount() == null || inv.getTotalAmount().compareTo(recalculatedTotalAmount) != 0) {
+                        inv.setTotalAmount(recalculatedTotalAmount);
+                        if (inv.getStatus() == PaymentStatus.PAID) {
+                            inv.setPaidAmount(recalculatedTotalAmount);
+                        }
+                        invoiceRepository.save(inv);
+                    }
+                    return mapToDto(inv, name, skippedDates, recalculatedTotalAmount);
                 })
                 .collect(Collectors.toList());
     }
 
+    private BigDecimal resolveTotalAmount(List<MilkEntry> entries) {
+        return entries.stream()
+                .map(MilkEntry::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private List<LocalDate> resolveSkippedDates(Customer customer, List<MilkEntry> entries, LocalDate startDate, LocalDate endDate) {
+        Set<LocalDate> deliveredDates = entries.stream()
+                .map(MilkEntry::getDate)
+                .collect(Collectors.toCollection(HashSet::new));
+
+        List<LocalDate> customerSkippedDates = customer.getSkippedDates() != null
+                ? customer.getSkippedDates()
+                : new ArrayList<>();
+
+        return customerSkippedDates.stream()
+                .filter(date -> !date.isBefore(startDate) && !date.isAfter(endDate))
+                .filter(date -> !deliveredDates.contains(date))
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
     private InvoiceDto mapToDto(Invoice invoice, String customerName, List<LocalDate> skippedDates) {
+        return mapToDto(invoice, customerName, skippedDates, invoice.getTotalAmount());
+    }
+
+    private InvoiceDto mapToDto(Invoice invoice, String customerName, List<LocalDate> skippedDates, BigDecimal totalAmount) {
         return InvoiceDto.builder()
                 .id(invoice.getId())
                 .customerId(invoice.getCustomerId())
@@ -96,7 +120,7 @@ public class InvoiceService {
                 .periodEndDate(invoice.getPeriodEndDate())
                 .invoiceMonth(invoice.getInvoiceMonth())
                 .invoiceYear(invoice.getInvoiceYear())
-                .totalAmount(invoice.getTotalAmount())
+                .totalAmount(totalAmount)
                 .paidAmount(invoice.getPaidAmount())
                 .status(invoice.getStatus())
                 .skippedDates(skippedDates)
@@ -115,21 +139,34 @@ public class InvoiceService {
             throw new RuntimeException("Invoice is already paid");
         }
 
+        LocalDate startDate = invoice.getPeriodStartDate() != null
+                ? invoice.getPeriodStartDate()
+                : LocalDate.of(invoice.getInvoiceYear(), invoice.getInvoiceMonth(), 1);
+        LocalDate endDate = invoice.getPeriodEndDate() != null
+                ? invoice.getPeriodEndDate()
+                : startDate.withDayOfMonth(startDate.lengthOfMonth());
+        List<MilkEntry> entries = milkEntryService.findEntriesByCustomerAndDateRange(SecurityUtils.getCurrentUserId(), invoice.getCustomerId(), startDate, endDate);
+        BigDecimal totalAmount = resolveTotalAmount(entries);
+
+        invoice.setTotalAmount(totalAmount);
         invoice.setStatus(PaymentStatus.PAID);
-        invoice.setPaidAmount(invoice.getTotalAmount());
+        invoice.setPaidAmount(totalAmount);
         invoice = invoiceRepository.save(invoice);
 
         // Record the payment
         Payment payment = Payment.builder()
                 .userId(SecurityUtils.getCurrentUserId())
                 .customerId(invoice.getCustomerId())
-                .amount(invoice.getTotalAmount())
+                .amount(totalAmount)
                 .paymentDate(LocalDate.now())
                 .paymentMethod("ONLINE")
                 .status(PaymentStatus.PAID)
                 .build();
         paymentRepository.save(payment);
 
-        return mapToDto(invoice, "Updated", new ArrayList<>());
+        List<LocalDate> skippedDates = customerRepository.findById(invoice.getCustomerId())
+                .map(customer -> resolveSkippedDates(customer, entries, startDate, endDate))
+                .orElseGet(ArrayList::new);
+        return mapToDto(invoice, "Updated", skippedDates, totalAmount);
     }
 }

@@ -72,8 +72,12 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">{t(language, 'dashboardOverview')}</h1>
-        <p className="text-slate-500 dark:text-slate-300 font-medium mt-1">{t(language, 'dashboardDesc')}</p>
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white sm:text-4xl">
+          {t(language, 'dashboardOverview')}
+        </h1>
+        <p className="mt-2 max-w-3xl text-slate-500 dark:text-slate-300 font-medium text-base sm:text-lg leading-relaxed">
+          {t(language, 'dashboardDesc')}
+        </p>
       </div>
 
       {/* Stats Cards */}
@@ -86,15 +90,19 @@ export default function Dashboard() {
         ].map((stat, i) => (
           <div
             key={i}
-            className="p-4 sm:p-6 rounded-[2rem] bg-white/40 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:bg-white/60 dark:hover:bg-slate-800/80 group"
+            className="rounded-[2rem] bg-white/40 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/80 p-4 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:bg-white/60 dark:hover:bg-slate-800/80 group"
           >
-            <div className="flex items-center gap-5">
-              <div className={`p-4 rounded-[1.25rem] ${stat.bg} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
+            <div className="flex items-center gap-4 sm:gap-5">
+              <div className={`shrink-0 p-4 rounded-[1.25rem] ${stat.bg} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
                 <stat.icon className={`w-7 h-7 ${stat.color}`} />
               </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">{stat.label}</p>
-                <h3 className="text-3xl font-extrabold text-slate-800 dark:text-white mt-1">{stat.value}</h3>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-500 dark:text-slate-300 leading-snug break-words">
+                  {stat.label}
+                </p>
+                <h3 className="mt-1 whitespace-nowrap text-[1.6rem] font-extrabold leading-none tracking-tight text-slate-800 dark:text-white sm:text-[1.85rem]">
+                  {stat.value}
+                </h3>
               </div>
             </div>
           </div>

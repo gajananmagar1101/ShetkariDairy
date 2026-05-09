@@ -39,6 +39,11 @@ public class User {
 
     private Role role;
 
+    @Builder.Default
+    private String autoEntryTime = "21:30";
+
+    private String upiId;
+
     @CreatedDate
     private LocalDateTime createdAt;
 
