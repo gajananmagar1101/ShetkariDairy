@@ -27,8 +27,8 @@ export default function Header() {
   }, [])
 
   return (
-    <header className="h-16 flex items-center justify-between px-2">
-      <div className="flex items-center gap-4">
+    <header className="h-16 flex items-center justify-between gap-2 px-2 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         <button 
           onClick={toggleMobileMenu}
           className="md:hidden p-2 rounded-xl glass text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"
@@ -45,7 +45,7 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         <button onClick={toggleLanguage} className="relative p-2.5 rounded-full glass hover:scale-105 active:scale-95 text-slate-600 dark:text-slate-300 hover:bg-white/80 transition-all font-bold text-sm w-10 h-10 flex items-center justify-center shadow-sm">
           {language === 'en' ? 'म' : 'EN'}
         </button>
@@ -55,10 +55,10 @@ export default function Header() {
         
         <div className="relative" ref={profileRef}>
           <div 
-            className="flex items-center gap-3 pl-5 border-l border-slate-200/50 dark:border-slate-700 cursor-pointer"
+            className="flex items-center gap-2 sm:gap-3 pl-3 sm:pl-5 border-l border-slate-200/50 dark:border-slate-700 cursor-pointer min-w-0"
             onClick={() => setIsProfileOpen(!isProfileOpen)}
           >
-            <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-slate-200 to-slate-50 dark:from-slate-700 dark:to-slate-800 border border-white shadow-sm flex items-center justify-center overflow-hidden">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr from-slate-200 to-slate-50 dark:from-slate-700 dark:to-slate-800 border border-white shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
               {user?.picture ? (
                 <img src={user.picture} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (

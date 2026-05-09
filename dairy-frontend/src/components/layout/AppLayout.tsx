@@ -56,7 +56,7 @@ export default function AppLayout() {
       <div className="flex-1 flex flex-col min-w-0 z-10 p-2 sm:p-5 sm:pl-0 h-full overflow-hidden">
         <Header />
         
-        <main className="flex-1 overflow-auto mt-2 sm:mt-4 rounded-[2rem] glass dark:glass-dark p-4 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 dark:border-white/10 relative transition-all duration-500">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden mt-2 sm:mt-4 rounded-[2rem] glass dark:glass-dark p-4 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 dark:border-white/10 relative transition-all duration-500">
           <Outlet />
         </main>
       </div>

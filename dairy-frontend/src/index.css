@@ -33,6 +33,12 @@
 }
 
 @layer base {
+  html,
+  body,
+  #root {
+    overflow-x: hidden;
+  }
+
   body {
     background-color: var(--color-background);
     color: #1e293b;

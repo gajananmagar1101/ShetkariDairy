@@ -351,14 +351,14 @@ export default function MilkEntries() {
   const totalOverridesCount = activeNoDeliveryCustomers.length + activeSpecialConditions.length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">{t(language, 'dailyMilkEntry')}</h1>
-          <p className="text-slate-500 dark:text-slate-300 font-medium mt-1">{t(language, 'recordMilkDesc')}</p>
+    <div className="space-y-6 min-w-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 min-w-0">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white break-words">{t(language, 'dailyMilkEntry')}</h1>
+          <p className="text-slate-500 dark:text-slate-300 font-medium mt-1 break-words">{t(language, 'recordMilkDesc')}</p>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto min-w-0">
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent className="sm:max-w-md rounded-3xl">
               <DialogHeader>
@@ -418,10 +418,10 @@ export default function MilkEntries() {
             </DialogContent>
           </Dialog>
 
-          <div className="flex w-full sm:w-auto gap-2 items-center">
+          <div className="flex w-full sm:w-auto gap-2 items-center min-w-0">
             <Dialog open={isOverrideDialogOpen} onOpenChange={(open) => { setIsOverrideDialogOpen(open); if(open) setOverrideError(''); }}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2 rounded-[1.25rem] border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 h-auto flex-1 sm:flex-none">
+                <Button variant="outline" className="gap-2 rounded-[1.25rem] border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 px-4 py-2 h-auto flex-1 sm:flex-none min-w-0">
                   <PencilLine className="h-4 w-4" />
                   <span className="hidden sm:inline">{t(language, 'specialQuantity')}</span>
                   <span className="sm:hidden">{t(language, 'specialQtyShort')}</span>
@@ -516,9 +516,9 @@ export default function MilkEntries() {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(open) setNoDeliveryError(''); }}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="gap-2 rounded-[1.25rem] border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 px-4 py-2 h-auto flex-1 sm:flex-none">
+            <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if(open) setNoDeliveryError(''); }}>
+              <DialogTrigger asChild>
+              <Button variant="outline" className="gap-2 rounded-[1.25rem] border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 px-4 py-2 h-auto flex-1 sm:flex-none min-w-0">
                 <Ban className="h-4 w-4" />
                 <span className="hidden sm:inline">{t(language, 'noDelivery')}</span>
                 <span className="sm:hidden">{t(language, 'skipShort')}</span>
@@ -599,16 +599,16 @@ export default function MilkEntries() {
           </Dialog>
           </div>
 
-          <div className="flex items-center gap-1 bg-white/60 p-1.5 rounded-[1.25rem] border border-white/80 w-full sm:w-auto shadow-sm backdrop-blur-sm justify-between sm:justify-start">
+          <div className="flex items-center gap-1 bg-white/60 p-1.5 rounded-[1.25rem] border border-white/80 w-full sm:w-auto max-w-full shadow-sm backdrop-blur-sm justify-between sm:justify-start min-w-0">
             <button onClick={handlePrevDay} className="p-1.5 hover:bg-white rounded-xl transition-colors text-slate-500 hover:text-slate-800">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <div className="flex items-center px-1">
+            <div className="flex items-center px-1 min-w-0 flex-1 sm:flex-initial justify-center">
               <input 
                 type="date" 
                 value={date}
                 onChange={e => setDate(e.target.value)}
-                className="bg-transparent border-none focus:outline-none text-slate-700 font-medium cursor-pointer w-[135px]"
+                className="bg-transparent border-none focus:outline-none text-slate-700 font-medium cursor-pointer w-full max-w-[135px] min-w-0"
               />
             </div>
             <button onClick={handleNextDay} className="p-1.5 hover:bg-white rounded-xl transition-colors text-slate-500 hover:text-slate-800">
@@ -619,9 +619,9 @@ export default function MilkEntries() {
       </div>
 
       <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6 min-w-0">
             <h3 className="font-bold text-lg text-slate-800 dark:text-white">{t(language, 'todaysCollection')}</h3>
-            <div className="flex gap-4">
+            <div className="flex gap-4 self-start sm:self-auto">
               <div className="text-right">
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">{t(language, 'totalLiters')}</p>
                 <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{totalLiters.toFixed(1)} L</p>
@@ -674,16 +674,16 @@ export default function MilkEntries() {
                         : `${formatDate(startDate)} to ${formatDate(endDate)}`;
                       
                       return (
-                        <div key={customer.id} className="flex items-center justify-between bg-rose-50/80 px-3 py-1.5 rounded-lg border border-rose-100">
-                          <div className="flex items-center gap-3 text-sm">
-                            <span className="font-semibold text-slate-800 dark:text-slate-200 w-32 truncate">{customer.name}</span>
+                        <div key={customer.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between bg-rose-50/80 px-3 py-2 rounded-lg border border-rose-100 min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm min-w-0">
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 min-w-0 break-words">{customer.name}</span>
                             <span className="font-bold text-rose-700">0 L</span>
-                            <span className="text-slate-500 text-xs flex items-center gap-1">
+                            <span className="text-slate-500 text-xs flex items-center gap-1 min-w-0 break-words">
                               <CalendarIcon className="w-3 h-3" />
                               {dateText}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 self-end sm:self-auto">
                             <button 
                               onClick={() => handleEditNoDelivery(customer)} 
                               className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition-colors"
@@ -726,16 +726,16 @@ export default function MilkEntries() {
                         : `${formatDate(cond.startDate)} to ${formatDate(cond.endDate)}`;
                       
                       return (
-                        <div key={customer.id} className="flex items-center justify-between bg-blue-50/80 px-3 py-1.5 rounded-lg border border-blue-100">
-                          <div className="flex items-center gap-3 text-sm">
-                            <span className="font-semibold text-slate-800 dark:text-slate-200 w-32 truncate">{customer.name}</span>
+                        <div key={customer.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between bg-blue-50/80 px-3 py-2 rounded-lg border border-blue-100 min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm min-w-0">
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 min-w-0 break-words">{customer.name}</span>
                             <span className="font-bold text-blue-700">{cond.quantity}L</span>
-                            <span className="text-slate-500 text-xs flex items-center gap-1">
+                            <span className="text-slate-500 text-xs flex items-center gap-1 min-w-0 break-words">
                               <CalendarIcon className="w-3 h-3" />
                               {dateText}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 self-end sm:self-auto">
                             <button 
                               onClick={() => handleEditSpecialCondition(customer)} 
                               className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition-colors"
@@ -862,13 +862,13 @@ export default function MilkEntries() {
               <div className="py-8 text-center text-slate-500">{t(language, 'noEntries')}</div>
             ) : (
               allDisplayEntries.map((entry) => (
-                <div key={`mobile-${entry.id}`} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-sm flex flex-col gap-3">
-                  <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-2">
-                    <span className="font-bold text-slate-800 dark:text-slate-200 text-base">{entry.customerName}</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200 text-base">₹{entry.totalAmount}</span>
+                <div key={`mobile-${entry.id}`} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-sm flex flex-col gap-3 min-w-0">
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-700 pb-2 min-w-0">
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-base break-words min-w-0">{entry.customerName}</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-base shrink-0">₹{entry.totalAmount}</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <div className="flex gap-5">
+                  <div className="flex flex-col gap-3 text-sm sm:flex-row sm:justify-between sm:items-center min-w-0">
+                    <div className="flex gap-5 flex-wrap">
                       <div className="flex flex-col">
                         <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-0.5">{t(language, 'morning')}</span>
                         <span className={entry.morningQuantity > 0 ? "font-bold text-blue-600 text-[15px]" : "text-slate-400 font-medium text-[15px]"}>
@@ -883,7 +883,7 @@ export default function MilkEntries() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 flex-wrap">
                       {(entry as any).isVirtualSkipped ? (
                         <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-700 px-2 py-1 rounded-lg text-xs font-bold">
                           <Ban className="w-3 h-3" /> {t(language, 'skipShort')}
