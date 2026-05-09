@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Loader2, Trash, Clock, PencilLine, Ban } from 'lucide-react'
+import { Plus, Search, Loader2, Trash, Clock, PencilLine, Ban, Mic, MicOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
@@ -45,6 +45,7 @@ export default function Customers() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isListening, setIsListening] = useState(false)
   
   const emptyForm = {
     name: '',
@@ -78,6 +79,44 @@ export default function Customers() {
   useEffect(() => {
     fetchCustomers()
   }, [])
+
+  const startVoiceTyping = () => {
+    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error(language === 'mr' ? 'तुमच्या ब्राउझरला व्हॉइस टायपिंगचा सपोर्ट नाही.' : 'Your browser does not support voice typing.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = language === 'mr' ? 'mr-IN' : 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      // remove trailing period if any
+      const cleaned = transcript.replace(/\.$/, '');
+      setFormData(prev => ({ ...prev, name: cleaned }));
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error', event.error);
+      setIsListening(false);
+      if (event.error !== 'no-speech') {
+        toast.error(language === 'mr' ? 'आवाज ओळखता आला नाही. पुन्हा प्रयत्न करा.' : 'Voice not recognized. Try again.');
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
 
   const handleSubmitCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -195,11 +234,21 @@ export default function Customers() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'name')}</label>
-                  <input 
-                    required type="text" value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
+                  <div className="relative">
+                    <input 
+                      required type="text" value={formData.name}
+                      onChange={e => setFormData({...formData, name: e.target.value})}
+                      className="w-full pl-4 pr-12 py-3 border border-slate-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={startVoiceTyping}
+                      className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-colors ${isListening ? 'text-rose-500 bg-rose-50 animate-pulse' : 'text-slate-400 hover:text-primary-600 hover:bg-slate-50'}`}
+                      title="Voice Typing"
+                    >
+                      {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'mobile')}</label>
