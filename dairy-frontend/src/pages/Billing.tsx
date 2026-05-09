@@ -266,14 +266,17 @@ export default function Billing() {
           }
           .watermark {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: auto;
             opacity: 0.06;
             pointer-events: none;
             z-index: -1;
             width: 70%;
             max-width: 500px;
+            object-fit: contain;
           }
           .header {
             display: flex;
