@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Download, MessageCircle, Calculator, Loader2, Trash2, CheckCircle } from 'lucide-react'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
 import QRCode from 'qrcode'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
@@ -161,7 +159,6 @@ export default function Billing() {
         const entries = res.data.data ?? []
         entries.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
-        const entryDates = new Set(entries.map((e: any) => e.date))
         const startDate = new Date(invoice.periodStartDate)
         const endDate = new Date(invoice.periodEndDate)
         const todayDate = new Date()
