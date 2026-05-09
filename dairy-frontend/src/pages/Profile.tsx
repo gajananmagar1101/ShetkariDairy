@@ -81,13 +81,17 @@ const Profile: React.FC = () => {
 
       const res = await axios.put('/api/users/profile', payload)
       if (res.data.success) {
-        // Update local store
+        const updatedProfile = res.data.data
+        const nextToken = updatedProfile?.token || token
+
         setAuth({
           ...user,
-          name: payload.name,
-          phone: payload.phone || user.phone,
-          picture: payload.picture || user.picture
-        }, token as string)
+          name: updatedProfile?.name ?? payload.name,
+          role: updatedProfile?.role ?? user.role,
+          email: updatedProfile?.email ?? user.email,
+          phone: updatedProfile?.phone ?? payload.phone ?? user.phone,
+          picture: updatedProfile?.picture ?? payload.picture ?? user.picture
+        }, nextToken as string)
         setIsEditing(false)
       } else {
         alert(res.data.message || 'Failed to update profile')
