@@ -264,18 +264,21 @@ export default function Billing() {
             position: relative;
             z-index: 1;
           }
-          .watermark {
+          .watermark-container {
             position: fixed;
             top: 0;
             bottom: 0;
             left: 0;
             right: 0;
-            margin: auto;
-            opacity: 0.06;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             pointer-events: none;
-            z-index: -1;
+          }
+          .watermark-img {
             width: 70%;
             max-width: 500px;
+            opacity: 0.06;
             object-fit: contain;
           }
           .header {
@@ -333,7 +336,9 @@ export default function Billing() {
         </style>
       </head>
       <body>
-        <img src="${logoUrl}" class="watermark" alt="Watermark" />
+        <div class="watermark-container">
+          <img src="${logoUrl}" class="watermark-img" alt="Watermark" />
+        </div>
         <div class="header">
           <div class="header-left">
             <img src="${logoUrl}" alt="Logo" style="width: 60px; height: 60px; object-fit: contain;" />
