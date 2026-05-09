@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 type Language = 'en' | 'mr'
 type Theme = 'light' | 'dark'
@@ -15,7 +16,9 @@ interface SettingsState {
   setMobileMenuOpen: (isOpen: boolean) => void
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set) => ({
   language: 'en',
   theme: 'light',
   isMobileMenuOpen: false,
@@ -40,4 +43,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   }),
   toggleMobileMenu: () => set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
   setMobileMenuOpen: (isOpen) => set({ isMobileMenuOpen: isOpen }),
-}))
+    }),
+    {
+      name: 'settings-storage',
+    }
+  )
+)

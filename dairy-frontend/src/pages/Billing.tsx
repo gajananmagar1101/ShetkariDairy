@@ -139,71 +139,20 @@ export default function Billing() {
   }
 
   const generatePDF = async (invoice: Invoice) => {
-    const doc = new jsPDF()
-    const rangeLabel = invoice.periodStartDate && invoice.periodEndDate
-      ? `${formatDisplayDate(invoice.periodStartDate)} to ${formatDisplayDate(invoice.periodEndDate)}`
-      : `${new Date(0, invoice.invoiceMonth - 1).toLocaleString('default', { month: 'long' })} ${invoice.invoiceYear}`
-    const pageWidth = doc.internal.pageSize.getWidth()
-    const pageHeight = doc.internal.pageSize.getHeight()
-    const formatDate = (value: string) => new Date(value).toLocaleDateString('en-GB')
-
-    const loadLogo = (): Promise<HTMLImageElement> => new Promise((resolve, reject) => {
-      const img = new Image();
-      img.src = '/logo.png';
-      img.onload = () => resolve(img);
-      img.onerror = () => reject();
-    });
-
-    doc.setDrawColor(226, 232, 240)
-    doc.setFillColor(255, 255, 255)
-    doc.roundedRect(12, 10, pageWidth - 24, 28, 4, 4, 'FD')
-    
-    // Attempt to add logo on the left
-    let textStartX = 18;
-    try {
-      const img = await loadLogo();
-      doc.addImage(img, 'PNG', 16, 13, 22, 22);
-      textStartX = 42; // Move text to right if logo is loaded
-    } catch (e) {
-      // Ignore if logo not found
+    const printWindow = window.open('', '', 'width=800,height=600');
+    if (!printWindow) {
+      alert("Please allow popups to generate the bill.");
+      return;
     }
 
-    doc.setTextColor(30, 41, 59)
-    doc.setFontSize(24)
-    doc.setFont("helvetica", "bold")
-    doc.text("Gharcha Dudh", textStartX, 23)
-    
-    doc.setTextColor(100, 116, 139)
-    doc.setFontSize(10)
-    doc.setFont("helvetica", "normal")
-    doc.text("Milk Bill Statement", textStartX, 31)
-    
-    doc.setTextColor(15, 23, 42)
-    doc.setFontSize(10)
-    doc.setFont("helvetica", "bold")
-    doc.text(rangeLabel, pageWidth - 16, 27, { align: "right" })
-
-    // Bill summary box
-    doc.setDrawColor(226, 232, 240)
-    doc.setFillColor(248, 250, 252)
-    doc.roundedRect(12, 44, pageWidth - 24, 24, 4, 4, 'FD')
-
-    doc.setTextColor(71, 85, 105)
-    doc.setFontSize(9)
-    doc.text("Customer", 18, 51)
-    doc.text("Billing Range", 80, 51)
-    doc.text("Amount", pageWidth - 18, 51, { align: "right" })
-
-    doc.setTextColor(15, 23, 42)
-    doc.setFontSize(12)
-    doc.setFont("helvetica", "bold")
-    doc.text(invoice.customerName, 18, 60)
-    doc.text(rangeLabel, 80, 60)
-    doc.text(`Rs. ${Number(invoice.totalAmount).toFixed(2)}`, pageWidth - 18, 60, { align: "right" })
+    const rangeLabel = invoice.periodStartDate && invoice.periodEndDate
+      ? `${formatDisplayDate(invoice.periodStartDate)} - ${formatDisplayDate(invoice.periodEndDate)}`
+      : `${new Date(0, invoice.invoiceMonth - 1).toLocaleString('default', { month: 'long' })} ${invoice.invoiceYear}`
+    const formatDate = (value: string) => new Date(value).toLocaleDateString('en-GB')
 
     let totalLiters = 0
     let deliveredDays = 0
-    let lineItems: string[][] = []
+    let lineItemsHTML = ''
     let computedSkippedDates: string[] = []
     
     try {
@@ -212,143 +161,218 @@ export default function Billing() {
         const entries = res.data.data ?? []
         entries.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
-        lineItems = entries.map((e: any, index: number) => {
-          const morning = Number(e.morningQuantity || 0)
-          const evening = Number(e.eveningQuantity || 0)
-          const liters = morning + evening
-          totalLiters += liters
-          deliveredDays += 1
-
-          return [
-            String(index + 1),
-            formatDate(e.date),
-            morning > 0 ? `${morning} L` : '-',
-            evening > 0 ? `${evening} L` : '-',
-            `${liters.toFixed(1)} L`,
-            `Rs. ${Number(e.totalAmount || 0).toFixed(2)}`
-          ]
-        })
-
         const entryDates = new Set(entries.map((e: any) => e.date))
         const startDate = new Date(invoice.periodStartDate)
         const endDate = new Date(invoice.periodEndDate)
         const todayDate = new Date()
         const actualEndDate = endDate > todayDate ? todayDate : endDate
 
+        const allDays = [];
         for (let d = new Date(startDate); d <= actualEndDate; d.setDate(d.getDate() + 1)) {
-          const dateStr = d.toISOString().split('T')[0]
-          if (!entryDates.has(dateStr)) {
-            computedSkippedDates.push(dateStr)
-            lineItems.push([
-              '-',
-              formatDate(dateStr),
-              '-',
-              '-',
-              '0.0 L',
-              'No delivery'
-            ])
-          }
+          allDays.push(d.toISOString().split('T')[0]);
         }
+
+        allDays.forEach((dateStr, index) => {
+          const entry = entries.find((e: any) => e.date === dateStr);
+          if (entry) {
+            const morning = Number(entry.morningQuantity || 0)
+            const evening = Number(entry.eveningQuantity || 0)
+            const liters = morning + evening
+            totalLiters += liters
+            deliveredDays += 1
+            lineItemsHTML += `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${formatDate(entry.date)}</td>
+                <td>${morning > 0 ? morning + ' L' : '-'}</td>
+                <td>${evening > 0 ? evening + ' L' : '-'}</td>
+                <td>${liters.toFixed(1)} L</td>
+                <td style="text-align: right;">₹${Number(entry.totalAmount || 0).toFixed(2)}</td>
+              </tr>
+            `;
+          } else {
+            computedSkippedDates.push(dateStr)
+            lineItemsHTML += `
+              <tr style="background-color: #f8fafc; color: #64748b;">
+                <td>${index + 1}</td>
+                <td>${formatDate(dateStr)}</td>
+                <td>-</td>
+                <td>-</td>
+                <td>0.0 L</td>
+                <td style="text-align: right;">${t(language, 'noDeliveryBill')}</td>
+              </tr>
+            `;
+          }
+        });
       }
     } catch (err) {
       console.error("Failed to fetch detailed entries for bill", err)
     }
 
-    lineItems.sort((a, b) => new Date(a[1].split('/').reverse().join('-')).getTime() - new Date(b[1].split('/').reverse().join('-')).getTime())
-
-    autoTable(doc, {
-      startY: 74,
-      head: [['#', 'Date', 'Morning', 'Evening', 'Total', 'Amount']],
-      body: lineItems,
-      theme: 'grid',
-      margin: { left: 12, right: 12 },
-      styles: {
-        fontSize: 8,
-        cellPadding: 2,
-        textColor: [30, 41, 59],
-        lineColor: [226, 232, 240],
-        lineWidth: 0.1,
-      },
-      headStyles: {
-        fillColor: [37, 99, 235],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        halign: 'center',
-      },
-      bodyStyles: {
-        halign: 'center',
-      },
-      columnStyles: {
-        0: { cellWidth: 10, halign: 'center' },
-        1: { cellWidth: 28, halign: 'left' },
-        2: { cellWidth: 26 },
-        3: { cellWidth: 26 },
-        4: { cellWidth: 24 },
-        5: { cellWidth: 32, halign: 'right' },
-      },
-      alternateRowStyles: {
-        fillColor: [248, 250, 252],
-      },
-    })
-
-    const finalY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 8 : 150
-
-    doc.setFont("helvetica", "normal")
-    doc.setFontSize(9)
-    let skippedDatesTextArray: string[] = []
-    if (computedSkippedDates.length > 0) {
-      const textStr = `No delivery dates: ${computedSkippedDates.map(formatDate).join(', ')}`
-      skippedDatesTextArray = doc.splitTextToSize(textStr, pageWidth - 36)
-    }
-
-    const boxHeight = skippedDatesTextArray.length > 0 ? 12 + (skippedDatesTextArray.length * 4) : 16
-
-    doc.setFillColor(239, 246, 255)
-    doc.setDrawColor(191, 219, 254)
-    doc.roundedRect(12, finalY, pageWidth - 24, boxHeight, 4, 4, 'FD')
-    doc.setTextColor(37, 99, 235)
-    doc.setFontSize(10)
-    doc.setFont("helvetica", "normal")
-    doc.text(`Delivered Days: ${deliveredDays}`, 18, finalY + 8)
-    doc.text(`Skipped Days: ${computedSkippedDates.length}`, 70, finalY + 8)
-    doc.text(`Total Liters: ${totalLiters.toFixed(1)} L`, 120, finalY + 8)
-    doc.setFont("helvetica", "bold")
-    doc.text(`Total Amount: Rs. ${Number(invoice.totalAmount).toFixed(2)}`, pageWidth - 18, finalY + 8, { align: "right" })
-
-    if (skippedDatesTextArray.length > 0) {
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(9)
-      doc.setTextColor(180, 83, 9)
-      doc.text(skippedDatesTextArray, 18, finalY + 15)
-    }
-
-    // Generate UPI QR Code
+    // Generate QR
+    let qrHtml = '';
     try {
       const upiId = "8149101048-2@ybl"
-      const upiString = `upi://pay?pa=${upiId}&pn=Makhan%20Dairy&am=${invoice.totalAmount}&cu=INR`
+      const upiString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(t(language, 'dairyName'))}&am=${invoice.totalAmount}&cu=INR`
       const qrDataUrl = await QRCode.toDataURL(upiString, { 
-        width: 120, 
+        width: 150, 
         margin: 1,
         color: { dark: '#0F172A', light: '#FFFFFF' }
       })
-      const qrY = Math.min(finalY + boxHeight + 4, pageHeight - 48)
-      doc.setDrawColor(226, 232, 240)
-      doc.roundedRect(12, qrY - 4, pageWidth - 24, 34, 4, 4, 'S')
-      doc.addImage(qrDataUrl, 'PNG', 18, qrY, 24, 24)
-      doc.setTextColor(15, 23, 42)
-      doc.setFontSize(11)
-      doc.setFont("helvetica", "bold")
-      doc.text("Pay via UPI", 50, qrY + 8)
-      doc.setFont("helvetica", "normal")
-      doc.setFontSize(9)
-      doc.setTextColor(100, 116, 139)
-      doc.text("Scan QR to complete payment quickly.", 50, qrY + 15)
-      doc.text("Thank you for your business.", 50, qrY + 21)
+      qrHtml = `
+        <div style="margin-top: 30px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; align-items: center; gap: 20px;">
+          <img src="${qrDataUrl}" style="width: 120px; height: 120px;" />
+          <div>
+            <h3 style="margin: 0 0 5px 0; font-size: 18px; color: #0f172a;">${t(language, 'payViaUpi')}</h3>
+            <p style="margin: 0 0 5px 0; color: #64748b; font-size: 14px;">${t(language, 'scanQrMsg')}</p>
+            <p style="margin: 0; color: #64748b; font-size: 14px;">${t(language, 'thankYou')}</p>
+          </div>
+        </div>
+      `;
     } catch (err) {
-      console.error("Failed to generate QR code", err)
+      console.error(err);
     }
-    
-    doc.save(`Bill_${invoice.customerName}_${rangeLabel.replaceAll('/', '-').replaceAll(' ', '_')}.pdf`)
+
+    const skippedDatesNote = computedSkippedDates.length > 0 
+      ? `<div style="margin-top: 15px; color: #b45309; font-size: 13px;">${t(language, 'noDeliveryBill')}: ${computedSkippedDates.map(formatDate).join(', ')}</div>`
+      : '';
+
+    const html = `
+      <!DOCTYPE html>
+      <html lang="${language}">
+      <head>
+        <meta charset="UTF-8">
+        <title>Bill_${invoice.customerName}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap');
+          body {
+            font-family: 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #0f172a;
+            line-height: 1.5;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+          }
+          .header-left h1 { margin: 0; font-size: 28px; color: #1e293b; }
+          .header-left p { margin: 5px 0 0 0; color: #64748b; font-size: 14px; }
+          .header-right { text-align: right; }
+          .header-right h2 { margin: 0; font-size: 20px; color: #3b82f6; }
+          .header-right p { margin: 5px 0 0 0; font-weight: 600; }
+          
+          .info-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+          }
+          .info-item p { margin: 0; color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+          .info-item h3 { margin: 5px 0 0 0; font-size: 18px; }
+          
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px; }
+          th { background-color: #f1f5f9; color: #475569; font-weight: 600; text-align: left; padding: 12px; border-bottom: 2px solid #cbd5e1; }
+          td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+          tr:nth-child(even) { background-color: #f8fafc; }
+          
+          .summary-box {
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .summary-stats { display: flex; gap: 30px; color: #1d4ed8; }
+          .summary-stats div span { display: block; font-size: 12px; color: #3b82f6; text-transform: uppercase; }
+          .summary-stats div strong { font-size: 16px; }
+          .summary-total { text-align: right; }
+          .summary-total span { display: block; font-size: 12px; color: #3b82f6; text-transform: uppercase; }
+          .summary-total strong { font-size: 24px; color: #1e40af; }
+          
+          @media print {
+            body { padding: 0; }
+            button { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="header-left">
+            <h1>${t(language, 'dairyName')}</h1>
+            <p>${t(language, 'milkBillStatement')}</p>
+          </div>
+          <div class="header-right">
+            <h2>₹${Number(invoice.totalAmount).toFixed(2)}</h2>
+            <p>${rangeLabel}</p>
+          </div>
+        </div>
+        
+        <div class="info-box">
+          <div class="info-item">
+            <p>${t(language, 'customer')}</p>
+            <h3>${invoice.customerName}</h3>
+          </div>
+          <div class="info-item" style="text-align: right;">
+            <p>${t(language, 'billingRange')}</p>
+            <h3>${rangeLabel}</h3>
+          </div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>${t(language, 'dateBill')}</th>
+              <th>${t(language, 'morningBill')}</th>
+              <th>${t(language, 'eveningBill')}</th>
+              <th>${t(language, 'totalBill')}</th>
+              <th style="text-align: right;">${t(language, 'amountBill')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lineItemsHTML}
+          </tbody>
+        </table>
+        
+        <div class="summary-box">
+          <div class="summary-stats">
+            <div><span>${t(language, 'deliveredDays')}</span><strong>${deliveredDays}</strong></div>
+            <div><span>${t(language, 'skippedDays')}</span><strong>${computedSkippedDates.length}</strong></div>
+            <div><span>${t(language, 'totalLitersBill')}</span><strong>${totalLiters.toFixed(1)} L</strong></div>
+          </div>
+          <div class="summary-total">
+            <span>${t(language, 'totalBill')}</span>
+            <strong>₹${Number(invoice.totalAmount).toFixed(2)}</strong>
+          </div>
+        </div>
+        
+        ${skippedDatesNote}
+        
+        ${qrHtml}
+        
+        <div style="text-align: center; margin-top: 40px;">
+          <button onclick="window.print()" style="background-color: #3b82f6; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; font-family: inherit;">Print / Save as PDF</button>
+        </div>
+        <script>
+          setTimeout(() => { window.print(); }, 1000);
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
   }
 
   return (

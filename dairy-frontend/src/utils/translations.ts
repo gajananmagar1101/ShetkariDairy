@@ -141,6 +141,21 @@ export const translations = {
     totalExpenses: 'Total Expenses',
     netProfitLoss: 'Net Profit / Loss',
     monthlyProfitTrend: 'Monthly Profit Trend',
+    // Bill
+    milkBillStatement: 'Milk Bill Statement',
+    billingRange: 'Billing Range',
+    deliveredDays: 'Delivered Days',
+    skippedDays: 'Skipped Days',
+    totalLitersBill: 'Total Liters',
+    payViaUpi: 'Pay via UPI',
+    scanQrMsg: 'Scan QR to complete payment quickly.',
+    thankYou: 'Thank you for your business.',
+    dateBill: 'Date',
+    morningBill: 'Morning',
+    eveningBill: 'Evening',
+    totalBill: 'Total',
+    amountBill: 'Amount',
+    noDeliveryBill: 'No delivery',
   },
   mr: {
     dashboard: 'डॅशबोर्ड',
@@ -284,6 +299,21 @@ export const translations = {
     totalExpenses: 'एकूण खर्च',
     netProfitLoss: 'निव्वळ नफा / तोटा',
     monthlyProfitTrend: 'मासिक नफ्याचा आलेख',
+    // Bill
+    milkBillStatement: 'दूध बिल पावती',
+    billingRange: 'बिलिंग कालावधी',
+    deliveredDays: 'दुधाचे दिवस',
+    skippedDays: 'सुट्टीचे दिवस',
+    totalLitersBill: 'एकूण लिटर',
+    payViaUpi: 'UPI द्वारे पेमेंट करा',
+    scanQrMsg: 'पेमेंट करण्यासाठी QR कोड स्कॅन करा.',
+    thankYou: 'धन्यवाद!',
+    dateBill: 'तारीख',
+    morningBill: 'सकाळ',
+    eveningBill: 'संध्याकाळ',
+    totalBill: 'एकूण',
+    amountBill: 'रक्कम',
+    noDeliveryBill: 'दूध नाही',
   }
 }
 

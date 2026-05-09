@@ -479,3 +479,4 @@ AggregateError [ECONNREFUSED]:
 4:40:25 AM [vite] (client) hmr update /src/pages/Billing.tsx, /src/index.css
 4:40:45 AM [vite] (client) hmr update /src/index.css, /src/components/layout/Header.tsx
 4:40:58 AM [vite] (client) hmr update /src/pages/Login.tsx, /src/index.css
+4:54:02 AM [vite] (client) [console.error] [GSI_LOGGER]: FedCM get() rejects with NetworkError: Error retrieving a token.

@@ -49,8 +49,8 @@ export default function Customers() {
     name: '',
     phone: '',
     address: '',
-    milkType: 'COW',
-    ratePerLiter: '60',
+    milkType: 'BUFFALO',
+    ratePerLiter: '70',
     dailyQuantity: '1',
     autoEntryEnabled: true,
     defaultMorningQuantity: '0',
@@ -81,6 +81,14 @@ export default function Customers() {
   const handleSubmitCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      if (!editingId) {
+        const isDuplicate = customers.some(c => c.name.trim().toLowerCase() === formData.name.trim().toLowerCase())
+        if (isDuplicate) {
+          toast.error("Customer with this name already exists")
+          return
+        }
+      }
+
       const computedDailyQuantity = parseFloat(formData.dailyQuantity || '0') || 0
 
       const payload = {
