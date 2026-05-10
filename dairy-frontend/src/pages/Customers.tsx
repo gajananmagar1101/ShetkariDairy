@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Trash, Clock, PencilLine, Ban, Mic, MicOff, Play } from 'lucide-react'
+import { Plus, Search, Trash, Clock, PencilLine, Ban, Mic, MicOff, Play, ChevronDown, ChevronUp } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
@@ -52,6 +52,7 @@ export default function Customers() {
   const [togglingCustomerId, setTogglingCustomerId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [isStoppedExpanded, setIsStoppedExpanded] = useState(false)
   
   const emptyForm = {
     name: '',
@@ -542,63 +543,102 @@ export default function Customers() {
       </div>
 
       <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => setIsStoppedExpanded((prev) => !prev)}
+          className="mb-4 flex w-full items-center justify-between gap-3 rounded-[1.5rem] bg-white/35 px-4 py-3 text-left transition hover:bg-white/55 dark:bg-slate-900/40 dark:hover:bg-slate-900/60"
+        >
           <div>
             <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">{t(language, 'stoppedCustomers')}</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-300">{stoppedCustomers.length}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-300">
+              {stoppedCustomers.length} • {isStoppedExpanded ? t(language, 'clickToCollapse') : t(language, 'clickToExpand')}
+            </p>
           </div>
-        </div>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex min-w-10 justify-center rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-100">
+              {stoppedCustomers.length}
+            </span>
+            {isStoppedExpanded ? (
+              <ChevronUp className="h-5 w-5 text-slate-500 dark:text-slate-300" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-slate-500 dark:text-slate-300" />
+            )}
+          </div>
+        </button>
 
-        {stoppedCustomers.length === 0 ? (
-          <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-white/50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-            {t(language, 'noStoppedCustomers')}
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {stoppedCustomers.map((customer) => (
-              <div key={customer.id} className="rounded-[1.5rem] border border-slate-200/80 bg-white/70 p-5 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/50">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-lg font-bold text-slate-800 dark:text-white">{customer.name}</p>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
-                      {t(language, 'stoppedOn')}: {formatStoppedAt(customer.stoppedAt)}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
-                      {t(language, 'dailyQuantity')}: {customer.dailyQuantity} L
-                    </p>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
-                      Balance: ₹{customer.balance}
-                    </p>
-                  </div>
-                  <span className="inline-flex rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                    {t(language, 'inactive')}
-                  </span>
-                </div>
-
-                <div className="mt-4 flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={togglingCustomerId === customer.id}
-                    onClick={() => handleToggleCustomerStatus(customer)}
-                    className="text-emerald-600 hover:text-emerald-700"
-                  >
-                    {togglingCustomerId === customer.id ? (
-                      <LoadingInline label="" className="gap-0" />
-                    ) : (
-                      <>
-                        <Play className="mr-1 h-4 w-4" />
-                        {t(language, 'resumeCustomer')}
-                      </>
-                    )}
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 hover:text-primary-700">
-                    Edit
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+        {isStoppedExpanded && (
+          stoppedCustomers.length === 0 ? (
+            <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-white/50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+              {t(language, 'noStoppedCustomers')}
+            </div>
+          ) : (
+            <div className="max-h-[28rem] overflow-auto rounded-[1.5rem] border border-slate-200/70 bg-white/60 dark:border-slate-700/80 dark:bg-slate-900/40">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 z-10 bg-white/95 backdrop-blur dark:bg-slate-900/95">
+                  <tr className="border-b border-slate-200/70 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-300">
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">{t(language, 'name')}</th>
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">{t(language, 'stoppedOn')}</th>
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">{t(language, 'milkType')}</th>
+                    <th className="px-4 py-3 font-medium whitespace-nowrap">{t(language, 'dailyQuantity')}</th>
+                    <th className="px-4 py-3 font-medium text-right whitespace-nowrap">Balance (₹)</th>
+                    <th className="px-4 py-3 font-medium text-right whitespace-nowrap">{t(language, 'actions')}</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {stoppedCustomers.map((customer) => (
+                    <tr key={customer.id} className="border-b border-slate-100 dark:border-slate-800/60 last:border-0 hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs dark:bg-slate-700 dark:text-slate-100">
+                            {customer.name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-medium text-slate-800 dark:text-slate-100">{customer.name}</p>
+                            <span className="inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 dark:bg-slate-700 dark:text-slate-100">
+                              {t(language, 'inactive')}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{formatStoppedAt(customer.stoppedAt)}</td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${customer.milkType === 'COW' ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-700'}`}>
+                          {getMilkTypeLabel(customer.milkType)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{customer.dailyQuantity} L</td>
+                      <td className="px-4 py-4 text-right font-medium whitespace-nowrap">
+                        <span className={customer.balance > 0 ? 'text-emerald-600 dark:text-emerald-400' : customer.balance < 0 ? 'text-red-500 dark:text-red-400' : 'text-slate-600 dark:text-slate-300'}>
+                          {customer.balance}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-right whitespace-nowrap">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={togglingCustomerId === customer.id}
+                          onClick={() => handleToggleCustomerStatus(customer)}
+                          className="text-emerald-600 hover:text-emerald-700"
+                        >
+                          {togglingCustomerId === customer.id ? (
+                            <LoadingInline label="" className="gap-0" />
+                          ) : (
+                            <>
+                              <Play className="mr-1 h-4 w-4" />
+                              {t(language, 'resumeCustomer')}
+                            </>
+                          )}
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 hover:text-primary-700">
+                          Edit
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         )}
       </div>
     </div>
