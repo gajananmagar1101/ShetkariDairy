@@ -6,6 +6,7 @@ import com.dairy.backend.dto.MilkEntryDto;
 import com.dairy.backend.entity.Customer;
 import com.dairy.backend.entity.DeliveryOverride;
 import com.dairy.backend.entity.MilkEntry;
+import com.dairy.backend.entity.SpecialCondition;
 import com.dairy.backend.repository.CustomerRepository;
 import com.dairy.backend.repository.MilkEntryRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,41 @@ public class MilkEntryService {
 
     private BigDecimal safe(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private boolean clearConsumedCustomerConditions(Customer customer, LocalDate date) {
+        boolean changed = false;
+
+        List<LocalDate> skippedDates = customer.getSkippedDates() != null ? customer.getSkippedDates() : new ArrayList<>();
+        if (skippedDates.removeIf(date::equals)) {
+            customer.setSkippedDates(skippedDates);
+            changed = true;
+        }
+
+        List<DeliveryOverride> deliveryOverrides = customer.getDeliveryOverrides() != null
+                ? customer.getDeliveryOverrides()
+                : new ArrayList<>();
+        if (deliveryOverrides.removeIf(override -> date.equals(override.getDate()))) {
+            customer.setDeliveryOverrides(deliveryOverrides);
+            changed = true;
+        }
+
+        SpecialCondition specialCondition = customer.getSpecialCondition();
+        if (specialCondition != null
+                && specialCondition.isActive()
+                && !date.isBefore(specialCondition.getStartDate())
+                && !date.isAfter(specialCondition.getEndDate())) {
+            LocalDate nextStartDate = date.plusDays(1);
+            if (nextStartDate.isAfter(specialCondition.getEndDate())) {
+                specialCondition.setActive(false);
+            } else {
+                specialCondition.setStartDate(nextStartDate);
+            }
+            customer.setSpecialCondition(specialCondition);
+            changed = true;
+        }
+
+        return changed;
     }
 
     @Transactional
@@ -63,6 +99,7 @@ public class MilkEntryService {
         // Note: Depending on whether the customer is buying or selling, logic changes. 
         // Assuming farmer selling to dairy -> Dairy owes Farmer -> Balance increases.
         customer.setBalance(customer.getBalance().add(totalAmount));
+        clearConsumedCustomerConditions(customer, entry.getDate());
         customerRepository.save(customer);
 
         return mapToDto(entry, customer.getName());
@@ -240,6 +277,7 @@ public class MilkEntryService {
             milkEntryRepository.save(entry);
 
             customer.setBalance(customer.getBalance().add(totalAmount));
+            clearConsumedCustomerConditions(customer, date);
             customerRepository.save(customer);
             generatedCount++;
         }

@@ -32,6 +32,10 @@ interface Customer {
   defaultEveningQuantity: number
   active: boolean
   stoppedAt?: string | null
+  deliveryOverrides?: Array<{
+    date: string
+    quantity: number
+  }>
   specialCondition?: {
     startDate: string
     endDate: string
@@ -69,6 +73,7 @@ export default function Customers() {
   const effectiveDailyQuantity = parseFloat(formData.dailyQuantity || '0') || 0
   const effectiveRate = parseFloat(formData.ratePerLiter || '0') || 0
   const estimatedAmount = effectiveDailyQuantity * effectiveRate
+  const todayStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`
 
   const fetchCustomers = async () => {
     try {
@@ -245,6 +250,19 @@ export default function Customers() {
       hour: '2-digit',
       minute: '2-digit',
     }).format(parsed)
+  }
+
+  const hasPendingSpecialQuantity = (customer: Customer) => {
+    const pendingOverrideExists = (customer.deliveryOverrides ?? []).some((override) => override.date >= todayStr)
+    if (pendingOverrideExists) return true
+
+    const condition = customer.specialCondition
+    if (!condition || !condition.active) return false
+    return condition.endDate >= todayStr
+  }
+
+  const hasPendingNoDelivery = (customer: Customer) => {
+    return (customer.skippedDates ?? []).some((skippedDate) => skippedDate >= todayStr)
   }
 
   const handleToggleCustomerStatus = async (customer: Customer) => {
@@ -470,12 +488,12 @@ export default function Customers() {
                               <Clock className="w-3 h-3" /> Auto
                             </span>
                           )}
-                          {customer.specialCondition?.active && (
+                          {hasPendingSpecialQuantity(customer) && (
                             <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700" title="Special Quantity Active">
                               <PencilLine className="w-3 h-3" /> {t(language, 'specialQtyShort')}
                             </span>
                           )}
-                          {customer.skippedDates?.includes(new Date().toISOString().split('T')[0]) && (
+                          {hasPendingNoDelivery(customer) && (
                             <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-700" title="No Delivery Today">
                               <Ban className="w-3 h-3" /> {t(language, 'skipShort')}
                             </span>
