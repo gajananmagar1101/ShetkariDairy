@@ -276,8 +276,8 @@ const Profile: React.FC = () => {
       </div>
 
       <Dialog open={isPhotoPreviewOpen} onOpenChange={setIsPhotoPreviewOpen}>
-        <DialogContent className="max-w-3xl border-white/40 bg-slate-950/80 p-3 backdrop-blur-2xl sm:p-4">
-          <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/60">
+        <DialogContent className="max-w-3xl border-none bg-transparent p-0 shadow-none backdrop-blur-none">
+          <div className="overflow-hidden rounded-3xl bg-white">
             {editPicture ? (
               <img
                 src={editPicture}
