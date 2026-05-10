@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Mail, Phone, User as UserIcon, Camera, Edit2, Check, X } from 'lucide-react'
+import { Mail, Phone, User as UserIcon, Camera, Edit2, Check, X, Expand } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { resizeImage } from '../utils/imageUtils'
 import axios from 'axios'
 import { LoadingInline } from '../components/ui/loading'
+import { Dialog, DialogContent } from '../components/ui/dialog'
 
 const Profile: React.FC = () => {
   const { user, setAuth, token } = useAuthStore()
   
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isPhotoPreviewOpen, setIsPhotoPreviewOpen] = useState(false)
   
   const [editName, setEditName] = useState(user?.name || '')
   const [editPhone, setEditPhone] = useState(user?.phone || '')
@@ -30,6 +32,11 @@ const Profile: React.FC = () => {
   const handleImageClick = () => {
     if (isEditing && fileInputRef.current) {
       fileInputRef.current.click()
+      return
+    }
+
+    if (editPicture) {
+      setIsPhotoPreviewOpen(true)
     }
   }
 
@@ -145,7 +152,7 @@ const Profile: React.FC = () => {
         <div className="px-6 pb-10 sm:px-10 flex flex-col items-center relative text-center">
           <div 
             onClick={handleImageClick}
-            className={`-mt-16 w-32 h-32 sm:-mt-20 sm:w-40 sm:h-40 rounded-full border-[6px] border-white/80 dark:border-slate-900/80 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shadow-xl relative z-10 transition-transform duration-300 backdrop-blur-sm ${isEditing ? 'cursor-pointer hover:scale-105 group' : ''}`}
+            className={`-mt-16 w-32 h-32 sm:-mt-20 sm:w-40 sm:h-40 rounded-full border-[6px] border-white/80 dark:border-slate-900/80 bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center shadow-xl relative z-10 transition-transform duration-300 backdrop-blur-sm ${isEditing || editPicture ? 'cursor-pointer hover:scale-105 group' : ''}`}
           >
             {editPicture ? (
               <img src={editPicture} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -159,6 +166,13 @@ const Profile: React.FC = () => {
               <div className="absolute inset-0 bg-black/40 backdrop-blur-md flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                 <Camera className="w-8 h-8 text-white mb-1" />
                 <span className="text-white text-xs font-medium tracking-wide shadow-sm">Change Photo</span>
+              </div>
+            )}
+            {!isEditing && editPicture && (
+              <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                <div className="rounded-full bg-white/90 p-3 shadow-lg">
+                  <Expand className="h-5 w-5 text-slate-800" />
+                </div>
               </div>
             )}
           </div>
@@ -260,6 +274,21 @@ const Profile: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={isPhotoPreviewOpen} onOpenChange={setIsPhotoPreviewOpen}>
+        <DialogContent className="max-w-3xl border-white/40 bg-slate-950/80 p-3 backdrop-blur-2xl sm:p-4">
+          <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/60">
+            {editPicture ? (
+              <img
+                src={editPicture}
+                alt={`${user.name} profile`}
+                className="max-h-[78vh] w-full object-contain"
+                referrerPolicy="no-referrer"
+              />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
