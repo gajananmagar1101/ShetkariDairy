@@ -9,12 +9,13 @@ import { Button } from './button'
 interface ConfirmDialogProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: () => void
+  onConfirm: () => void | Promise<void>
   title: string
   description: string
   confirmText?: string
   cancelText?: string
   isDestructive?: boolean
+  isProcessing?: boolean
 }
 
 export function ConfirmDialog({
@@ -26,6 +27,7 @@ export function ConfirmDialog({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   isDestructive = true,
+  isProcessing = false,
 }: ConfirmDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -37,18 +39,16 @@ export function ConfirmDialog({
           <p className="text-slate-600 text-base">{description}</p>
         </div>
         <div className="flex justify-end gap-3 mt-4">
-          <Button variant="outline" onClick={onClose} className="rounded-full">
+          <Button variant="outline" onClick={onClose} disabled={isProcessing} className="rounded-full">
             {cancelText}
           </Button>
           <Button 
             variant={isDestructive ? 'destructive' : 'default'} 
-            onClick={() => {
-              onConfirm()
-              onClose()
-            }}
+            onClick={onConfirm}
+            disabled={isProcessing}
             className="rounded-full"
           >
-            {confirmText}
+            {isProcessing ? '...' : confirmText}
           </Button>
         </div>
       </DialogContent>

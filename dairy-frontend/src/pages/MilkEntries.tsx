@@ -67,6 +67,7 @@ export default function MilkEntries() {
   const [isNoDeliveryExpanded, setIsNoDeliveryExpanded] = useState(true)
   const [isSpecialQuantitiesExpanded, setIsSpecialQuantitiesExpanded] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null)
 
   // Auto-switch date at midnight
   useEffect(() => {
@@ -139,8 +140,11 @@ export default function MilkEntries() {
     }
   }
 
-  const fetchEntries = async (selectedDate: string) => {
-    setIsLoading(true)
+  const fetchEntries = async (selectedDate: string, options?: { showLoading?: boolean }) => {
+    const showLoading = options?.showLoading ?? true
+    if (showLoading) {
+      setIsLoading(true)
+    }
     try {
       const res = await axios.get(`/api/milk-entries?date=${selectedDate}`)
       if (res.data.success) {
@@ -149,23 +153,33 @@ export default function MilkEntries() {
     } catch (err) {
       console.error(err)
     } finally {
-      setIsLoading(false)
+      if (showLoading) {
+        setIsLoading(false)
+      }
     }
   }
 
   const handleDeleteEntry = async () => {
-    if (!deleteConfirmId) return;
+    if (!deleteConfirmId || deletingEntryId) return;
+
+    const entryId = deleteConfirmId;
+    const previousEntries = entries;
+    setDeletingEntryId(entryId)
+    setEntries((currentEntries) => currentEntries.filter((entry) => entry.id !== entryId))
 
     try {
-      const res = await axios.delete(`/api/milk-entries/${deleteConfirmId}`);
+      const res = await axios.delete(`/api/milk-entries/${entryId}`);
       if (res.data.success) {
-        fetchEntries(date);
+        setDeleteConfirmId(null)
+        void fetchEntries(date, { showLoading: false })
+        toast.success(language === 'mr' ? 'नोंद हटवली.' : 'Entry deleted.')
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to delete entry.");
+      setEntries(previousEntries)
+      toast.error(language === 'mr' ? 'नोंद हटवता आली नाही.' : 'Failed to delete entry.')
     } finally {
-      setDeleteConfirmId(null)
+      setDeletingEntryId(null)
     }
   }
 
@@ -1060,6 +1074,7 @@ export default function MilkEntries() {
               isOpen={!!deleteConfirmId}
               onClose={() => setDeleteConfirmId(null)}
               onConfirm={handleDeleteEntry}
+              isProcessing={!!deletingEntryId}
               title={t(language, 'confirmDeletionTitle')}
               description={language === 'mr' ? 'ही नोंद हटवल्याने ग्राहकाचे बिल बदलेल. तुम्हाला नक्की ही नोंद काढायची आहे का?' : 'Deleting this entry will adjust the customer\'s bill. Are you sure you want to delete this entry?'}
               confirmText={t(language, 'delete')}
