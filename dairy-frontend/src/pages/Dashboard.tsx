@@ -5,6 +5,7 @@ import { getApiBaseUrl } from '../lib/api'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 import { LoadingBlock, LoadingSpinner } from '../components/ui/loading'
+import { getCachedViewData, setCachedViewData } from '../lib/viewCache'
 
 const DashboardChart = lazy(() => import('../components/dashboard/DashboardChart'))
 
@@ -22,6 +23,9 @@ interface DashboardSummary {
   weeklyTrends: WeeklyTrend[]
 }
 
+const DASHBOARD_CACHE_KEY = 'view-cache-dashboard-summary'
+const DASHBOARD_CACHE_TTL_MS = 60_000
+
 export default function Dashboard() {
   const { language } = useSettingsStore()
   const [data, setData] = useState<DashboardSummary | null>(null)
@@ -29,14 +33,26 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchDashboardSummary()
+    const cached = getCachedViewData<DashboardSummary>(DASHBOARD_CACHE_KEY, DASHBOARD_CACHE_TTL_MS)
+    if (cached) {
+      setData(cached)
+      setIsLoading(false)
+      void fetchDashboardSummary(false)
+      return
+    }
+
+    void fetchDashboardSummary(true)
   }, [])
 
-  const fetchDashboardSummary = async () => {
+  const fetchDashboardSummary = async (showLoader = true) => {
+    if (showLoader) {
+      setIsLoading(true)
+    }
     try {
       const res = await axios.get('/api/dashboard/summary')
       if (res.data.success) {
         setData(res.data.data)
+        setCachedViewData(DASHBOARD_CACHE_KEY, res.data.data)
       } else {
         setError('Dashboard API returned an unexpected response.')
       }
@@ -44,7 +60,9 @@ export default function Dashboard() {
       console.error(err)
       setError(err.response?.data?.message || err.message || 'Failed to connect to the server.')
     } finally {
-      setIsLoading(false)
+      if (showLoader) {
+        setIsLoading(false)
+      }
     }
   }
 

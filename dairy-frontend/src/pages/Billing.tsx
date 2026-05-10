@@ -17,6 +17,7 @@ import { t } from '../utils/translations'
 import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
 import { fetchAppSettings } from '../lib/userSettings'
 import { LoadingBlock, LoadingInline, LoadingSpinner } from '../components/ui/loading'
+import { getCachedViewData, setCachedViewData } from '../lib/viewCache'
 
 interface Invoice {
   id: string
@@ -44,6 +45,9 @@ interface MilkEntryRow {
   totalAmount?: number
   normalizedDate: string
 }
+
+const BILLING_CACHE_KEY = 'view-cache-billing-invoices'
+const BILLING_CACHE_TTL_MS = 60_000
 
 export default function Billing() {
   const { language } = useSettingsStore()
@@ -81,6 +85,14 @@ export default function Billing() {
       : `${new Date(0, invoice.invoiceMonth - 1).toLocaleString('default', { month: 'short' })} ${invoice.invoiceYear}`
 
   useEffect(() => {
+    const cachedInvoices = getCachedViewData<Invoice[]>(BILLING_CACHE_KEY, BILLING_CACHE_TTL_MS)
+    if (cachedInvoices) {
+      setInvoices(cachedInvoices)
+      setIsLoading(false)
+      void Promise.all([fetchInvoices(), fetchCustomers(), fetchUpiSettings()])
+      return
+    }
+
     void loadInitialData()
   }, [])
 
@@ -129,10 +141,12 @@ export default function Billing() {
       const res = await axios.get('/api/invoices')
       if (res.data.success) {
         const reconciledInvoices = await Promise.all((res.data.data as Invoice[]).map(reconcileInvoiceTotal))
-        setInvoices(reconciledInvoices.sort((a: Invoice, b: Invoice) => {
+        const sortedInvoices = reconciledInvoices.sort((a: Invoice, b: Invoice) => {
           // ObjectIDs can be sorted chronologically
           return b.id.localeCompare(a.id);
-        }))
+        })
+        setInvoices(sortedInvoices)
+        setCachedViewData(BILLING_CACHE_KEY, sortedInvoices)
       }
     } catch (err) {
       console.error(err)
@@ -150,7 +164,6 @@ export default function Billing() {
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault()
     if (isSubmitting) return;
-    setIsSubmitting(true)
     if (!selectedCustomer) {
       alert("Please select a customer")
       return
@@ -159,11 +172,14 @@ export default function Billing() {
       alert("Please select a valid date range")
       return
     }
+    setIsSubmitting(true)
     try {
       const res = await axios.post(`/api/invoices/generate?customerId=${selectedCustomer}&startDate=${startDate}&endDate=${endDate}`)
       if (res.data.success) {
         invalidateCustomerCache()
-        setInvoices([res.data.data, ...invoices])
+        const nextInvoices = [res.data.data, ...invoices]
+        setInvoices(nextInvoices)
+        setCachedViewData(BILLING_CACHE_KEY, nextInvoices)
         setIsDialogOpen(false)
       }
     } catch (err) {
@@ -180,7 +196,9 @@ export default function Billing() {
     try {
       const res = await axios.put(`/api/invoices/${invoiceId}/pay`)
       if (res.data.success) {
-        setInvoices(invoices.map(inv => inv.id === invoiceId ? { ...inv, status: 'PAID' } : inv))
+        const nextInvoices = invoices.map(inv => inv.id === invoiceId ? { ...inv, status: 'PAID' } : inv)
+        setInvoices(nextInvoices)
+        setCachedViewData(BILLING_CACHE_KEY, nextInvoices)
         toast.success('Invoice marked as paid and added to payments!')
       }
     } catch (err) {
@@ -198,18 +216,22 @@ export default function Billing() {
     const previousInvoices = invoices;
 
     setDeletingInvoiceId(invoiceId)
-    setInvoices((currentInvoices) => currentInvoices.filter((invoice) => invoice.id !== invoiceId));
+    const nextInvoices = invoices.filter((invoice) => invoice.id !== invoiceId)
+    setInvoices(nextInvoices);
+    setCachedViewData(BILLING_CACHE_KEY, nextInvoices)
     setDeleteConfirmId(null);
 
     try {
       const res = await axios.delete(`/api/invoices/${invoiceId}`);
       if (!res.data.success) {
         setInvoices(previousInvoices);
+        setCachedViewData(BILLING_CACHE_KEY, previousInvoices)
         toast.error("Failed to delete bill.");
       }
     } catch (err) {
       console.error(err);
       setInvoices(previousInvoices);
+      setCachedViewData(BILLING_CACHE_KEY, previousInvoices)
       toast.error("Failed to delete bill.");
     } finally {
       setDeletingInvoiceId(null);

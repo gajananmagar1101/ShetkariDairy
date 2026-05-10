@@ -5,6 +5,7 @@ import { TrendingUp, TrendingDown, IndianRupee } from 'lucide-react'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 import { LoadingBlock } from '../components/ui/loading'
+import { getCachedViewData, setCachedViewData } from '../lib/viewCache'
 
 interface DailySummary {
   date: string
@@ -12,6 +13,8 @@ interface DailySummary {
   expenses: number
   profit: number
 }
+
+const REPORTS_CACHE_TTL_MS = 5 * 60_000
 
 export default function Reports() {
   const { language } = useSettingsStore()
@@ -21,11 +24,22 @@ export default function Reports() {
   const [month, setMonth] = useState(new Date().getMonth() + 1)
 
   useEffect(() => {
-    fetchReport()
+    const cacheKey = `view-cache-reports-${year}-${month}`
+    const cachedReport = getCachedViewData<DailySummary[]>(cacheKey, REPORTS_CACHE_TTL_MS)
+    if (cachedReport) {
+      setData(cachedReport)
+      setIsLoading(false)
+      void fetchReport(false)
+      return
+    }
+
+    void fetchReport(true)
   }, [year, month])
 
-  const fetchReport = async () => {
-    setIsLoading(true)
+  const fetchReport = async (showLoader = true) => {
+    if (showLoader) {
+      setIsLoading(true)
+    }
     try {
       const res = await axios.get(`/api/reports/monthly?year=${year}&month=${month}`)
       if (res.data.success) {
@@ -35,11 +49,14 @@ export default function Reports() {
           dayLabel: new Date(d.date).toLocaleDateString('default', { day: '2-digit', month: 'short' })
         }))
         setData(formattedData)
+        setCachedViewData(`view-cache-reports-${year}-${month}`, formattedData)
       }
     } catch (err) {
       console.error(err)
     } finally {
-      setIsLoading(false)
+      if (showLoader) {
+        setIsLoading(false)
+      }
     }
   }
 

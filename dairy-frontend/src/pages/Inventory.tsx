@@ -13,6 +13,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 import { LoadingBlock, LoadingInline } from '../components/ui/loading'
+import { getCachedViewData, setCachedViewData } from '../lib/viewCache'
 
 interface InventoryItem {
   id: string
@@ -29,6 +30,10 @@ interface Expense {
   amount: number
   date: string
 }
+
+const INVENTORY_ITEMS_CACHE_KEY = 'view-cache-inventory-items'
+const INVENTORY_EXPENSES_CACHE_KEY = 'view-cache-inventory-expenses'
+const INVENTORY_CACHE_TTL_MS = 60_000
 
 export default function Inventory() {
   const { language } = useSettingsStore()
@@ -48,22 +53,43 @@ export default function Inventory() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    fetchData()
+    const cachedItems = getCachedViewData<InventoryItem[]>(INVENTORY_ITEMS_CACHE_KEY, INVENTORY_CACHE_TTL_MS)
+    const cachedExpenses = getCachedViewData<Expense[]>(INVENTORY_EXPENSES_CACHE_KEY, INVENTORY_CACHE_TTL_MS)
+
+    if (cachedItems || cachedExpenses) {
+      if (cachedItems) setItems(cachedItems)
+      if (cachedExpenses) setExpenses(cachedExpenses)
+      setIsLoading(false)
+      void fetchData(false)
+      return
+    }
+
+    void fetchData(true)
   }, [])
 
-  const fetchData = async () => {
-    setIsLoading(true)
+  const fetchData = async (showLoader = true) => {
+    if (showLoader) {
+      setIsLoading(true)
+    }
     try {
       const [itemsRes, expRes] = await Promise.all([
         axios.get('/api/inventory/items'),
         axios.get('/api/inventory/expenses')
       ])
-      if (itemsRes.data.success) setItems(itemsRes.data.data)
-      if (expRes.data.success) setExpenses(expRes.data.data)
+      if (itemsRes.data.success) {
+        setItems(itemsRes.data.data)
+        setCachedViewData(INVENTORY_ITEMS_CACHE_KEY, itemsRes.data.data)
+      }
+      if (expRes.data.success) {
+        setExpenses(expRes.data.data)
+        setCachedViewData(INVENTORY_EXPENSES_CACHE_KEY, expRes.data.data)
+      }
     } catch (err) {
       console.error(err)
     } finally {
-      setIsLoading(false)
+      if (showLoader) {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -74,7 +100,9 @@ export default function Inventory() {
     try {
       const res = await axios.post('/api/inventory/items', { ...itemForm, quantity: parseFloat(itemForm.quantity) })
       if (res.data.success) {
-        setItems([res.data.data, ...items])
+        const nextItems = [res.data.data, ...items]
+        setItems(nextItems)
+        setCachedViewData(INVENTORY_ITEMS_CACHE_KEY, nextItems)
         setIsItemDialogOpen(false)
         setItemForm({ name: '', category: 'FEED', quantity: '', unit: 'KG' })
       }
@@ -92,7 +120,9 @@ export default function Inventory() {
     try {
       const res = await axios.post('/api/inventory/expenses', { ...expenseForm, amount: parseFloat(expenseForm.amount) })
       if (res.data.success) {
-        setExpenses([res.data.data, ...expenses])
+        const nextExpenses = [res.data.data, ...expenses]
+        setExpenses(nextExpenses)
+        setCachedViewData(INVENTORY_EXPENSES_CACHE_KEY, nextExpenses)
         setIsExpenseDialogOpen(false)
         setExpenseForm({ ...expenseForm, description: '', amount: '' })
       }
@@ -110,18 +140,22 @@ export default function Inventory() {
     const previousItems = items
 
     setDeletingItemId(itemId)
-    setItems((currentItems) => currentItems.filter((item) => item.id !== itemId))
+    const nextItems = items.filter((item) => item.id !== itemId)
+    setItems(nextItems)
+    setCachedViewData(INVENTORY_ITEMS_CACHE_KEY, nextItems)
     setDeleteConfirmId(null)
 
     try {
       const res = await axios.delete(`/api/inventory/items/${itemId}`)
       if (!res.data.success) {
         setItems(previousItems)
+        setCachedViewData(INVENTORY_ITEMS_CACHE_KEY, previousItems)
         alert('Failed to delete item')
       }
     } catch (err: any) {
       console.error(err)
       setItems(previousItems)
+      setCachedViewData(INVENTORY_ITEMS_CACHE_KEY, previousItems)
       alert(err.response?.data?.message || 'Failed to delete item')
     } finally {
       setDeletingItemId(null)

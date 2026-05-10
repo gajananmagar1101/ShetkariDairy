@@ -14,6 +14,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { LoadingBlock, LoadingInline } from '../components/ui/loading'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
+import { setCachedCustomers } from '../lib/customerCache'
 
 interface Customer {
   id: string
@@ -70,6 +71,7 @@ export default function Customers() {
       const res = await axios.get('/api/customers')
       if (res.data.success) {
         setCustomers(res.data.data)
+        setCachedCustomers(res.data.data)
       }
     } catch (err) {
       console.error(err)
@@ -123,16 +125,16 @@ export default function Customers() {
   const handleSubmitCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
     if (isSubmitting) return;
+    if (!editingId) {
+      const isDuplicate = customers.some(c => c.name.trim().toLowerCase() === formData.name.trim().toLowerCase())
+      if (isDuplicate) {
+        toast.error("Customer with this name already exists")
+        return
+      }
+    }
+
     setIsSubmitting(true)
     try {
-      if (!editingId) {
-        const isDuplicate = customers.some(c => c.name.trim().toLowerCase() === formData.name.trim().toLowerCase())
-        if (isDuplicate) {
-          toast.error("Customer with this name already exists")
-          return
-        }
-      }
-
       const computedDailyQuantity = parseFloat(formData.dailyQuantity || '0') || 0
 
       const payload = {
@@ -147,12 +149,16 @@ export default function Customers() {
       if (editingId) {
         const res = await axios.put(`/api/customers/${editingId}`, payload)
         if (res.data.success) {
-          setCustomers(customers.map(c => c.id === editingId ? res.data.data : c))
+          const nextCustomers = customers.map(c => c.id === editingId ? res.data.data : c)
+          setCustomers(nextCustomers)
+          setCachedCustomers(nextCustomers)
         }
       } else {
         const res = await axios.post('/api/customers', payload)
         if (res.data.success) {
-          setCustomers([...customers, res.data.data])
+          const nextCustomers = [...customers, res.data.data]
+          setCustomers(nextCustomers)
+          setCachedCustomers(nextCustomers)
         }
       }
       
@@ -191,18 +197,22 @@ export default function Customers() {
     const previousCustomers = customers
 
     setDeletingCustomerId(customerId)
-    setCustomers((currentCustomers) => currentCustomers.filter((customer) => customer.id !== customerId))
+    const nextCustomers = customers.filter((customer) => customer.id !== customerId)
+    setCustomers(nextCustomers)
+    setCachedCustomers(nextCustomers)
     setDeleteConfirmId(null)
 
     try {
       const res = await axios.delete(`/api/customers/${customerId}`)
       if (!res.data.success) {
         setCustomers(previousCustomers)
+        setCachedCustomers(previousCustomers)
         toast.error("Failed to delete customer")
       }
     } catch (err: any) {
       console.error(err)
       setCustomers(previousCustomers)
+      setCachedCustomers(previousCustomers)
       toast.error("Failed to delete customer")
     } finally {
       setDeletingCustomerId(null)

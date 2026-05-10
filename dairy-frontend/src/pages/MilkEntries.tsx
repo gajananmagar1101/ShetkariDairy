@@ -7,8 +7,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
-import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
+import { fetchCustomersWithCache, setCachedCustomers } from '../lib/customerCache'
 import { LoadingBlock, LoadingInline, LoadingSpinner } from '../components/ui/loading'
+import { getCachedViewData, setCachedViewData } from '../lib/viewCache'
 
 interface Customer {
   id: string
@@ -33,6 +34,9 @@ interface MilkEntry {
   ratePerLiter: number
   totalAmount: number
 }
+
+const MILK_ENTRIES_CACHE_TTL_MS = 30_000
+const getMilkEntriesCacheKey = (selectedDate: string) => `view-cache-milk-entries-${selectedDate}`
 
 const getLocalDataString = (d: Date) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -97,7 +101,16 @@ export default function MilkEntries() {
   }, [])
 
   useEffect(() => {
-    fetchEntries(date)
+    const cacheKey = `view-cache-milk-entries-${date}`
+    const cachedEntries = getCachedViewData<MilkEntry[]>(cacheKey, MILK_ENTRIES_CACHE_TTL_MS)
+    if (cachedEntries) {
+      setEntries(cachedEntries)
+      setIsLoading(false)
+      void fetchEntries(date, { showLoading: false })
+      return
+    }
+
+    void fetchEntries(date)
   }, [date])
 
   const handlePrevDay = () => {
@@ -120,7 +133,7 @@ export default function MilkEntries() {
         const count = res.data.data
         if (count > 0) {
           toast.success(language === 'mr' ? `${count} नोंदी यशस्वीरित्या जनरेट झाल्या!` : `Successfully generated ${count} entries!`)
-          fetchEntries(date)
+          void fetchEntries(date, { showLoading: false })
         } else {
           toast.success(language === 'mr' ? 'कोणतीही नवीन नोंदणी आवश्यक नाही' : 'No new entries needed')
         }
@@ -135,7 +148,8 @@ export default function MilkEntries() {
 
   const fetchCustomers = async () => {
     try {
-      setCustomers(await fetchCustomersWithCache<Customer>())
+      const nextCustomers = await fetchCustomersWithCache<Customer>()
+      setCustomers(nextCustomers)
     } catch (err) {
       console.error(err)
     }
@@ -150,6 +164,7 @@ export default function MilkEntries() {
       const res = await axios.get(`/api/milk-entries?date=${selectedDate}`)
       if (res.data.success) {
         setEntries(res.data.data)
+        setCachedViewData(getMilkEntriesCacheKey(selectedDate), res.data.data)
       }
     } catch (err) {
       console.error(err)
@@ -166,18 +181,20 @@ export default function MilkEntries() {
     const entryId = deleteConfirmId;
     const previousEntries = entries;
     setDeletingEntryId(entryId)
-    setEntries((currentEntries) => currentEntries.filter((entry) => entry.id !== entryId))
+    const nextEntries = entries.filter((entry) => entry.id !== entryId)
+    setEntries(nextEntries)
+    setCachedViewData(getMilkEntriesCacheKey(date), nextEntries)
 
     try {
       const res = await axios.delete(`/api/milk-entries/${entryId}`);
       if (res.data.success) {
         setDeleteConfirmId(null)
-        void fetchEntries(date, { showLoading: false })
         toast.success(language === 'mr' ? 'नोंद हटवली.' : 'Entry deleted.')
       }
     } catch (err) {
       console.error(err);
       setEntries(previousEntries)
+      setCachedViewData(getMilkEntriesCacheKey(date), previousEntries)
       toast.error(language === 'mr' ? 'नोंद हटवता आली नाही.' : 'Failed to delete entry.')
     } finally {
       setDeletingEntryId(null)
@@ -207,9 +224,20 @@ export default function MilkEntries() {
       })
 
       if (res.data.success) {
+        const updatedEntry = res.data.data ?? {
+          ...editingEntry,
+          morningQuantity: editMorning ? parseFloat(editMorning) : 0,
+          eveningQuantity: editEvening ? parseFloat(editEvening) : 0,
+          fat: editFat ? parseFloat(editFat) : null,
+          snf: editSnf ? parseFloat(editSnf) : null,
+        }
+        const nextEntries = entries.map((entry) =>
+          entry.id === editingEntry.id ? { ...entry, ...updatedEntry } : entry
+        )
+        setEntries(nextEntries)
+        setCachedViewData(getMilkEntriesCacheKey(date), nextEntries)
         setIsEditDialogOpen(false)
         setEditingEntry(null)
-        fetchEntries(date)
       }
     } catch (err) {
       console.error(err)
@@ -227,10 +255,11 @@ export default function MilkEntries() {
       return
     }
 
-    setIsSubmitting(true)
-
     const customer = customers.find(c => c.id === selectedCustomerId);
-    if (!customer) return;
+    if (!customer) {
+      toast.error(language === 'mr' ? 'ग्राहक सापडला नाही.' : 'Customer not found.')
+      return
+    }
 
     const start = noDeliveryStartDate;
     const end = noDeliveryIsRange ? noDeliveryEndDate : noDeliveryStartDate;
@@ -245,14 +274,26 @@ export default function MilkEntries() {
       }
     }
 
+    setIsSubmitting(true)
+
     try {
       const res = await axios.post(`/api/customers/${selectedCustomerId}/no-delivery?startDate=${start}&endDate=${end}`)
       if (res.data.success) {
-        invalidateCustomerCache()
+        const nextCustomers = customers.map((customer) =>
+          customer.id === selectedCustomerId
+            ? {
+                ...customer,
+                skippedDates: Array.from(
+                  new Set([...(customer.skippedDates ?? []), ...(res.data.data?.skippedDates ?? [start])])
+                ).sort(),
+              }
+            : customer
+        )
+        setCustomers(nextCustomers)
+        setCachedCustomers(nextCustomers)
         setIsDialogOpen(false)
         setSelectedCustomerId('')
-        fetchEntries(date)
-        fetchCustomers()
+        void fetchEntries(date, { showLoading: false })
       }
     } catch (err) {
       console.error(err)
@@ -266,8 +307,16 @@ export default function MilkEntries() {
     try {
       const res = await axios.delete(`/api/customers/${customerId}/no-delivery?date=${date}`)
       if (res.data.success) {
-        invalidateCustomerCache()
-        fetchCustomers()
+        const nextCustomers = customers.map((customer) =>
+          customer.id === customerId
+            ? {
+                ...customer,
+                skippedDates: (customer.skippedDates ?? []).filter((skippedDate) => skippedDate !== date),
+              }
+            : customer
+        )
+        setCustomers(nextCustomers)
+        setCachedCustomers(nextCustomers)
       }
     } catch (err) {
       console.error(err)
@@ -298,10 +347,11 @@ export default function MilkEntries() {
       return
     }
 
-    setIsSubmitting(true)
-
     const customer = customers.find(c => c.id === overrideCustomerId);
-    if (!customer) return;
+    if (!customer) {
+      toast.error(language === 'mr' ? 'ग्राहक सापडला नाही.' : 'Customer not found.')
+      return
+    }
 
     const start = overrideStartDate;
     const end = overrideIsRange ? overrideEndDate : overrideStartDate;
@@ -317,6 +367,8 @@ export default function MilkEntries() {
       }
     }
 
+    setIsSubmitting(true)
+
     try {
       
       const payload = {
@@ -331,12 +383,25 @@ export default function MilkEntries() {
 
       const res = await axios.put(`/api/customers/${overrideCustomerId}`, payload)
       if (res.data.success) {
-        invalidateCustomerCache()
+        const nextCustomers = customers.map((currentCustomer) =>
+          currentCustomer.id === overrideCustomerId
+            ? {
+                ...currentCustomer,
+                specialCondition: {
+                  startDate: start,
+                  endDate: end,
+                  quantity: parseFloat(overrideQuantity),
+                  active: true,
+                },
+              }
+            : currentCustomer
+        )
+        setCustomers(nextCustomers)
+        setCachedCustomers(nextCustomers)
         setIsOverrideDialogOpen(false)
         setOverrideCustomerId('')
         setOverrideQuantity('')
-        fetchEntries(date)
-        fetchCustomers()
+        void fetchEntries(date, { showLoading: false })
       }
     } catch (err) {
       console.error(err)
@@ -360,8 +425,18 @@ export default function MilkEntries() {
       }
       const res = await axios.put(`/api/customers/${customerId}`, payload);
       if (res.data.success) {
-        invalidateCustomerCache()
-        fetchCustomers();
+        const nextCustomers = customers.map((currentCustomer) =>
+          currentCustomer.id === customerId
+            ? {
+                ...currentCustomer,
+                specialCondition: currentCustomer.specialCondition
+                  ? { ...currentCustomer.specialCondition, active: false }
+                  : null,
+              }
+            : currentCustomer
+        )
+        setCustomers(nextCustomers)
+        setCachedCustomers(nextCustomers)
       }
     } catch (err) {
       console.error("Failed to turn off special condition", err);

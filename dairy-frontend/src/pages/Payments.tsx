@@ -12,9 +12,10 @@ import {
 } from '../components/ui/dialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
-import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
+import { fetchCustomersWithCache, invalidateCustomerCache, setCachedCustomers } from '../lib/customerCache'
 import { fetchAppSettings } from '../lib/userSettings'
 import { LoadingBlock, LoadingInline } from '../components/ui/loading'
+import { getCachedViewData, setCachedViewData } from '../lib/viewCache'
 
 interface Payment {
   id: string
@@ -31,6 +32,9 @@ interface Customer {
   name: string
   balance: number
 }
+
+const PAYMENTS_CACHE_KEY = 'view-cache-payments'
+const PAYMENTS_CACHE_TTL_MS = 60_000
 
 export default function Payments() {
   const { language } = useSettingsStore()
@@ -51,6 +55,14 @@ export default function Payments() {
   })
 
   useEffect(() => {
+    const cachedPayments = getCachedViewData<Payment[]>(PAYMENTS_CACHE_KEY, PAYMENTS_CACHE_TTL_MS)
+    if (cachedPayments) {
+      setPayments(cachedPayments)
+      setIsLoading(false)
+      void Promise.all([fetchPayments(), fetchCustomers(), fetchUpiSettings()])
+      return
+    }
+
     void loadInitialData()
   }, [])
 
@@ -68,6 +80,7 @@ export default function Payments() {
       const res = await axios.get('/api/payments')
       if (res.data.success) {
         setPayments(res.data.data)
+        setCachedViewData(PAYMENTS_CACHE_KEY, res.data.data)
       }
     } catch (err) {
       console.error(err)
@@ -106,10 +119,19 @@ export default function Payments() {
       }
       const res = await axios.post('/api/payments', payload)
       if (res.data.success) {
-        setPayments([res.data.data, ...payments]) // Prepend new payment
+        const nextPayments = [res.data.data, ...payments]
+        setPayments(nextPayments)
+        setCachedViewData(PAYMENTS_CACHE_KEY, nextPayments)
+        const nextCustomers = customers.map((customer) =>
+          customer.id === formData.customerId
+            ? { ...customer, balance: Number(customer.balance || 0) - Number(payload.amount || 0) }
+            : customer
+        )
+        setCustomers(nextCustomers)
+        setCachedCustomers(nextCustomers)
         setIsDialogOpen(false)
         invalidateCustomerCache()
-        fetchCustomers() // Refresh balances
+        void fetchCustomers() // Silent refresh to confirm balances
         setFormData({ ...formData, amount: '', customerId: '' })
       }
     } catch (err) {

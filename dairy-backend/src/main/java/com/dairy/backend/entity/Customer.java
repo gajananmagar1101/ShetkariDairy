@@ -7,8 +7,10 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -21,6 +23,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "customers")
+@CompoundIndexes({
+    @CompoundIndex(name = "customer_user_active_idx", def = "{'userId': 1, 'isActive': 1}"),
+    @CompoundIndex(name = "customer_user_phone_idx", def = "{'userId': 1, 'phone': 1}")
+})
 public class Customer {
 
     @Id
