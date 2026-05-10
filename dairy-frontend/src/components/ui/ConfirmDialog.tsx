@@ -1,6 +1,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from './dialog'
@@ -34,10 +35,10 @@ export function ConfirmDialog({
       <DialogContent className="sm:max-w-md rounded-[2rem] p-8">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
+          <DialogDescription className="text-base text-slate-600">
+            {description}
+          </DialogDescription>
         </DialogHeader>
-        <div className="py-2">
-          <p className="text-slate-600 text-base">{description}</p>
-        </div>
         <div className="flex justify-end gap-3 mt-4">
           <Button variant="outline" onClick={onClose} disabled={isProcessing} className="rounded-full">
             {cancelText}

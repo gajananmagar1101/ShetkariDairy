@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Mail, Phone, User as UserIcon, Camera, Edit2, Check, X, Expand } from 'lucide-react'
+import { Mail, Phone, User as UserIcon, Camera, Edit2, Check, X } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { resizeImage } from '../utils/imageUtils'
 import axios from 'axios'
 import { LoadingInline } from '../components/ui/loading'
-import { Dialog, DialogContent } from '../components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../components/ui/dialog'
 
 const Profile: React.FC = () => {
   const { user, setAuth, token } = useAuthStore()
@@ -168,13 +168,6 @@ const Profile: React.FC = () => {
                 <span className="text-white text-xs font-medium tracking-wide shadow-sm">Change Photo</span>
               </div>
             )}
-            {!isEditing && editPicture && (
-              <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <div className="rounded-full bg-white/90 p-3 shadow-lg">
-                  <Expand className="h-5 w-5 text-slate-800" />
-                </div>
-              </div>
-            )}
           </div>
           <input 
             type="file" 
@@ -276,13 +269,17 @@ const Profile: React.FC = () => {
       </div>
 
       <Dialog open={isPhotoPreviewOpen} onOpenChange={setIsPhotoPreviewOpen}>
-        <DialogContent className="max-w-3xl border-none bg-transparent p-0 shadow-none backdrop-blur-none">
-          <div className="overflow-hidden rounded-3xl bg-white">
+        <DialogContent plain className="max-w-3xl p-3 sm:p-4">
+          <DialogTitle className="sr-only">Profile photo preview</DialogTitle>
+          <DialogDescription className="sr-only">
+            Enlarged preview of the profile photo
+          </DialogDescription>
+          <div className="overflow-hidden rounded-xl bg-white">
             {editPicture ? (
               <img
                 src={editPicture}
                 alt={`${user.name} profile`}
-                className="max-h-[78vh] w-full object-contain"
+                className="max-h-[78vh] w-full rounded-xl object-contain"
                 referrerPolicy="no-referrer"
               />
             ) : null}

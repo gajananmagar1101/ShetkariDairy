@@ -7,6 +7,7 @@ import { Button } from '../components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -530,6 +531,9 @@ export default function Billing() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t(language, 'generateBill')}</DialogTitle>
+              <DialogDescription>
+                Choose a customer and date range to generate a bill.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleGenerate} className="mt-4 space-y-4">
               <div>

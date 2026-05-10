@@ -3,7 +3,7 @@ import { Calendar as CalendarIcon, MessageCircle, Trash2, Ban, PencilLine, Squar
 import toast from 'react-hot-toast'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
@@ -521,6 +521,9 @@ export default function MilkEntries() {
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>{t(language, 'editEntryTitle')}</DialogTitle>
+                <DialogDescription>
+                  Update the milk quantities and optional fat or SNF values for this entry.
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleEditEntry} className="mt-3 space-y-4">
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
@@ -598,6 +601,9 @@ export default function MilkEntries() {
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>{t(language, 'specialQuantity')}</DialogTitle>
+                <DialogDescription>
+                  Set a special delivery quantity for a customer on one date or a date range.
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleDeliveryOverride} className="mt-3 space-y-4">
                 {overrideError && (
@@ -695,6 +701,9 @@ export default function MilkEntries() {
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>{t(language, 'noDelivery')}</DialogTitle>
+                <DialogDescription>
+                  Mark no-delivery days for a customer on one date or a date range.
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleNoDelivery} className="mt-3 space-y-4">
                 {noDeliveryError && (

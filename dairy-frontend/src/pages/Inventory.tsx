@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -188,7 +189,12 @@ export default function Inventory() {
                 </Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>{t(language, 'addInventoryItem')}</DialogTitle></DialogHeader>
+                <DialogHeader>
+                  <DialogTitle>{t(language, 'addInventoryItem')}</DialogTitle>
+                  <DialogDescription>
+                    Add a stock item with its category, quantity, and unit.
+                  </DialogDescription>
+                </DialogHeader>
                 <form onSubmit={handleAddItem} className="space-y-4 mt-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'itemName')}</label>
@@ -281,7 +287,12 @@ export default function Inventory() {
                 <Button size="sm" variant="destructive" className="rounded-xl bg-red-500 hover:bg-red-600">{t(language, 'addExpense')}</Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>{t(language, 'recordExpense')}</DialogTitle></DialogHeader>
+                <DialogHeader>
+                  <DialogTitle>{t(language, 'recordExpense')}</DialogTitle>
+                  <DialogDescription>
+                    Save an expense entry with category, amount, and date.
+                  </DialogDescription>
+                </DialogHeader>
                 <form onSubmit={handleAddExpense} className="space-y-4 mt-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'category')}</label>

@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -161,6 +162,9 @@ export default function Payments() {
             <DialogContent className="sm:max-w-md flex flex-col items-center">
               <DialogHeader>
                 <DialogTitle>{t(language, 'receiveUPI')}</DialogTitle>
+                <DialogDescription className="text-center">
+                  Show the QR code to collect payment from the customer.
+                </DialogDescription>
               </DialogHeader>
               {upiId ? (
                 <>
@@ -202,6 +206,9 @@ export default function Payments() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{t(language, 'recordNewPayment')}</DialogTitle>
+              <DialogDescription>
+                Enter the customer, amount, date, and payment method to save a payment.
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleRecordPayment} className="space-y-4 mt-4">
               <div>

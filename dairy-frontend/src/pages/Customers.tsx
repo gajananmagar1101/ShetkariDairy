@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -257,6 +258,9 @@ export default function Customers() {
               <DialogTitle className="px-6 pt-6 text-2xl font-bold text-slate-900">
                 {editingId ? t(language, 'editCustomer') : t(language, 'addCustomer')}
               </DialogTitle>
+              <DialogDescription className="px-6 text-slate-500">
+                {editingId ? 'Update customer details and pricing.' : 'Add a new customer with milk and billing details.'}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmitCustomer} className="space-y-5 px-6 pb-6">
               <div className="grid grid-cols-2 gap-4">
