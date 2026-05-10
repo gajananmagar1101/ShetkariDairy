@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import AppLayout from './components/layout/AppLayout'
 import AuthGuard from './components/auth/AuthGuard'
+import { LoadingBlock } from './components/ui/loading'
 
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Customers = lazy(() => import('./pages/Customers'))
@@ -14,18 +15,10 @@ const Login = lazy(() => import('./pages/Login'))
 const Profile = lazy(() => import('./pages/Profile'))
 const Settings = lazy(() => import('./pages/Settings'))
 
-function PageLoader() {
-  return (
-    <div className="flex min-h-[40vh] items-center justify-center">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-primary-500" />
-    </div>
-  )
-}
-
 function App() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
+      <Suspense fallback={<LoadingBlock label="Opening page..." minHeightClassName="min-h-screen" />}>
         <Routes>
           <Route path="/login" element={<Login />} />
           

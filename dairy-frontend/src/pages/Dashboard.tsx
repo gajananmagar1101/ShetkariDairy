@@ -1,9 +1,10 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
-import { Droplets, Users, IndianRupee, TrendingUp, Loader2 } from 'lucide-react'
+import { Droplets, Users, IndianRupee, TrendingUp } from 'lucide-react'
 import axios from 'axios'
 import { getApiBaseUrl } from '../lib/api'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
+import { LoadingBlock, LoadingSpinner } from '../components/ui/loading'
 
 const DashboardChart = lazy(() => import('../components/dashboard/DashboardChart'))
 
@@ -48,11 +49,7 @@ export default function Dashboard() {
   }
 
   if (isLoading) {
-    return (
-      <div className="w-full h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-      </div>
-    )
+    return <LoadingBlock label="Loading dashboard..." minHeightClassName="min-h-[60vh]" />
   }
 
   if (error || !data) {
@@ -115,7 +112,7 @@ export default function Dashboard() {
         <Suspense
           fallback={
             <div className="flex h-[calc(100%-3rem)] items-center justify-center">
-              <Loader2 className="h-7 w-7 animate-spin text-primary-500" />
+              <LoadingSpinner />
             </div>
           }
         >

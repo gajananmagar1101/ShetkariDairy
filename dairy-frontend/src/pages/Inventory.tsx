@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Package, IndianRupee, Plus, Trash, Loader2 } from 'lucide-react'
+import { Package, IndianRupee, Plus, Trash } from 'lucide-react'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
 import {
@@ -12,6 +12,7 @@ import {
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
+import { LoadingBlock, LoadingInline } from '../components/ui/loading'
 
 interface InventoryItem {
   id: string
@@ -37,11 +38,13 @@ export default function Inventory() {
   // Forms
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null)
   const [itemForm, setItemForm] = useState({ name: '', category: 'FEED', quantity: '', unit: 'KG' })
 
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
   const [expenseForm, setExpenseForm] = useState({ category: 'TRANSPORT', description: '', amount: '', date: new Date().toISOString().split('T')[0] })
   
+  const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -49,6 +52,7 @@ export default function Inventory() {
   }, [])
 
   const fetchData = async () => {
+    setIsLoading(true)
     try {
       const [itemsRes, expRes] = await Promise.all([
         axios.get('/api/inventory/items'),
@@ -58,6 +62,8 @@ export default function Inventory() {
       if (expRes.data.success) setExpenses(expRes.data.data)
     } catch (err) {
       console.error(err)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -98,18 +104,27 @@ export default function Inventory() {
   }
 
   const handleDeleteItem = async () => {
-    if (deleteConfirmId) {
-      try {
-        const res = await axios.delete(`/api/inventory/items/${deleteConfirmId}`)
-        if (res.data.success) {
-          fetchData()
-        }
-      } catch (err: any) {
-        console.error(err)
-        alert(err.response?.data?.message || 'Failed to delete item')
-      } finally {
-        setDeleteConfirmId(null)
+    if (!deleteConfirmId || deletingItemId) return
+
+    const itemId = deleteConfirmId
+    const previousItems = items
+
+    setDeletingItemId(itemId)
+    setItems((currentItems) => currentItems.filter((item) => item.id !== itemId))
+    setDeleteConfirmId(null)
+
+    try {
+      const res = await axios.delete(`/api/inventory/items/${itemId}`)
+      if (!res.data.success) {
+        setItems(previousItems)
+        alert('Failed to delete item')
       }
+    } catch (err: any) {
+      console.error(err)
+      setItems(previousItems)
+      alert(err.response?.data?.message || 'Failed to delete item')
+    } finally {
+      setDeletingItemId(null)
     }
   }
 
@@ -168,7 +183,7 @@ export default function Inventory() {
                     </div>
                   </div>
                   <Button type="submit" disabled={isSubmitting} className="w-full rounded-xl mt-2">
-                    {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : t(language, 'saveItem')}
+                    {isSubmitting ? <LoadingInline label="Saving..." /> : t(language, 'saveItem')}
                   </Button>
                 </form>
               </DialogContent>
@@ -178,6 +193,7 @@ export default function Inventory() {
               isOpen={!!deleteConfirmId}
               onClose={() => setDeleteConfirmId(null)}
               onConfirm={handleDeleteItem}
+              isProcessing={!!deletingItemId}
               title={t(language, 'confirmDeletionTitle')}
               description={t(language, 'deleteConfirm')}
               confirmText={t(language, 'delete')}
@@ -186,6 +202,9 @@ export default function Inventory() {
           </div>
           
           <div className="overflow-x-auto">
+            {isLoading ? (
+              <LoadingBlock label="Loading inventory..." minHeightClassName="min-h-[220px]" size="md" />
+            ) : (
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-slate-200/60 dark:border-slate-600 text-slate-500 dark:text-slate-300 text-sm">
@@ -212,6 +231,7 @@ export default function Inventory() {
                 ))}
               </tbody>
             </table>
+            )}
           </div>
         </div>
 
@@ -253,7 +273,7 @@ export default function Inventory() {
                     </div>
                   </div>
                   <Button type="submit" variant="destructive" disabled={isSubmitting} className="w-full rounded-xl mt-2 bg-red-500">
-                    {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : t(language, 'saveExpense')}
+                    {isSubmitting ? <LoadingInline label="Saving..." /> : t(language, 'saveExpense')}
                   </Button>
                 </form>
               </DialogContent>
@@ -261,6 +281,9 @@ export default function Inventory() {
           </div>
 
           <div className="overflow-x-auto">
+            {isLoading ? (
+              <LoadingBlock label="Loading expenses..." minHeightClassName="min-h-[220px]" size="md" />
+            ) : (
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-slate-200/60 dark:border-slate-600 text-slate-500 dark:text-slate-300 text-sm">
@@ -284,6 +307,7 @@ export default function Inventory() {
                 ))}
               </tbody>
             </table>
+            )}
           </div>
         </div>
 

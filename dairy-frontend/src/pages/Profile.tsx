@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Mail, Phone, User as UserIcon, Camera, Edit2, Check, X, Loader2 } from 'lucide-react'
+import { Mail, Phone, User as UserIcon, Camera, Edit2, Check, X } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { resizeImage } from '../utils/imageUtils'
 import axios from 'axios'
+import { LoadingInline } from '../components/ui/loading'
 
 const Profile: React.FC = () => {
   const { user, setAuth, token } = useAuthStore()
@@ -15,22 +16,6 @@ const Profile: React.FC = () => {
   const [editPicture, setEditPicture] = useState(user?.picture || '')
   
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!token) return;
-      try {
-        const res = await axios.get('/api/users/profile')
-        if (res.data.success) {
-          const fetchedUser = res.data.data;
-          setAuth({ ...user, ...fetchedUser }, token as string)
-        }
-      } catch (error) {
-        console.error("Failed to fetch latest profile", error)
-      }
-    }
-    fetchProfile()
-  }, [])
 
   useEffect(() => {
     if (user) {
@@ -139,7 +124,7 @@ const Profile: React.FC = () => {
               disabled={isLoading}
               className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {isLoading ? <LoadingInline label="" className="gap-0" /> : <Check className="w-4 h-4" />}
               <span className="hidden sm:inline">Save Changes</span>
               <span className="sm:hidden">Save</span>
             </button>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Calendar as CalendarIcon, Loader2, MessageCircle, Trash2, Ban, PencilLine, SquarePen, X, ChevronLeft, ChevronRight, ChevronDown, AlertCircle, Play } from 'lucide-react'
+import { Calendar as CalendarIcon, MessageCircle, Trash2, Ban, PencilLine, SquarePen, X, ChevronLeft, ChevronRight, ChevronDown, AlertCircle, Play } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
@@ -8,6 +8,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
+import { LoadingBlock, LoadingInline, LoadingSpinner } from '../components/ui/loading'
 
 interface Customer {
   id: string
@@ -494,7 +495,7 @@ export default function MilkEntries() {
                   </div>
                 </div>
                 <Button type="submit" disabled={isSubmitting} className="mt-2 h-14 w-full rounded-[1.6rem] shadow-[0_12px_30px_rgba(139,92,246,0.28)]">
-                  {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : t(language, 'saveChanges')}
+                  {isSubmitting ? <LoadingInline label="Saving..." /> : t(language, 'saveChanges')}
                 </Button>
               </form>
             </DialogContent>
@@ -507,7 +508,7 @@ export default function MilkEntries() {
               disabled={isSubmitting}
               className="h-auto min-w-0 flex-1 gap-2 rounded-[1.25rem] border-emerald-200 bg-emerald-50 px-4 py-2 text-emerald-700 hover:bg-emerald-100 xl:flex-none"
             >
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              {isSubmitting ? <LoadingSpinner size="sm" /> : <Play className="h-4 w-4" />}
               <span className="hidden lg:inline">{language === 'mr' ? 'ऑटो जनरेट' : 'Auto Generate'}</span>
               <span className="lg:hidden">{language === 'mr' ? 'ऑटो' : 'Auto'}</span>
             </Button>
@@ -602,7 +603,7 @@ export default function MilkEntries() {
                   />
                 </div>
                 <Button type="submit" disabled={isSubmitting} className="mt-2 h-14 w-full rounded-[1.6rem] shadow-[0_12px_30px_rgba(139,92,246,0.28)]">
-                  {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : t(language, 'saveSpecialQuantity')}
+                  {isSubmitting ? <LoadingInline label="Saving..." /> : t(language, 'saveSpecialQuantity')}
                 </Button>
               </form>
             </DialogContent>
@@ -684,7 +685,7 @@ export default function MilkEntries() {
                   </select>
                 </div>
                 <Button type="submit" disabled={isSubmitting} className="mt-2 h-14 w-full rounded-[1.6rem] shadow-[0_12px_30px_rgba(139,92,246,0.28)]">
-                  {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : t(language, 'saveNoDelivery')}
+                  {isSubmitting ? <LoadingInline label="Saving..." /> : t(language, 'saveNoDelivery')}
                 </Button>
               </form>
             </DialogContent>
@@ -899,9 +900,7 @@ export default function MilkEntries() {
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
             {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
-              </div>
+              <LoadingBlock label="Loading milk entries..." minHeightClassName="min-h-[240px]" size="md" />
             ) : (
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -989,9 +988,7 @@ export default function MilkEntries() {
           {/* Mobile Scrollable Table View */}
           <div className="md:hidden mt-4">
             {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
-              </div>
+              <LoadingBlock label="Loading milk entries..." minHeightClassName="min-h-[240px]" size="md" />
             ) : allDisplayEntries.length === 0 ? (
               <div className="py-8 text-center text-slate-500">{t(language, 'noEntries')}</div>
             ) : (

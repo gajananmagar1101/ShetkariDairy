@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Wallet, Loader2, QrCode, Plus } from 'lucide-react'
+import { Wallet, QrCode, Plus } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
@@ -14,6 +14,7 @@ import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
 import { fetchAppSettings } from '../lib/userSettings'
+import { LoadingBlock, LoadingInline } from '../components/ui/loading'
 
 interface Payment {
   id: string
@@ -50,10 +51,17 @@ export default function Payments() {
   })
 
   useEffect(() => {
-    fetchPayments()
-    fetchCustomers()
-    fetchUpiSettings()
+    void loadInitialData()
   }, [])
+
+  const loadInitialData = async () => {
+    setIsLoading(true)
+    try {
+      await Promise.all([fetchPayments(), fetchCustomers(), fetchUpiSettings()])
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const fetchPayments = async () => {
     try {
@@ -63,8 +71,6 @@ export default function Payments() {
       }
     } catch (err) {
       console.error(err)
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -221,7 +227,7 @@ export default function Payments() {
                 </div>
               </div>
               <Button type="submit" disabled={isSubmitting} className="w-full rounded-xl mt-2 bg-emerald-600 hover:bg-emerald-700">
-                {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : t(language, 'savePayment')}
+                {isSubmitting ? <LoadingInline label="Saving..." /> : t(language, 'savePayment')}
               </Button>
             </form>
           </DialogContent>
@@ -232,9 +238,7 @@ export default function Payments() {
       <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <div className="overflow-x-auto">
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
-            </div>
+            <LoadingBlock label="Loading payments..." minHeightClassName="min-h-[220px]" size="md" />
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import axios from 'axios'
-import { Loader2, TrendingUp, TrendingDown, IndianRupee } from 'lucide-react'
+import { TrendingUp, TrendingDown, IndianRupee } from 'lucide-react'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
+import { LoadingBlock } from '../components/ui/loading'
 
 interface DailySummary {
   date: string
@@ -110,9 +111,7 @@ export default function Reports() {
         <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-6">{t(language, 'monthlyProfitTrend')}</h3>
         <div className="h-[400px] w-full">
           {isLoading ? (
-            <div className="w-full h-full flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-            </div>
+            <LoadingBlock label="Loading reports..." minHeightClassName="min-h-[400px]" />
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>

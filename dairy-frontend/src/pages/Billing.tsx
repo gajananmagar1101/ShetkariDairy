@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
-import { Download, MessageCircle, Calculator, Loader2, Trash2, CheckCircle } from 'lucide-react'
+import { Download, MessageCircle, Calculator, Trash2, CheckCircle } from 'lucide-react'
 import QRCode from 'qrcode'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
@@ -16,6 +16,7 @@ import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
 import { fetchAppSettings } from '../lib/userSettings'
+import { LoadingBlock, LoadingInline, LoadingSpinner } from '../components/ui/loading'
 
 interface Invoice {
   id: string
@@ -51,6 +52,7 @@ export default function Billing() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null)
+  const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null)
   
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
@@ -79,10 +81,17 @@ export default function Billing() {
       : `${new Date(0, invoice.invoiceMonth - 1).toLocaleString('default', { month: 'short' })} ${invoice.invoiceYear}`
 
   useEffect(() => {
-    fetchInvoices()
-    fetchCustomers()
-    fetchUpiSettings()
+    void loadInitialData()
   }, [])
+
+  const loadInitialData = async () => {
+    setIsLoading(true)
+    try {
+      await Promise.all([fetchInvoices(), fetchCustomers(), fetchUpiSettings()])
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const fetchUpiSettings = async () => {
     try {
@@ -127,8 +136,6 @@ export default function Billing() {
       }
     } catch (err) {
       console.error(err)
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -185,17 +192,27 @@ export default function Billing() {
   }
 
   const handleDeleteInvoice = async () => {
-    if (!deleteConfirmId) return;
+    if (!deleteConfirmId || deletingInvoiceId) return;
+
+    const invoiceId = deleteConfirmId;
+    const previousInvoices = invoices;
+
+    setDeletingInvoiceId(invoiceId)
+    setInvoices((currentInvoices) => currentInvoices.filter((invoice) => invoice.id !== invoiceId));
+    setDeleteConfirmId(null);
+
     try {
-      const res = await axios.delete(`/api/invoices/${deleteConfirmId}`);
-      if (res.data.success) {
-        setInvoices(invoices.filter(inv => inv.id !== deleteConfirmId));
+      const res = await axios.delete(`/api/invoices/${invoiceId}`);
+      if (!res.data.success) {
+        setInvoices(previousInvoices);
+        toast.error("Failed to delete bill.");
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to delete bill.");
+      setInvoices(previousInvoices);
+      toast.error("Failed to delete bill.");
     } finally {
-      setDeleteConfirmId(null);
+      setDeletingInvoiceId(null);
     }
   }
 
@@ -527,7 +544,7 @@ export default function Billing() {
                 </div>
               </div>
               <Button type="submit" disabled={isSubmitting} className="mt-2 h-14 w-full rounded-[1.6rem] shadow-[0_12px_30px_rgba(139,92,246,0.28)]">
-                {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : t(language, 'generateBill')}
+                {isSubmitting ? <LoadingInline label="Generating..." /> : t(language, 'generateBill')}
               </Button>
             </form>
           </DialogContent>
@@ -537,9 +554,7 @@ export default function Billing() {
       <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <div className="overflow-x-auto">
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
-            </div>
+            <LoadingBlock label="Loading bills..." minHeightClassName="min-h-[240px]" size="md" />
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
@@ -582,7 +597,7 @@ export default function Billing() {
                             title="Mark as Paid"
                             onClick={() => handleMarkAsPaid(inv.id)}
                           >
-                            {payingInvoiceId === inv.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                            {payingInvoiceId === inv.id ? <LoadingSpinner size="sm" className="text-current" /> : <CheckCircle className="w-4 h-4" />}
                           </Button>
                         )}
                         <Button 
@@ -632,10 +647,11 @@ export default function Billing() {
           )}
         </div>
         
-        <ConfirmDialog 
+          <ConfirmDialog 
           isOpen={!!deleteConfirmId}
           onClose={() => setDeleteConfirmId(null)}
           onConfirm={handleDeleteInvoice}
+          isProcessing={!!deletingInvoiceId}
           title={t(language, 'confirmDeletionTitle')}
           description={t(language, 'deleteConfirm')}
           confirmText={t(language, 'delete')}

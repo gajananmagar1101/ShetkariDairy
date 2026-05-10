@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Loader2, Trash, Clock, PencilLine, Ban, Mic, MicOff } from 'lucide-react'
+import { Plus, Search, Trash, Clock, PencilLine, Ban, Mic, MicOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from '../components/ui/dialog'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
+import { LoadingBlock, LoadingInline } from '../components/ui/loading'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 
@@ -44,6 +45,7 @@ export default function Customers() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [deletingCustomerId, setDeletingCustomerId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isListening, setIsListening] = useState(false)
   
@@ -183,18 +185,27 @@ export default function Customers() {
   }
 
   const handleDeleteCustomer = async () => {
-    if (deleteConfirmId) {
-      try {
-        const res = await axios.delete(`/api/customers/${deleteConfirmId}`)
-        if (res.data.success) {
-          setCustomers(customers.filter(c => c.id !== deleteConfirmId))
-        }
-      } catch (err: any) {
-        console.error(err)
+    if (!deleteConfirmId || deletingCustomerId) return
+
+    const customerId = deleteConfirmId
+    const previousCustomers = customers
+
+    setDeletingCustomerId(customerId)
+    setCustomers((currentCustomers) => currentCustomers.filter((customer) => customer.id !== customerId))
+    setDeleteConfirmId(null)
+
+    try {
+      const res = await axios.delete(`/api/customers/${customerId}`)
+      if (!res.data.success) {
+        setCustomers(previousCustomers)
         toast.error("Failed to delete customer")
-      } finally {
-        setDeleteConfirmId(null)
       }
+    } catch (err: any) {
+      console.error(err)
+      setCustomers(previousCustomers)
+      toast.error("Failed to delete customer")
+    } finally {
+      setDeletingCustomerId(null)
     }
   }
 
@@ -321,7 +332,7 @@ export default function Customers() {
               </div>
               <Button type="submit" disabled={isSubmitting} className="w-full rounded-2xl py-6 text-lg font-bold shadow-lg">
                 {isSubmitting ? (
-                  <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Saving...</>
+                  <LoadingInline label="Saving..." />
                 ) : (
                   editingId ? t(language, 'updateCustomer') : t(language, 'saveCustomer')
                 )}
@@ -334,6 +345,7 @@ export default function Customers() {
           isOpen={!!deleteConfirmId}
           onClose={() => setDeleteConfirmId(null)}
           onConfirm={handleDeleteCustomer}
+          isProcessing={!!deletingCustomerId}
           title={t(language, 'confirmDeletionTitle')}
           description={t(language, 'deleteConfirm')}
           confirmText={t(language, 'delete')}
@@ -357,9 +369,7 @@ export default function Customers() {
 
         <div className="overflow-x-auto">
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
-            </div>
+            <LoadingBlock label="Loading customers..." minHeightClassName="min-h-[220px]" size="md" />
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/useAuthStore'
+import { beginNetworkActivity, endNetworkActivity } from './networkActivity'
 
 const REQUEST_TIMEOUT_MS = 10000
 
@@ -30,16 +31,24 @@ if (configuredApiUrl) {
 }
 
 axios.interceptors.request.use((config) => {
+  beginNetworkActivity()
   const token = useAuthStore.getState().token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
+}, (error) => {
+  endNetworkActivity()
+  return Promise.reject(error)
 });
 
 axios.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    endNetworkActivity()
+    return response
+  },
   (error) => {
+    endNetworkActivity()
     if (axios.isAxiosError(error)) {
       if (error.code === 'ECONNABORTED') {
         error.message =

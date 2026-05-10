@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Clock3, Loader2, Save, Wallet, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Clock3, Save, Wallet, AlertCircle, CheckCircle2 } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
-import { fetchAppSettings } from '../lib/userSettings'
+import { fetchAppSettings, invalidateAppSettingsCache } from '../lib/userSettings'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
+import { LoadingInline } from '../components/ui/loading'
 
 interface AutoEntrySettingsResponse {
   autoEntryTime: string
@@ -72,6 +73,7 @@ export default function Settings() {
       })
       if (res.data.success) {
         const data = res.data.data as AutoEntrySettingsResponse
+        invalidateAppSettingsCache()
         const updatedTime = data.autoEntryTime || autoEntryTime
         setAutoEntryTime(updatedTime)
         setSavedAutoEntryTime(updatedTime)
@@ -102,6 +104,7 @@ export default function Settings() {
       })
       if (res.data.success) {
         const data = res.data.data as AutoEntrySettingsResponse
+        invalidateAppSettingsCache()
         const updatedUpi = data.upiId || upiId
         setUpiId(updatedUpi)
         setSavedUpiId(updatedUpi)
@@ -158,8 +161,7 @@ export default function Settings() {
             </label>
             {isLoading ? (
               <div className="flex items-center gap-2 text-slate-500 dark:text-slate-300">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Loading...</span>
+                <LoadingInline />
               </div>
             ) : (
               <input
@@ -180,7 +182,7 @@ export default function Settings() {
             disabled={isLoading || isSavingTime || autoEntryTime === savedAutoEntryTime}
             className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSavingTime ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {isSavingTime ? <LoadingInline label="" className="gap-0" /> : <Save className="h-4 w-4" />}
             {t(language, 'saveSettings')}
           </button>
         </div>
@@ -249,7 +251,7 @@ export default function Settings() {
             disabled={isLoading || isSavingUpi || !isUpiValid || upiId === savedUpiId}
             className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSavingUpi ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {isSavingUpi ? <LoadingInline label="" className="gap-0" /> : <Save className="h-4 w-4" />}
             {t(language, 'saveSettings')}
           </button>
         </div>

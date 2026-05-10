@@ -6,10 +6,13 @@ import Header from './Header'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { Toaster } from 'react-hot-toast'
+import { GlobalLoadBar } from '../ui/loading'
+import { useNetworkActivity } from '../../lib/networkActivity'
 
 export default function AppLayout() {
   const { isMobileMenuOpen, setMobileMenuOpen } = useSettingsStore()
   const { user, token, setAuth } = useAuthStore()
+  const isNetworkBusy = useNetworkActivity()
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -29,6 +32,7 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-screen bg-[#fafafc] dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-500 overflow-hidden relative">
+      <GlobalLoadBar active={isNetworkBusy} />
       {/* Delicate Mesh Gradient Background */}
       <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-200/40 dark:bg-primary-900/20 rounded-full blur-[100px] pointer-events-none mix-blend-multiply dark:mix-blend-screen transition-colors duration-500" />
       <div className="fixed bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-fuchsia-200/30 dark:bg-fuchsia-900/20 rounded-full blur-[120px] pointer-events-none mix-blend-multiply dark:mix-blend-screen transition-colors duration-500" />
