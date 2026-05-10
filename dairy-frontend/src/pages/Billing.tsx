@@ -61,6 +61,7 @@ export default function Billing() {
   
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [markPaidConfirmId, setMarkPaidConfirmId] = useState<string | null>(null)
   const [selectedCustomer, setSelectedCustomer] = useState('')
   const [upiId, setUpiId] = useState('')
   const today = new Date()
@@ -665,7 +666,7 @@ export default function Billing() {
                             disabled={payingInvoiceId === inv.id}
                             className="h-8 w-8 text-emerald-600 rounded-lg border-emerald-200 hover:bg-emerald-50 disabled:opacity-50"
                             title="Mark as Paid"
-                            onClick={() => handleMarkAsPaid(inv.id)}
+                            onClick={() => setMarkPaidConfirmId(inv.id)}
                           >
                             {payingInvoiceId === inv.id ? <LoadingSpinner size="sm" className="text-current" /> : <CheckCircle className="w-4 h-4" />}
                           </Button>
@@ -717,7 +718,22 @@ export default function Billing() {
           )}
         </div>
         
-          <ConfirmDialog 
+        <ConfirmDialog
+          isOpen={!!markPaidConfirmId}
+          onClose={() => setMarkPaidConfirmId(null)}
+          onConfirm={async () => {
+            if (!markPaidConfirmId) return
+            await handleMarkAsPaid(markPaidConfirmId)
+            setMarkPaidConfirmId(null)
+          }}
+          isProcessing={!!payingInvoiceId}
+          title={language === 'mr' ? 'पेमेंट कन्फर्म करा' : 'Confirm Payment'}
+          description={language === 'mr' ? 'हे बिल paid म्हणून mark करायचे आहे का?' : 'Do you want to mark this bill as paid?'}
+          confirmText={language === 'mr' ? 'हो, Paid करा' : 'Yes, Mark Paid'}
+          cancelText={t(language, 'cancel')}
+        />
+
+        <ConfirmDialog 
           isOpen={!!deleteConfirmId}
           onClose={() => setDeleteConfirmId(null)}
           onConfirm={handleDeleteInvoice}
