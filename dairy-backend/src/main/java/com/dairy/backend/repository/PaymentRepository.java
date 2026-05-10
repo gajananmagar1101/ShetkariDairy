@@ -5,10 +5,11 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import org.springframework.data.domain.Sort;
 
 @Repository
 public interface PaymentRepository extends MongoRepository<Payment, String> {
 List<Payment> findByUserIdAndCustomerId(String userId, String customerId);
 void deleteByUserIdAndCustomerId(String userId, String customerId);
-    List<Payment> findByUserId(String userId);
+List<Payment> findByUserId(String userId, Sort sort);
 }

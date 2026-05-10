@@ -40,6 +40,11 @@ public class CustomerController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Customer updated", customerService.updateCustomer(id, customerDto)));
     }
 
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<CustomerDto>> updateCustomerStatus(@PathVariable String id, @RequestParam boolean active) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Customer status updated", customerService.setCustomerActive(id, active)));
+    }
+
     @PostMapping("/{id}/no-delivery")
     public ResponseEntity<ApiResponse<CustomerDto>> markNoDelivery(
             @PathVariable String id, 

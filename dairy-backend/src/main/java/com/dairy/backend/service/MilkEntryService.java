@@ -69,7 +69,9 @@ public class MilkEntryService {
     }
 
     public List<MilkEntryDto> getEntriesByDate(LocalDate date) {
-        return milkEntryRepository.findByUserIdAndDate(SecurityUtils.getCurrentUserId(), date).stream()
+        return milkEntryRepository.findByUserId(SecurityUtils.getCurrentUserId()).stream()
+                .filter(entry -> entry.getDate() != null)
+                .filter(entry -> entry.getDate().equals(date))
                 .map(entry -> {
                     String name = customerRepository.findById(entry.getCustomerId())
                             .map(Customer::getName).orElse("Unknown");

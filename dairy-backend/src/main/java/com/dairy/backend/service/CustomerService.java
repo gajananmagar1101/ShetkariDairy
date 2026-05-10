@@ -14,8 +14,14 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,6 +45,43 @@ public class CustomerService {
         return safe(dto.getDefaultMorningQuantity()).add(safe(dto.getDefaultEveningQuantity()));
     }
 
+    private BigDecimal calculateLiveBalance(String userId, Customer customer) {
+        Map<LocalDate, BigDecimal> entryAmountByDate = new HashMap<>();
+        BigDecimal milkEntriesTotal = milkEntryRepository.findByUserIdAndCustomerId(userId, customer.getId()).stream()
+                .peek(entry -> {
+                    if (entry.getDate() != null) {
+                        entryAmountByDate.merge(entry.getDate(), safe(entry.getTotalAmount()), BigDecimal::add);
+                    }
+                })
+                .map(entry -> safe(entry.getTotalAmount()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Set<LocalDate> coveredPaidDates = new HashSet<>();
+        BigDecimal rangedPaymentsTotal = BigDecimal.ZERO;
+        BigDecimal manualPaymentsTotal = BigDecimal.ZERO;
+
+        var payments = paymentRepository.findByUserIdAndCustomerId(userId, customer.getId()).stream()
+                .sorted(Comparator
+                        .comparing(com.dairy.backend.entity.Payment::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(com.dairy.backend.entity.Payment::getId, Comparator.nullsLast(String::compareTo)))
+                .collect(Collectors.toList());
+
+        for (var payment : payments) {
+            if (payment.getPaidFromDate() != null && payment.getPaidToDate() != null) {
+                for (LocalDate date = payment.getPaidFromDate(); !date.isAfter(payment.getPaidToDate()); date = date.plusDays(1)) {
+                    if (coveredPaidDates.add(date)) {
+                        rangedPaymentsTotal = rangedPaymentsTotal.add(entryAmountByDate.getOrDefault(date, BigDecimal.ZERO));
+                    }
+                }
+                continue;
+            }
+
+            manualPaymentsTotal = manualPaymentsTotal.add(safe(payment.getAmount()));
+        }
+
+        return milkEntriesTotal.subtract(rangedPaymentsTotal).subtract(manualPaymentsTotal);
+    }
+
     public CustomerDto createCustomer(CustomerDto dto) {
         Customer customer = Customer.builder()
                 .name(dto.getName())
@@ -55,16 +98,18 @@ public class CustomerService {
                 .skippedDates(dto.getSkippedDates() != null ? dto.getSkippedDates() : new ArrayList<>())
                 .deliveryOverrides(dto.getDeliveryOverrides() != null ? dto.getDeliveryOverrides() : new ArrayList<>())
                 .specialCondition(dto.getSpecialCondition())
-                .isActive(true)
+                .isActive(dto.getActive() == null || dto.getActive())
+                .stoppedAt(dto.getActive() != null && !dto.getActive() ? LocalDateTime.now() : null)
                 .build();
 
         customer = customerRepository.save(customer);
-        return mapToDto(customer);
+        return mapToDto(customer, calculateLiveBalance(SecurityUtils.getCurrentUserId(), customer));
     }
 
     public List<CustomerDto> getAllCustomers() {
-        return customerRepository.findByUserId(SecurityUtils.getCurrentUserId()).stream()
-                .map(this::mapToDto)
+        String userId = SecurityUtils.getCurrentUserId();
+        return customerRepository.findByUserId(userId).stream()
+                .map(customer -> mapToDto(customer, calculateLiveBalance(userId, customer)))
                 .collect(Collectors.toList());
     }
 
@@ -95,8 +140,21 @@ public class CustomerService {
         if (dto.getSpecialCondition() != null) {
             customer.setSpecialCondition(dto.getSpecialCondition());
         }
+        if (dto.getActive() != null) {
+            customer.setActive(dto.getActive());
+            customer.setStoppedAt(dto.getActive() ? null : (customer.getStoppedAt() != null ? customer.getStoppedAt() : LocalDateTime.now()));
+        }
         // Do not update balance or joinedDate during normal edit
-        return mapToDto(customerRepository.save(customer));
+        Customer savedCustomer = customerRepository.save(customer);
+        return mapToDto(savedCustomer, calculateLiveBalance(SecurityUtils.getCurrentUserId(), savedCustomer));
+    }
+
+    public CustomerDto setCustomerActive(String id, boolean active) {
+        Customer customer = customerRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
+        customer.setActive(active);
+        customer.setStoppedAt(active ? null : LocalDateTime.now());
+        Customer savedCustomer = customerRepository.save(customer);
+        return mapToDto(savedCustomer, calculateLiveBalance(SecurityUtils.getCurrentUserId(), savedCustomer));
     }
 
     public CustomerDto markNoDelivery(String id, LocalDate startDate, LocalDate endDate) {
@@ -117,7 +175,8 @@ public class CustomerService {
         
         customer.setSkippedDates(skippedDates);
 
-        return mapToDto(customerRepository.save(customer));
+        Customer savedCustomer = customerRepository.save(customer);
+        return mapToDto(savedCustomer, calculateLiveBalance(SecurityUtils.getCurrentUserId(), savedCustomer));
     }
 
     public CustomerDto setDeliveryOverride(String id, LocalDate startDate, LocalDate endDate, BigDecimal quantity) {
@@ -142,7 +201,8 @@ public class CustomerService {
         customer.setDeliveryOverrides(overrides);
         customer.setSkippedDates(skippedDates);
 
-        return mapToDto(customerRepository.save(customer));
+        Customer savedCustomer = customerRepository.save(customer);
+        return mapToDto(savedCustomer, calculateLiveBalance(SecurityUtils.getCurrentUserId(), savedCustomer));
     }
 
     public CustomerDto removeNoDelivery(String id, LocalDate date) {
@@ -150,7 +210,8 @@ public class CustomerService {
         if (customer.getSkippedDates() != null) {
             customer.getSkippedDates().removeIf(date::equals);
         }
-        return mapToDto(customerRepository.save(customer));
+        Customer savedCustomer = customerRepository.save(customer);
+        return mapToDto(savedCustomer, calculateLiveBalance(SecurityUtils.getCurrentUserId(), savedCustomer));
     }
 
     public CustomerDto removeDeliveryOverride(String id, LocalDate date) {
@@ -158,16 +219,17 @@ public class CustomerService {
         if (customer.getDeliveryOverrides() != null) {
             customer.getDeliveryOverrides().removeIf(override -> date.equals(override.getDate()));
         }
-        return mapToDto(customerRepository.save(customer));
+        Customer savedCustomer = customerRepository.save(customer);
+        return mapToDto(savedCustomer, calculateLiveBalance(SecurityUtils.getCurrentUserId(), savedCustomer));
     }
 
-    private CustomerDto mapToDto(Customer customer) {
+    private CustomerDto mapToDto(Customer customer, BigDecimal balance) {
         return CustomerDto.builder()
                 .id(customer.getId())
                 .name(customer.getName())
                 .phone(customer.getPhone())
                 .address(customer.getAddress())
-                .balance(customer.getBalance())
+                .balance(balance)
                 .milkType(customer.getMilkType())
                 .ratePerLiter(customer.getRatePerLiter())
                 .dailyQuantity(customer.getDailyQuantity())
@@ -178,6 +240,7 @@ public class CustomerService {
                 .deliveryOverrides(customer.getDeliveryOverrides())
                 .specialCondition(customer.getSpecialCondition())
                 .active(customer.isActive())
+                .stoppedAt(customer.getStoppedAt())
                 .build();
     }
 }

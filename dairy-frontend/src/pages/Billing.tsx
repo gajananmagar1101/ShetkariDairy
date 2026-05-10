@@ -115,8 +115,12 @@ export default function Billing() {
     }
   }
 
-  const reconcileInvoiceTotal = async (invoice: Invoice) => {
-    if (Number(invoice.totalAmount || 0) > 0 || !invoice.periodStartDate || !invoice.periodEndDate) {
+  const reconcileInvoiceTotal = async (invoice: Invoice, sourceInvoices: Invoice[]) => {
+    if (invoice.status === 'PAID') {
+      return invoice
+    }
+
+    if (!invoice.periodStartDate || !invoice.periodEndDate) {
       return invoice
     }
 
@@ -126,7 +130,15 @@ export default function Billing() {
         return invoice
       }
 
-      const totalAmount = (res.data.data ?? []).reduce((sum: number, entry: any) => sum + Number(entry.totalAmount || 0), 0)
+      const paidDates = getCoveredPaidDates(invoice, sourceInvoices)
+      const totalAmount = (res.data.data ?? []).reduce((sum: number, entry: any) => {
+        const normalizedDate = normalizeApiDate(entry.date)
+        if (paidDates.has(normalizedDate)) {
+          return sum
+        }
+        return sum + Number(entry.totalAmount || 0)
+      }, 0)
+
       return {
         ...invoice,
         totalAmount,
@@ -137,11 +149,36 @@ export default function Billing() {
     }
   }
 
+  const getCoveredPaidDates = (invoice: Invoice, sourceInvoices: Invoice[]) => {
+    const coveredDates = new Set<string>()
+
+    sourceInvoices.forEach((currentInvoice) => {
+      if (
+        currentInvoice.customerId !== invoice.customerId ||
+        currentInvoice.id === invoice.id ||
+        currentInvoice.status !== 'PAID' ||
+        !currentInvoice.periodStartDate ||
+        !currentInvoice.periodEndDate
+      ) {
+        return
+      }
+
+      const start = parseDateInput(currentInvoice.periodStartDate)
+      const end = parseDateInput(currentInvoice.periodEndDate)
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        coveredDates.add(formatLocalDate(d))
+      }
+    })
+
+    return coveredDates
+  }
+
   const fetchInvoices = async () => {
     try {
       const res = await axios.get('/api/invoices')
       if (res.data.success) {
-        const reconciledInvoices = await Promise.all((res.data.data as Invoice[]).map(reconcileInvoiceTotal))
+        const rawInvoices = res.data.data as Invoice[]
+        const reconciledInvoices = await Promise.all(rawInvoices.map((invoice) => reconcileInvoiceTotal(invoice, rawInvoices)))
         const sortedInvoices = reconciledInvoices.sort((a: Invoice, b: Invoice) => {
           // ObjectIDs can be sorted chronologically
           return b.id.localeCompare(a.id);
@@ -197,9 +234,8 @@ export default function Billing() {
     try {
       const res = await axios.put(`/api/invoices/${invoiceId}/pay`)
       if (res.data.success) {
-        const nextInvoices = invoices.map(inv => inv.id === invoiceId ? { ...inv, status: 'PAID' } : inv)
-        setInvoices(nextInvoices)
-        setCachedViewData(BILLING_CACHE_KEY, nextInvoices)
+        invalidateCustomerCache()
+        await Promise.all([fetchInvoices(), fetchCustomers()])
         toast.success('Invoice marked as paid and added to payments!')
       }
     } catch (err) {
@@ -264,6 +300,7 @@ export default function Billing() {
           ...entry,
           normalizedDate: normalizeApiDate(entry.date),
         }))
+        const paidDates = getCoveredPaidDates(invoice, invoices)
         entries.sort((a, b) => a.normalizedDate.localeCompare(b.normalizedDate))
         const entriesByDate = new Map<string, MilkEntryRow>(entries.map((entry) => [entry.normalizedDate, entry]))
 
@@ -283,17 +320,20 @@ export default function Billing() {
             const morning = Number(entry.morningQuantity || 0)
             const evening = Number(entry.eveningQuantity || 0)
             const liters = morning + evening
-            totalLiters += liters
-            deliveredDays += 1
-            computedTotalAmount += Number(entry.totalAmount || 0)
+            const isPaidDate = paidDates.has(dateStr)
+            if (!isPaidDate) {
+              totalLiters += liters
+              deliveredDays += 1
+              computedTotalAmount += Number(entry.totalAmount || 0)
+            }
             lineItemsHTML += `
-              <tr>
+              <tr${isPaidDate ? ' style="background-color: #f8fafc; color: #64748b;"' : ''}>
                 <td>${index + 1}</td>
                 <td>${formatDate(entry.date)}</td>
                 <td>${morning > 0 ? morning + ' L' : '-'}</td>
                 <td>${evening > 0 ? evening + ' L' : '-'}</td>
                 <td>${liters.toFixed(1)} L</td>
-                <td style="text-align: right;">₹${Number(entry.totalAmount || 0).toFixed(2)}</td>
+                <td style="text-align: right;">${isPaidDate ? 'Paid' : `₹${Number(entry.totalAmount || 0).toFixed(2)}`}</td>
               </tr>
             `;
           } else {
@@ -313,6 +353,10 @@ export default function Billing() {
       }
     } catch (err) {
       console.error("Failed to fetch detailed entries for bill", err)
+    }
+
+    if (!computedTotalAmount && Number(invoice.totalAmount || 0) > 0) {
+      computedTotalAmount = Number(invoice.totalAmount || 0)
     }
 
     // Generate QR

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Trash, Clock, PencilLine, Ban, Mic, MicOff } from 'lucide-react'
+import { Plus, Search, Trash, Clock, PencilLine, Ban, Mic, MicOff, Play } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
@@ -31,6 +31,7 @@ interface Customer {
   defaultMorningQuantity: number
   defaultEveningQuantity: number
   active: boolean
+  stoppedAt?: string | null
   specialCondition?: {
     startDate: string
     endDate: string
@@ -48,6 +49,7 @@ export default function Customers() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [deletingCustomerId, setDeletingCustomerId] = useState<string | null>(null)
+  const [togglingCustomerId, setTogglingCustomerId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isListening, setIsListening] = useState(false)
   
@@ -224,7 +226,49 @@ export default function Customers() {
     c.name.toLowerCase().includes(search.toLowerCase()) || 
     c.phone.includes(search)
   )
-  const totalCustomerMilk = filteredCustomers.reduce((sum, customer) => sum + (customer.dailyQuantity || 0), 0)
+  const activeCustomers = filteredCustomers.filter((customer) => customer.active)
+  const stoppedCustomers = filteredCustomers
+    .filter((customer) => !customer.active)
+    .sort((a, b) => new Date(b.stoppedAt || 0).getTime() - new Date(a.stoppedAt || 0).getTime())
+  const totalCustomerMilk = activeCustomers
+    .reduce((sum, customer) => sum + (customer.dailyQuantity || 0), 0)
+
+  const formatStoppedAt = (value?: string | null) => {
+    if (!value) return '-'
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return '-'
+    return new Intl.DateTimeFormat(language === 'mr' ? 'mr-IN' : 'en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(parsed)
+  }
+
+  const handleToggleCustomerStatus = async (customer: Customer) => {
+    if (togglingCustomerId) return
+
+    const nextActive = !customer.active
+    setTogglingCustomerId(customer.id)
+
+    try {
+      const res = await axios.patch(`/api/customers/${customer.id}/status?active=${nextActive}`)
+      if (res.data.success) {
+        const nextCustomers = customers.map((currentCustomer) =>
+          currentCustomer.id === customer.id ? { ...currentCustomer, ...res.data.data } : currentCustomer
+        )
+        setCustomers(nextCustomers)
+        setCachedCustomers(nextCustomers)
+        toast.success(nextActive ? t(language, 'customerResumed') : t(language, 'customerStopped'))
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error(language === 'mr' ? 'ग्राहकाची स्थिती बदलता आली नाही.' : 'Failed to update customer status.')
+    } finally {
+      setTogglingCustomerId(null)
+    }
+  }
 
   const getMilkTypeLabel = (milkType: string) => {
     if (milkType === 'COW') return t(language, 'cow')
@@ -369,6 +413,10 @@ export default function Customers() {
 
       <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">{t(language, 'activeCustomerList')}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-300">{activeCustomers.length}</p>
+          </div>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
@@ -391,18 +439,19 @@ export default function Customers() {
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'name')}</th>
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'milkType')}</th>
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'dailyQuantity')}</th>
+                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'status')}</th>
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'ratePerLiter')}</th>
                   <th className="pb-3 px-4 font-medium text-right whitespace-nowrap">Balance (₹)</th>
                   <th className="pb-3 px-4 font-medium text-right whitespace-nowrap">{t(language, 'actions')}</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {filteredCustomers.length === 0 ? (
+                {activeCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-500 dark:text-slate-300">{t(language, 'noCustomersFound')}</td>
+                    <td colSpan={7} className="py-8 text-center text-slate-500 dark:text-slate-300">{t(language, 'noCustomersFound')}</td>
                   </tr>
                 ) : (
-                  filteredCustomers.map((customer) => (
+                  activeCustomers.map((customer) => (
                     <tr key={customer.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="py-4 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
@@ -410,6 +459,11 @@ export default function Customers() {
                             {customer.name.charAt(0)}
                           </div>
                           <span className="font-medium text-slate-800 dark:text-slate-200">{customer.name}</span>
+                          {!customer.active && (
+                            <span className="ml-2 inline-flex items-center rounded-md bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                              {t(language, 'inactive')}
+                            </span>
+                          )}
                           {customer.autoEntryEnabled && (
                             <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700" title={t(language, 'autoEntry930')}>
                               <Clock className="w-3 h-3" /> Auto
@@ -433,6 +487,11 @@ export default function Customers() {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{customer.dailyQuantity} L</td>
+                      <td className="py-4 px-4 whitespace-nowrap">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${customer.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}>
+                          {customer.active ? t(language, 'active') : t(language, 'inactive')}
+                        </span>
+                      </td>
                       <td className="py-4 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">₹{customer.ratePerLiter}</td>
                       <td className="py-4 px-4 text-right font-medium whitespace-nowrap">
                         <span className={customer.balance > 0 ? 'text-emerald-600 dark:text-emerald-400' : customer.balance < 0 ? 'text-red-500 dark:text-red-400' : 'text-slate-600 dark:text-slate-300'}>
@@ -440,6 +499,27 @@ export default function Customers() {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right whitespace-nowrap">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={togglingCustomerId === customer.id}
+                          onClick={() => handleToggleCustomerStatus(customer)}
+                          className={customer.active ? 'text-amber-600 hover:text-amber-700' : 'text-emerald-600 hover:text-emerald-700'}
+                        >
+                          {togglingCustomerId === customer.id ? (
+                            <LoadingInline label="" className="gap-0" />
+                          ) : customer.active ? (
+                            <>
+                              <Ban className="mr-1 h-4 w-4" />
+                              {t(language, 'stopCustomer')}
+                            </>
+                          ) : (
+                            <>
+                              <Play className="mr-1 h-4 w-4" />
+                              {t(language, 'resumeCustomer')}
+                            </>
+                          )}
+                        </Button>
                         <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">Edit</Button>
                         <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(customer.id)} className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 ml-2 rounded-full">
                           <Trash className="w-4 h-4" />
@@ -459,6 +539,67 @@ export default function Customers() {
             <p className="text-2xl font-extrabold text-primary-700 dark:text-primary-300">{totalCustomerMilk.toFixed(1)} L</p>
           </div>
         </div>
+      </div>
+
+      <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">{t(language, 'stoppedCustomers')}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-300">{stoppedCustomers.length}</p>
+          </div>
+        </div>
+
+        {stoppedCustomers.length === 0 ? (
+          <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-white/50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+            {t(language, 'noStoppedCustomers')}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {stoppedCustomers.map((customer) => (
+              <div key={customer.id} className="rounded-[1.5rem] border border-slate-200/80 bg-white/70 p-5 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/50">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-lg font-bold text-slate-800 dark:text-white">{customer.name}</p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
+                      {t(language, 'stoppedOn')}: {formatStoppedAt(customer.stoppedAt)}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
+                      {t(language, 'dailyQuantity')}: {customer.dailyQuantity} L
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
+                      Balance: ₹{customer.balance}
+                    </p>
+                  </div>
+                  <span className="inline-flex rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                    {t(language, 'inactive')}
+                  </span>
+                </div>
+
+                <div className="mt-4 flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={togglingCustomerId === customer.id}
+                    onClick={() => handleToggleCustomerStatus(customer)}
+                    className="text-emerald-600 hover:text-emerald-700"
+                  >
+                    {togglingCustomerId === customer.id ? (
+                      <LoadingInline label="" className="gap-0" />
+                    ) : (
+                      <>
+                        <Play className="mr-1 h-4 w-4" />
+                        {t(language, 'resumeCustomer')}
+                      </>
+                    )}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 hover:text-primary-700">
+                    Edit
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

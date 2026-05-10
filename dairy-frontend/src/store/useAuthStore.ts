@@ -1,6 +1,22 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+const clearSessionCaches = () => {
+  try {
+    const keysToRemove: string[] = []
+    for (let index = 0; index < sessionStorage.length; index += 1) {
+      const key = sessionStorage.key(index)
+      if (!key) continue
+      if (key === 'customer-cache-v1' || key.startsWith('view-cache-')) {
+        keysToRemove.push(key)
+      }
+    }
+    keysToRemove.forEach((key) => sessionStorage.removeItem(key))
+  } catch {
+    // Ignore storage access issues.
+  }
+}
+
 export interface User {
   id?: string
   name: string
@@ -24,8 +40,14 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
-      setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
-      logout: () => set({ user: null, token: null, isAuthenticated: false }),
+      setAuth: (user, token) => {
+        clearSessionCaches()
+        set({ user, token, isAuthenticated: true })
+      },
+      logout: () => {
+        clearSessionCaches()
+        set({ user: null, token: null, isAuthenticated: false })
+      },
     }),
     {
       name: 'auth-storage',

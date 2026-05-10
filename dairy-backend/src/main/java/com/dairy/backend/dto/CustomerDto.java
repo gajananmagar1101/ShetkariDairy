@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -31,4 +32,5 @@ public class CustomerDto {
     private List<DeliveryOverride> deliveryOverrides;
     private SpecialCondition specialCondition;
     private Boolean active;
+    private LocalDateTime stoppedAt;
 }

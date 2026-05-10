@@ -1,6 +1,5 @@
 package com.dairy.backend.service;
 
-import com.dairy.backend.util.SecurityUtils;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -26,6 +25,14 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    private static final String GOOGLE_CLIENT_ID = "554655172126-0imvqv0v7e00gi8rhmb3s3rhmlcmu4nb.apps.googleusercontent.com";
+    private static final NetHttpTransport GOOGLE_HTTP_TRANSPORT = new NetHttpTransport();
+    private static final GsonFactory GOOGLE_JSON_FACTORY = new GsonFactory();
+    private static final GoogleIdTokenVerifier GOOGLE_ID_TOKEN_VERIFIER =
+            new GoogleIdTokenVerifier.Builder(GOOGLE_HTTP_TRANSPORT, GOOGLE_JSON_FACTORY)
+                    .setAudience(Collections.singletonList(GOOGLE_CLIENT_ID))
+                    .build();
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -78,11 +85,7 @@ public class AuthService {
     public AuthResponse googleLogin(java.util.Map<String, String> request) {
         String token = request.get("token");
         try {
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
-                .setAudience(Collections.singletonList("554655172126-0imvqv0v7e00gi8rhmb3s3rhmlcmu4nb.apps.googleusercontent.com"))
-                .build();
-                
-            GoogleIdToken idToken = verifier.verify(token);
+            GoogleIdToken idToken = GOOGLE_ID_TOKEN_VERIFIER.verify(token);
             if (idToken != null) {
                 GoogleIdToken.Payload payload = idToken.getPayload();
                 String userId = payload.getSubject();
@@ -94,21 +97,42 @@ public class AuthService {
                 User user;
                 if (userOptional.isPresent()) {
                     user = userOptional.get();
-                    if (user.getPicture() == null || user.getPicture().startsWith("http")) {
+                    boolean shouldSave = false;
+
+                    if ((user.getPicture() == null || user.getPicture().startsWith("http"))
+                            && pictureUrl != null
+                            && !pictureUrl.equals(user.getPicture())) {
                         user.setPicture(pictureUrl);
+                        shouldSave = true;
                     }
-                    if (user.getName() == null || user.getName().trim().isEmpty()) {
+                    if ((user.getName() == null || user.getName().trim().isEmpty()) && name != null && !name.isBlank()) {
                         user.setName(name);
+                        shouldSave = true;
                     }
-                    userRepository.save(user);
+                    if (shouldSave) {
+                        userRepository.save(user);
+                    }
                 } else {
                     // Fallback to find by email if registered manually before
                     Optional<User> emailUser = userRepository.findByEmail(email);
                     if (emailUser.isPresent()) {
                         user = emailUser.get();
+                        boolean shouldSave = false;
+
                         user.setGoogleId(userId);
-                        if (user.getPicture() == null || user.getPicture().startsWith("http")) {
+                        shouldSave = true;
+                        if ((user.getPicture() == null || user.getPicture().startsWith("http"))
+                                && pictureUrl != null
+                                && !pictureUrl.equals(user.getPicture())) {
                             user.setPicture(pictureUrl);
+                            shouldSave = true;
+                        }
+                        if ((user.getName() == null || user.getName().trim().isEmpty()) && name != null && !name.isBlank()) {
+                            user.setName(name);
+                            shouldSave = true;
+                        }
+                        if (shouldSave) {
+                            userRepository.save(user);
                         }
                     } else {
                         user = User.builder()

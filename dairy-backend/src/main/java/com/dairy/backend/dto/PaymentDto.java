@@ -19,6 +19,8 @@ public class PaymentDto {
     private String customerName;
     private BigDecimal amount;
     private LocalDate paymentDate;
+    private LocalDate paidFromDate;
+    private LocalDate paidToDate;
     private String paymentMethod;
     private PaymentStatus status;
 }

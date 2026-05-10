@@ -40,6 +40,10 @@ public class Payment {
 
     private LocalDate paymentDate;
 
+    private LocalDate paidFromDate;
+
+    private LocalDate paidToDate;
+
     private String paymentMethod; // e.g. UPI, CASH, BANK_TRANSFER
 
     private String transactionId;

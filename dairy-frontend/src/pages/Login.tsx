@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import { useAuthStore } from '../store/useAuthStore'
 import { useNavigate } from 'react-router-dom'
@@ -8,8 +8,15 @@ import axios from 'axios'
 const Login: React.FC = () => {
   const setAuth = useAuthStore((state) => state.setAuth)
   const navigate = useNavigate()
+  const [isSigningIn, setIsSigningIn] = useState(false)
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
+    if (!credentialResponse?.credential) {
+      alert('Google authentication token not received.')
+      return
+    }
+
+    setIsSigningIn(true)
     try {
       const res = await axios.post('/api/auth/google', { token: credentialResponse.credential })
       if (res.data.success) {
@@ -18,10 +25,12 @@ const Login: React.FC = () => {
         navigate('/')
       } else {
         alert('Login failed. Please try again.')
+        setIsSigningIn(false)
       }
     } catch (error) {
       console.error('Google login error:', error)
       alert('Authentication failed.')
+      setIsSigningIn(false)
     }
   }
 
@@ -52,18 +61,25 @@ const Login: React.FC = () => {
           <p className="text-slate-700 dark:text-slate-300 text-sm mb-8 text-center font-medium leading-relaxed">
             Welcome back! Please sign in with your Google account to access your dashboard.
           </p>
-          <div className="transform transition-transform duration-300 hover:scale-105 active:scale-95">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => {
-                console.log('Login Failed')
-              }}
-              useOneTap
-              shape="pill"
-              theme="outline"
-              size="large"
-            />
-          </div>
+          {isSigningIn ? (
+            <div className="flex w-full max-w-[320px] items-center justify-center gap-3 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700" />
+              Signing you in...
+            </div>
+          ) : (
+            <div className="transform transition-transform duration-300 hover:scale-105 active:scale-95">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => {
+                  console.log('Login Failed')
+                }}
+                useOneTap
+                shape="pill"
+                theme="outline"
+                size="large"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

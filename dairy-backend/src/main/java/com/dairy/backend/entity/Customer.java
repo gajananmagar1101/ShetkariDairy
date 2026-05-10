@@ -59,6 +59,8 @@ public class Customer {
     @Builder.Default
     private boolean isActive = true;
 
+    private LocalDateTime stoppedAt;
+
     @Indexed
     private String userId; // Optional link to User collection
 
