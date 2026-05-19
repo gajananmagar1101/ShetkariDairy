@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
-import { fetchCustomersWithCache, setCachedCustomers, clearCustomerCache } from '../lib/customerCache'
+import { fetchCustomersWithCache, setCachedCustomers, invalidateCustomerCache } from '../lib/customerCache'
 import { LoadingBlock, LoadingInline, LoadingSpinner } from '../components/ui/loading'
 import { getCachedViewData, setCachedViewData } from '../lib/viewCache'
 
@@ -234,7 +234,7 @@ export default function MilkEntries() {
       if (res.data.success) {
         setDeleteConfirmId(null)
         toast.success(language === 'mr' ? 'नोंद हटवली.' : 'Entry deleted.')
-        clearCustomerCache()
+        invalidateCustomerCache()
         void fetchCustomers()
       }
     } catch (err) {
@@ -284,7 +284,7 @@ export default function MilkEntries() {
         setCachedViewData(getMilkEntriesCacheKey(date), nextEntries)
         setIsEditDialogOpen(false)
         setEditingEntry(null)
-        clearCustomerCache()
+        invalidateCustomerCache()
         void fetchCustomers()
       }
     } catch (err) {
