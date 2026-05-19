@@ -318,8 +318,20 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                           entries.map(entry => (
                             <tr key={entry.id} className="border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/30">
                               <td className="px-4 py-3 whitespace-nowrap">{formatDate(entry.date)}</td>
-                              <td className="px-4 py-3 whitespace-nowrap">{entry.morningQuantity || 0} L</td>
-                              <td className="px-4 py-3 whitespace-nowrap">{entry.eveningQuantity || 0} L</td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                {(!entry.morningQuantity || entry.morningQuantity === 0) ? (
+                                  <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-500/20">{language === 'mr' ? 'सुट्टी' : 'Holiday'}</span>
+                                ) : (
+                                  `${entry.morningQuantity} L`
+                                )}
+                              </td>
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                {(!entry.eveningQuantity || entry.eveningQuantity === 0) ? (
+                                  <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-500/20">{language === 'mr' ? 'सुट्टी' : 'Holiday'}</span>
+                                ) : (
+                                  `${entry.eveningQuantity} L`
+                                )}
+                              </td>
                               <td className="px-4 py-3 font-medium text-right whitespace-nowrap">₹{entry.totalAmount}</td>
                             </tr>
                           ))
