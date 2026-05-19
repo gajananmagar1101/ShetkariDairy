@@ -197,6 +197,39 @@ public class MilkEntryService {
     }
 
     @Transactional
+    public int autoGenerateEntriesForRange(LocalDate startDate, LocalDate endDate) {
+        String userId = SecurityUtils.getCurrentUserId();
+
+        List<MilkEntry> existingEntries = milkEntryRepository.findByUserIdAndDateBetween(userId, startDate, endDate);
+        if (!existingEntries.isEmpty()) {
+            List<LocalDate> existingDates = existingEntries.stream()
+                    .map(MilkEntry::getDate)
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .sorted()
+                    .collect(Collectors.toList());
+
+            if (!existingDates.isEmpty()) {
+                if (existingDates.size() == 1) {
+                    throw new IllegalArgumentException("Entries already exist for " + existingDates.get(0) + ". Cannot generate.");
+                } else {
+                    LocalDate minDate = existingDates.get(0);
+                    LocalDate maxDate = existingDates.get(existingDates.size() - 1);
+                    throw new IllegalArgumentException("Entries already exist from " + minDate + " to " + maxDate + ". Cannot generate.");
+                }
+            }
+        }
+
+        int totalGenerated = 0;
+        LocalDate current = startDate;
+        while (!current.isAfter(endDate)) {
+            totalGenerated += autoGenerateEntriesForUser(userId, current);
+            current = current.plusDays(1);
+        }
+        return totalGenerated;
+    }
+
+    @Transactional
     public int autoGenerateEntriesForAllUsers(LocalDate date) {
         Map<String, List<Customer>> customersByUser = customerRepository.findAll().stream()
                 .filter(Customer::isActive)

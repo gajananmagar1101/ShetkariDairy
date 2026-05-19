@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, Trash, Clock, PencilLine, Ban, Mic, MicOff, Play, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Search, Trash, Clock, PencilLine, Ban, Mic, MicOff, Play, ChevronDown, ChevronUp, Eye } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
@@ -16,6 +16,7 @@ import { LoadingBlock, LoadingInline } from '../components/ui/loading'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 import { setCachedCustomers } from '../lib/customerCache'
+import { CustomerDetailsDialog } from '../components/customers/CustomerDetailsDialog'
 
 interface Customer {
   id: string
@@ -57,6 +58,7 @@ export default function Customers() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [isStoppedExpanded, setIsStoppedExpanded] = useState(false)
+  const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null)
   
   const emptyForm = {
     name: '',
@@ -539,7 +541,11 @@ export default function Customers() {
                             </>
                           )}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setViewingCustomer(customer)} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 ml-1">
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 ml-1">Edit</Button>
                         <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(customer.id)} className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 ml-2 rounded-full">
                           <Trash className="w-4 h-4" />
                         </Button>
@@ -647,7 +653,11 @@ export default function Customers() {
                             </>
                           )}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 hover:text-primary-700">
+                        <Button variant="ghost" size="sm" onClick={() => setViewingCustomer(customer)} className="text-blue-600 hover:text-blue-700 ml-1">
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 hover:text-primary-700 ml-1">
                           Edit
                         </Button>
                       </td>
@@ -659,6 +669,12 @@ export default function Customers() {
           )
         )}
       </div>
+      
+      <CustomerDetailsDialog
+        customer={viewingCustomer}
+        isOpen={!!viewingCustomer}
+        onClose={() => setViewingCustomer(null)}
+      />
     </div>
   )
 }

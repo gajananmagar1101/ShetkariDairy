@@ -54,6 +54,10 @@ export const translations = {
     saveChanges: 'Save Changes',
     quantityL: 'Quantity (L)',
     dateLabel: 'Date',
+    filterEntries: 'Filter Entries',
+    allEntries: 'All Entries',
+    specificDate: 'Specific Date',
+    dateRange: 'Date Range',
     // Customers
     customersTitle: 'Customer Management',
     customersDesc: 'Manage farmers, rates, and active status.',
@@ -241,6 +245,10 @@ export const translations = {
     saveChanges: 'बदल सेव्ह करा',
     quantityL: 'प्रमाण (L)',
     dateLabel: 'तारीख',
+    filterEntries: 'नोंदी फिल्टर करा',
+    allEntries: 'सर्व नोंदी',
+    specificDate: 'विशिष्ट तारीख',
+    dateRange: 'तारखांचा टप्पा',
     // Customers
     customersTitle: 'ग्राहक व्यवस्थापन',
     customersDesc: 'शेतकरी, दर आणि त्यांची माहिती व्यवस्थापित करा.',

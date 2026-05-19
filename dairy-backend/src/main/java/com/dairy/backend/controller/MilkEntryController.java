@@ -58,6 +58,14 @@ public class MilkEntryController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Auto-generated " + count + " entries", count));
     }
 
+    @PostMapping("/auto-generate-range")
+    public ResponseEntity<ApiResponse<Integer>> autoGenerateEntriesRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        int count = milkEntryService.autoGenerateEntriesForRange(startDate, endDate);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Auto-generated " + count + " entries", count));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteEntry(@PathVariable String id) {
         milkEntryService.deleteMilkEntry(id);

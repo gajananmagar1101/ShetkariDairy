@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useAuthStore } from '../store/useAuthStore'
 import { beginNetworkActivity, endNetworkActivity } from './networkActivity'
 
-const REQUEST_TIMEOUT_MS = 10000
+const REQUEST_TIMEOUT_MS = 60000
 
 const normalizeApiUrl = (value?: string) => {
   if (!value) {
