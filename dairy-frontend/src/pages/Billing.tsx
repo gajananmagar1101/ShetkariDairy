@@ -81,7 +81,7 @@ export default function Billing() {
   )
 
   const formatDisplayDate = (value?: string) =>
-    value ? value.split('-').reverse().join('/') : 'N/A'
+    value ? value.split('-').reverse().join('/') : '-'
   const normalizeApiDate = (value?: string) => (value ? value.slice(0, 10) : '')
   const parseDateInput = (value: string) => {
     const [year, month, day] = value.split('-').map(Number)
@@ -210,11 +210,11 @@ export default function Billing() {
     e.preventDefault()
     if (isSubmitting) return;
     if (!selectedCustomer) {
-      alert("Please select a customer")
+      alert(t(language, 'pleaseSelectCustomer'))
       return
     }
     if (!startDate || !endDate || startDate > endDate) {
-      alert("Please select a valid date range")
+      alert(t(language, 'validDateRange'))
       return
     }
     setIsSubmitting(true)
@@ -229,7 +229,7 @@ export default function Billing() {
       }
     } catch (err) {
       console.error(err)
-      alert("Failed to generate bill")
+      alert(t(language, 'failedGenerateBill'))
     } finally {
       setIsSubmitting(false)
     }
@@ -243,11 +243,11 @@ export default function Billing() {
       if (res.data.success) {
         invalidateCustomerCache()
         await Promise.all([fetchInvoices(), fetchCustomers()])
-        toast.success('Invoice marked as paid and added to payments!')
+        toast.success(t(language, 'invoiceMarkedPaid'))
       }
     } catch (err) {
       console.error(err)
-      toast.error("Failed to mark as paid")
+      toast.error(t(language, 'failedMarkPaid'))
     } finally {
       setPayingInvoiceId(null)
     }
@@ -270,13 +270,13 @@ export default function Billing() {
       if (!res.data.success) {
         setInvoices(previousInvoices);
         setCachedViewData(BILLING_CACHE_KEY, previousInvoices)
-        toast.error("Failed to delete bill.");
+        toast.error(t(language, 'failedDeleteBill'));
       }
     } catch (err) {
       console.error(err);
       setInvoices(previousInvoices);
       setCachedViewData(BILLING_CACHE_KEY, previousInvoices)
-      toast.error("Failed to delete bill.");
+      toast.error(t(language, 'failedDeleteBill'));
     } finally {
       setDeletingInvoiceId(null);
     }
@@ -285,7 +285,7 @@ export default function Billing() {
   const generatePDF = async (invoice: Invoice) => {
     const printWindow = window.open('', '', 'width=800,height=600');
     if (!printWindow) {
-      alert("Please allow popups to generate the bill.");
+      alert(t(language, 'allowPopups'));
       return;
     }
 
@@ -340,7 +340,7 @@ export default function Billing() {
                 <td>${morning > 0 ? morning + ' L' : '-'}</td>
                 <td>${evening > 0 ? evening + ' L' : '-'}</td>
                 <td>${liters.toFixed(1)} L</td>
-                <td style="text-align: right;">${isPaidDate ? 'Paid' : `₹${Number(entry.totalAmount || 0).toFixed(2)}`}</td>
+                <td style="text-align: right;">${isPaidDate ? t(language, 'paid') : `₹${Number(entry.totalAmount || 0).toFixed(2)}`}</td>
               </tr>
             `;
           } else {
@@ -370,7 +370,7 @@ export default function Billing() {
     let qrHtml = '';
     try {
       if (!upiId) {
-        throw new Error('UPI ID not configured')
+          throw new Error(t(language, 'upiIdMissing'))
       }
       const payableAmount = computedTotalAmount || Number(invoice.totalAmount || 0)
       const upiString = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(t(language, 'dairyName'))}&am=${payableAmount}&cu=INR`
@@ -551,7 +551,7 @@ export default function Billing() {
         ${qrHtml}
         
         <div style="text-align: center; margin-top: 40px;">
-          <button onclick="window.print()" style="background-color: #3b82f6; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; font-family: inherit;">Print / Save as PDF</button>
+          <button onclick="window.print()" style="background-color: #3b82f6; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; font-family: inherit;">${t(language, 'printSavePdf')}</button>
         </div>
         <script>
           setTimeout(() => { window.print(); }, 1000);
@@ -583,7 +583,7 @@ export default function Billing() {
             <DialogHeader>
               <DialogTitle>{t(language, 'generateBill')}</DialogTitle>
               <DialogDescription>
-                Choose a customer and date range to generate a bill.
+                {t(language, 'generateBillDesc')}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleGenerate} className="mt-4 space-y-4">
@@ -595,7 +595,7 @@ export default function Billing() {
                   onChange={e => setSelectedCustomer(e.target.value)}
                   className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 py-3.5 text-slate-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/40"
                 >
-                  <option value="" disabled>Select Customer</option>
+                  <option value="" disabled>{t(language, 'selectCustomerPlaceholder')}</option>
                   {activeCustomers.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -621,7 +621,7 @@ export default function Billing() {
                 </div>
               </div>
               <Button type="submit" disabled={isSubmitting} className="mt-2 h-14 w-full rounded-[1.6rem] shadow-[0_12px_30px_rgba(139,92,246,0.28)]">
-                {isSubmitting ? <LoadingInline label="Generating..." /> : t(language, 'generateBill')}
+                {isSubmitting ? <LoadingInline label={t(language, 'generating')} /> : t(language, 'generateBill')}
               </Button>
             </form>
           </DialogContent>
@@ -631,7 +631,7 @@ export default function Billing() {
       <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <div className="overflow-x-auto">
           {isLoading ? (
-            <LoadingBlock label="Loading bills..." minHeightClassName="min-h-[240px]" size="md" />
+            <LoadingBlock label={t(language, 'loadingBills')} minHeightClassName="min-h-[240px]" size="md" />
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
@@ -662,7 +662,7 @@ export default function Billing() {
                         <span className={`px-2 py-1 rounded-md text-xs font-medium ${
                           inv.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
                         }`}>
-                          {inv.status}
+                          {inv.status === 'PAID' ? t(language, 'paid') : t(language, 'pending')}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right flex justify-end gap-2 whitespace-nowrap">
@@ -671,7 +671,7 @@ export default function Billing() {
                             variant="outline" size="icon" 
                             disabled={payingInvoiceId === inv.id}
                             className="h-8 w-8 text-emerald-600 rounded-lg border-emerald-200 hover:bg-emerald-50 disabled:opacity-50"
-                            title="Mark as Paid"
+                            title={t(language, 'markAsPaid')}
                             onClick={() => setMarkPaidConfirmId(inv.id)}
                           >
                             {payingInvoiceId === inv.id ? <LoadingSpinner size="sm" className="text-current" /> : <CheckCircle className="w-4 h-4" />}
@@ -680,7 +680,7 @@ export default function Billing() {
                         <Button 
                           variant="outline" size="icon" 
                           className="h-8 w-8 text-blue-600 rounded-lg border-blue-200 hover:bg-blue-50"
-                          title="Download Bill"
+                          title={t(language, 'downloadBill')}
                           onClick={() => generatePDF(inv)}
                         >
                           <Download className="w-4 h-4" />
@@ -688,7 +688,7 @@ export default function Billing() {
                         <Button 
                           variant="outline" size="icon" 
                           className="h-8 w-8 text-green-600 rounded-lg border-green-200 hover:bg-green-50"
-                          title="Send via WhatsApp"
+                          title={t(language, 'sendViaWhatsapp')}
                           onClick={() => {
                             if (!upiId) {
                               alert(t(language, 'upiIdMissing'))
@@ -698,10 +698,11 @@ export default function Billing() {
                             const encodedUpi = encodeURIComponent(upiString);
                             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedUpi}`;
                             const skippedNote = inv.skippedDates?.length
-                              ? `%0ANo milk on: ${inv.skippedDates.join(', ')}`
+                              ? `%0A${t(language, 'noMilkOn')}: ${inv.skippedDates.join(', ')}`
                               : '';
                             
-                            const text = `Hello ${inv.customerName},%0A%0AYour milk bill for ${getInvoiceRangeLabel(inv)} is generated.%0ATotal Amount: ₹${inv.totalAmount}%0AStatus: ${inv.status}${skippedNote}%0A%0APay instantly via this link:%0A${upiString}%0A%0AOr scan the QR code here:%0A${qrUrl}%0A%0A- Gharcha Dudh`;
+                            const greeting = language === 'mr' ? `नमस्कार ${inv.customerName},` : `Hello ${inv.customerName},`
+                            const text = `${greeting}%0A%0A${t(language, 'billStatusMessage')}%0A${t(language, 'billingPeriod')}: ${getInvoiceRangeLabel(inv)}%0A${t(language, 'amountBill')}: ₹${inv.totalAmount}%0A${t(language, 'status')}: ${inv.status === 'PAID' ? t(language, 'paid') : t(language, 'pending')}${skippedNote}%0A%0A${t(language, 'payInstantly')}%0A${upiString}%0A%0A${t(language, 'orScanQr')}%0A${qrUrl}%0A%0A- ${t(language, 'dairyName')}`;
                             window.open(`https://wa.me/?text=${text}`, '_blank');
                           }}
                         >
@@ -710,7 +711,7 @@ export default function Billing() {
                         <Button 
                           variant="outline" size="icon" 
                           className="h-8 w-8 text-red-500 rounded-lg border-red-200 hover:bg-red-50"
-                          title="Delete Bill"
+                          title={t(language, 'deleteBill')}
                           onClick={() => setDeleteConfirmId(inv.id)}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -733,9 +734,9 @@ export default function Billing() {
             setMarkPaidConfirmId(null)
           }}
           isProcessing={!!payingInvoiceId}
-          title={language === 'mr' ? 'पेमेंट कन्फर्म करा' : 'Confirm Payment'}
-          description={language === 'mr' ? 'हे बिल paid म्हणून mark करायचे आहे का?' : 'Do you want to mark this bill as paid?'}
-          confirmText={language === 'mr' ? 'हो, Paid करा' : 'Yes, Mark Paid'}
+          title={t(language, 'confirmPayment')}
+          description={t(language, 'confirmPaidDesc')}
+          confirmText={t(language, 'yesMarkPaid')}
           cancelText={t(language, 'cancel')}
         />
 

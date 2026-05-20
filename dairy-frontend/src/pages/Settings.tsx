@@ -197,10 +197,10 @@ export default function Settings() {
             </div>
             <div className="space-y-1">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                UPI Settings
+                {language === 'mr' ? 'यूपीआय सेटिंग्ज' : 'UPI Settings'}
               </h2>
               <p className="max-w-2xl text-sm font-medium text-slate-600 dark:text-slate-300">
-                Set your personal UPI ID for receiving payments
+                {language === 'mr' ? 'पेमेंट घेण्यासाठी तुमचा वैयक्तिक यूपीआय आयडी सेट करा' : 'Set your personal UPI ID for receiving payments'}
               </p>
             </div>
           </div>
@@ -216,7 +216,7 @@ export default function Settings() {
                 type="text"
                 value={upiId}
                 onChange={handleUpiChange}
-                placeholder="yourname@bank"
+                placeholder={language === 'mr' ? 'तुमचेनाव@बँक' : 'yourname@bank'}
                 className={`w-full rounded-2xl border bg-white px-4 py-3 text-base font-semibold text-slate-900 outline-none transition focus:ring-4 dark:bg-slate-900 dark:text-white ${
                   !isUpiValid && upiId !== ''
                     ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500'

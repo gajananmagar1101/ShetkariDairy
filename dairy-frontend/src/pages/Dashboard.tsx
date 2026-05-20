@@ -54,11 +54,11 @@ export default function Dashboard() {
         setData(res.data.data)
         setCachedViewData(DASHBOARD_CACHE_KEY, res.data.data)
       } else {
-        setError('Dashboard API returned an unexpected response.')
+        setError(t(language, 'dashboardApiUnexpected'))
       }
     } catch (err: any) {
       console.error(err)
-      setError(err.response?.data?.message || err.message || 'Failed to connect to the server.')
+      setError(err.response?.data?.message || err.message || t(language, 'failedServerConnect'))
     } finally {
       if (showLoader) {
         setIsLoading(false)
@@ -67,17 +67,17 @@ export default function Dashboard() {
   }
 
   if (isLoading) {
-    return <LoadingBlock label="Loading dashboard..." minHeightClassName="min-h-[60vh]" />
+    return <LoadingBlock label={t(language, 'loadingDashboard')} minHeightClassName="min-h-[60vh]" />
   }
 
   if (error || !data) {
     return (
       <div className="w-full h-[60vh] flex flex-col items-center justify-center space-y-4">
         <div className="bg-red-50 text-red-500 p-4 rounded-xl border border-red-100 max-w-md text-center">
-          <h3 className="font-bold mb-2">Connection Error</h3>
-          <p className="text-sm">{error || 'Could not load data'}</p>
+          <h3 className="font-bold mb-2">{t(language, 'connectionError')}</h3>
+          <p className="text-sm">{error || t(language, 'couldNotLoadData')}</p>
           <p className="text-xs mt-4 text-red-400">
-            Current API URL: {getApiBaseUrl()}
+            {t(language, 'currentApiUrl')}: {getApiBaseUrl()}
           </p>
         </div>
       </div>

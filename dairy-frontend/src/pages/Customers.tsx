@@ -265,7 +265,7 @@ export default function Customers() {
       setFormData(emptyForm)
     } catch (err: any) {
       console.error(err)
-      const errorMsg = err.response?.data?.message || "Failed to save customer. Please try again."
+      const errorMsg = err.response?.data?.message || t(language, 'failedSaveCustomer')
       toast.error(errorMsg)
     } finally {
       setIsSubmitting(false)
@@ -305,13 +305,13 @@ export default function Customers() {
       if (!res.data.success) {
         setCustomers(previousCustomers)
         setCachedCustomers(previousCustomers)
-        toast.error("Failed to delete customer")
+        toast.error(t(language, 'failedDeleteCustomer'))
       }
     } catch (err: any) {
       console.error(err)
       setCustomers(previousCustomers)
       setCachedCustomers(previousCustomers)
-      toast.error("Failed to delete customer")
+      toast.error(t(language, 'failedDeleteCustomer'))
     } finally {
       setDeletingCustomerId(null)
     }
@@ -333,6 +333,10 @@ export default function Customers() {
     () => activeCustomers.reduce((sum, customer) => sum + (customer.balance || 0), 0),
     [activeCustomers]
   )
+  const totalRecentAmount = useMemo(
+    () => activeCustomers.reduce((sum, customer) => sum + (recentEntriesByCustomer[customer.id]?.amount || 0), 0),
+    [activeCustomers, recentEntriesByCustomer]
+  )
 
   const formatStoppedAt = (value?: string | null) => {
     if (!value) return '-'
@@ -348,7 +352,7 @@ export default function Customers() {
   }
 
   const formatEntryDate = (value?: string | null) => {
-    if (!value) return language === 'mr' ? 'नोंद नाही' : 'No entry'
+    if (!value) return t(language, 'noEntry')
     const parsed = new Date(value)
     if (Number.isNaN(parsed.getTime())) return value
     return new Intl.DateTimeFormat(getDisplayLocale(language), {
@@ -389,7 +393,7 @@ export default function Customers() {
       }
     } catch (err) {
       console.error(err)
-      toast.error(language === 'mr' ? 'ग्राहकाची स्थिती बदलता आली नाही.' : 'Failed to update customer status.')
+      toast.error(t(language, 'failedUpdateCustomerStatus'))
     } finally {
       setTogglingCustomerId(null)
     }
@@ -428,7 +432,7 @@ export default function Customers() {
                 {editingId ? t(language, 'editCustomer') : t(language, 'addCustomer')}
               </DialogTitle>
               <DialogDescription className="px-6 text-slate-500">
-                {editingId ? 'Update customer details and pricing.' : 'Add a new customer with milk and billing details.'}
+                {editingId ? t(language, 'editCustomerDesc') : t(language, 'addCustomerDesc')}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmitCustomer} className="space-y-5 px-6 pb-6">
@@ -445,7 +449,7 @@ export default function Customers() {
                       type="button"
                       onClick={startVoiceTyping}
                       className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-colors ${isListening ? 'text-rose-500 bg-rose-50 animate-pulse' : 'text-slate-400 hover:text-primary-600 hover:bg-slate-50'}`}
-                      title="Voice Typing"
+                      title={t(language, 'voiceTyping')}
                     >
                       {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
                     </button>
@@ -502,20 +506,20 @@ export default function Customers() {
                 </div>
                 <div className="col-span-2 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4">
                   <div className="flex items-center justify-between text-sm text-slate-700">
-                    <span className="font-medium">Calculation</span>
+                    <span className="font-medium">{t(language, 'calculation')}</span>
                     <span className="font-semibold">
                       {effectiveDailyQuantity.toFixed(1)} L x ₹{effectiveRate.toFixed(2)}
                     </span>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
-                    <span className="text-sm text-slate-600">Estimated amount</span>
+                    <span className="text-sm text-slate-600">{t(language, 'estimatedAmount')}</span>
                     <span className="text-xl font-bold text-emerald-700">₹{estimatedAmount.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
               <Button type="submit" disabled={isSubmitting} className="w-full rounded-2xl py-6 text-lg font-bold shadow-lg">
                 {isSubmitting ? (
-                  <LoadingInline label="Saving..." />
+                  <LoadingInline label={language === 'mr' ? 'सेव्ह होत आहे...' : 'Saving...'} />
                 ) : (
                   editingId ? t(language, 'updateCustomer') : t(language, 'saveCustomer')
                 )}
@@ -556,14 +560,14 @@ export default function Customers() {
 
         <div className="overflow-x-auto">
           {isLoading ? (
-            <LoadingBlock label="Loading customers..." minHeightClassName="min-h-[220px]" size="md" />
+            <LoadingBlock label={t(language, 'loadingCustomers')} minHeightClassName="min-h-[220px]" size="md" />
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200/60 dark:border-slate-600 text-slate-500 dark:text-slate-300 text-sm">
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'name')}</th>
-                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{language === 'mr' ? 'शेवटची नोंद' : 'Recent Entry'}</th>
-                  <th className="pb-3 px-4 font-medium text-right whitespace-nowrap">Balance (₹)</th>
+                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'recentEntry')}</th>
+                  <th className="pb-3 px-4 font-medium text-right whitespace-nowrap">{t(language, 'currentBalance')} (₹)</th>
                   <th className="pb-3 px-4 font-medium text-right whitespace-nowrap">{t(language, 'actions')}</th>
                 </tr>
               </thead>
@@ -592,12 +596,12 @@ export default function Customers() {
                             </span>
                           )}
                           {hasPendingSpecialQuantity(customer) && (
-                            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700" title="Special Quantity Active">
+                            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700" title={t(language, 'specialQuantityActive')}>
                               <PencilLine className="w-3 h-3" /> {t(language, 'specialQtyShort')}
                             </span>
                           )}
                           {hasPendingNoDelivery(customer) && (
-                            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-700" title="No Delivery Today">
+                            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-700" title={t(language, 'noDeliveryToday')}>
                               <Ban className="w-3 h-3" /> {t(language, 'skipShort')}
                             </span>
                           )}
@@ -617,11 +621,11 @@ export default function Customers() {
                             </span>
                           )}
                           <span className="text-xs font-semibold text-slate-500 dark:text-slate-300">
-                            {language === 'mr' ? 'दूध: ' : 'Milk: '}
+                            {t(language, 'milkLabel')}: 
                             {(recentEntriesByCustomer[customer.id]?.quantity ?? 0).toFixed(1)} L
                           </span>
                           <span className="text-xs font-semibold text-slate-500 dark:text-slate-300">
-                            {language === 'mr' ? 'रक्कम: ' : 'Amount: '}
+                            {t(language, 'amountLabel')}: 
                             ₹{(recentEntriesByCustomer[customer.id]?.amount ?? 0).toFixed(2)}
                           </span>
                         </div>
@@ -655,9 +659,9 @@ export default function Customers() {
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => setViewingCustomer(customer)} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 ml-1">
                           <Eye className="w-4 h-4 mr-1" />
-                          View
+                          {t(language, 'view')}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 ml-1">Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 ml-1">{t(language, 'edit')}</Button>
                         <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(customer.id)} className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 ml-2 rounded-full">
                           <Trash className="w-4 h-4" />
                         </Button>
@@ -671,13 +675,19 @@ export default function Customers() {
         </div>
 
         <div className="mt-6 rounded-[1.75rem] border border-white/70 bg-white/45 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)] backdrop-blur-xl dark:border-slate-700/80 dark:bg-slate-900/60">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center justify-between gap-3 sm:min-w-72">
               <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">{t(language, 'totalCustomerMilk')}</p>
               <p className="text-2xl font-extrabold text-primary-700 dark:text-primary-300">{totalCustomerMilk.toFixed(1)} L</p>
             </div>
             <div className="flex items-center justify-between gap-3 sm:min-w-72">
-              <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">{language === 'mr' ? 'एकूण बॅलन्स' : 'Total Balance'}</p>
+              <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">{t(language, 'totalRecentAmount')}</p>
+              <p className="text-2xl font-extrabold text-blue-600 dark:text-blue-400">
+                ₹{totalRecentAmount.toFixed(2)}
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-3 sm:min-w-72">
+              <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">{t(language, 'totalBalance')}</p>
               <p className={`text-2xl font-extrabold ${totalCustomerBalance > 0 ? 'text-emerald-600 dark:text-emerald-400' : totalCustomerBalance < 0 ? 'text-red-500 dark:text-red-400' : 'text-slate-700 dark:text-slate-200'}`}>
                 ₹{totalCustomerBalance.toFixed(2)}
               </p>
@@ -724,7 +734,7 @@ export default function Customers() {
                     <th className="px-4 py-3 font-medium whitespace-nowrap">{t(language, 'stoppedOn')}</th>
                     <th className="px-4 py-3 font-medium whitespace-nowrap">{t(language, 'milkType')}</th>
                     <th className="px-4 py-3 font-medium whitespace-nowrap">{t(language, 'dailyQuantity')}</th>
-                    <th className="px-4 py-3 font-medium text-right whitespace-nowrap">Balance (₹)</th>
+                    <th className="px-4 py-3 font-medium text-right whitespace-nowrap">{t(language, 'currentBalance')} (₹)</th>
                     <th className="px-4 py-3 font-medium text-right whitespace-nowrap">{t(language, 'actions')}</th>
                   </tr>
                 </thead>
@@ -775,10 +785,10 @@ export default function Customers() {
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => setViewingCustomer(customer)} className="text-blue-600 hover:text-blue-700 ml-1">
                           <Eye className="w-4 h-4 mr-1" />
-                          View
+                          {t(language, 'view')}
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 hover:text-primary-700 ml-1">
-                          Edit
+                          {t(language, 'edit')}
                         </Button>
                       </td>
                     </tr>

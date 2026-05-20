@@ -53,6 +53,28 @@ export default function Inventory() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const getItemCategoryLabel = (category: string) => {
+    if (category === 'FEED') return t(language, 'animalFeed')
+    if (category === 'MEDICINE') return t(language, 'medicine')
+    if (category === 'CANS') return t(language, 'cansEquipment')
+    return category
+  }
+
+  const getUnitLabel = (unit: string) => {
+    if (unit === 'PIECE') return t(language, 'piece')
+    if (unit === 'LITER') return t(language, 'liter')
+    return unit
+  }
+
+  const getExpenseCategoryLabel = (category: string) => {
+    if (language !== 'mr') return category
+    if (category === 'TRANSPORT') return 'वाहतूक'
+    if (category === 'ELECTRICITY') return 'वीज'
+    if (category === 'FOOD') return 'खाद्य / पशुखाद्य'
+    if (category === 'OTHER') return 'इतर'
+    return category
+  }
+
   useEffect(() => {
     const cachedItems = getCachedViewData<InventoryItem[]>(INVENTORY_ITEMS_CACHE_KEY, INVENTORY_CACHE_TTL_MS)
     const cachedExpenses = getCachedViewData<Expense[]>(INVENTORY_EXPENSES_CACHE_KEY, INVENTORY_CACHE_TTL_MS)
@@ -151,13 +173,13 @@ export default function Inventory() {
       if (!res.data.success) {
         setItems(previousItems)
         setCachedViewData(INVENTORY_ITEMS_CACHE_KEY, previousItems)
-        alert('Failed to delete item')
+        alert(t(language, 'failedDeleteItem'))
       }
     } catch (err: any) {
       console.error(err)
       setItems(previousItems)
       setCachedViewData(INVENTORY_ITEMS_CACHE_KEY, previousItems)
-      alert(err.response?.data?.message || 'Failed to delete item')
+      alert(err.response?.data?.message || t(language, 'failedDeleteItem'))
     } finally {
       setDeletingItemId(null)
     }
@@ -192,7 +214,7 @@ export default function Inventory() {
                 <DialogHeader>
                   <DialogTitle>{t(language, 'addInventoryItem')}</DialogTitle>
                   <DialogDescription>
-                    Add a stock item with its category, quantity, and unit.
+                    {t(language, 'addStockDesc')}
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleAddItem} className="space-y-4 mt-4">
@@ -203,9 +225,9 @@ export default function Inventory() {
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'category')}</label>
                     <select value={itemForm.category} onChange={e => setItemForm({...itemForm, category: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-xl">
-                      <option value="FEED">Animal Feed</option>
-                      <option value="MEDICINE">Medicine</option>
-                      <option value="CANS">Cans / Equipment</option>
+                      <option value="FEED">{t(language, 'animalFeed')}</option>
+                      <option value="MEDICINE">{t(language, 'medicine')}</option>
+                      <option value="CANS">{t(language, 'cansEquipment')}</option>
                     </select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -217,13 +239,13 @@ export default function Inventory() {
                       <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'unit')}</label>
                       <select value={itemForm.unit} onChange={e => setItemForm({...itemForm, unit: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-xl">
                         <option value="KG">KG</option>
-                        <option value="PIECE">Piece</option>
-                        <option value="LITER">Liter</option>
+                        <option value="PIECE">{t(language, 'piece')}</option>
+                        <option value="LITER">{t(language, 'liter')}</option>
                       </select>
                     </div>
                   </div>
                   <Button type="submit" disabled={isSubmitting} className="w-full rounded-xl mt-2">
-                    {isSubmitting ? <LoadingInline label="Saving..." /> : t(language, 'saveItem')}
+                    {isSubmitting ? <LoadingInline label={t(language, 'saveInProgress')} /> : t(language, 'saveItem')}
                   </Button>
                 </form>
               </DialogContent>
@@ -243,7 +265,7 @@ export default function Inventory() {
           
           <div className="overflow-x-auto">
             {isLoading ? (
-              <LoadingBlock label="Loading inventory..." minHeightClassName="min-h-[220px]" size="md" />
+              <LoadingBlock label={t(language, 'loadingInventory')} minHeightClassName="min-h-[220px]" size="md" />
             ) : (
             <table className="w-full text-left">
               <thead>
@@ -260,8 +282,8 @@ export default function Inventory() {
                 ) : items.map(item => (
                   <tr key={item.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0">
                     <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">{item.name}</td>
-                    <td className="py-3 px-4 whitespace-nowrap"><span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs">{item.category}</span></td>
-                    <td className="py-3 px-4 text-right font-bold text-primary-600 whitespace-nowrap">{item.quantity} {item.unit}</td>
+                    <td className="py-3 px-4 whitespace-nowrap"><span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs">{getItemCategoryLabel(item.category)}</span></td>
+                    <td className="py-3 px-4 text-right font-bold text-primary-600 whitespace-nowrap">{item.quantity} {getUnitLabel(item.unit)}</td>
                     <td className="py-3 px-4 text-right whitespace-nowrap">
                       <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(item.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50 ml-2 rounded-full">
                         <Trash className="w-4 h-4" />
@@ -290,17 +312,17 @@ export default function Inventory() {
                 <DialogHeader>
                   <DialogTitle>{t(language, 'recordExpense')}</DialogTitle>
                   <DialogDescription>
-                    Save an expense entry with category, amount, and date.
+                    {t(language, 'recordExpenseDesc')}
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleAddExpense} className="space-y-4 mt-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t(language, 'category')}</label>
                     <select value={expenseForm.category} onChange={e => setExpenseForm({...expenseForm, category: e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded-xl">
-                      <option value="TRANSPORT">Transport</option>
-                      <option value="ELECTRICITY">Electricity</option>
-                      <option value="FOOD">Food / Feed</option>
-                      <option value="OTHER">Other</option>
+                      <option value="TRANSPORT">{language === 'mr' ? 'वाहतूक' : 'Transport'}</option>
+                      <option value="ELECTRICITY">{language === 'mr' ? 'वीज' : 'Electricity'}</option>
+                      <option value="FOOD">{language === 'mr' ? 'खाद्य / पशुखाद्य' : 'Food / Feed'}</option>
+                      <option value="OTHER">{language === 'mr' ? 'इतर' : 'Other'}</option>
                     </select>
                   </div>
                   <div>
@@ -318,7 +340,7 @@ export default function Inventory() {
                     </div>
                   </div>
                   <Button type="submit" variant="destructive" disabled={isSubmitting} className="w-full rounded-xl mt-2 bg-red-500">
-                    {isSubmitting ? <LoadingInline label="Saving..." /> : t(language, 'saveExpense')}
+                    {isSubmitting ? <LoadingInline label={t(language, 'saveInProgress')} /> : t(language, 'saveExpense')}
                   </Button>
                 </form>
               </DialogContent>
@@ -327,7 +349,7 @@ export default function Inventory() {
 
           <div className="overflow-x-auto">
             {isLoading ? (
-              <LoadingBlock label="Loading expenses..." minHeightClassName="min-h-[220px]" size="md" />
+              <LoadingBlock label={t(language, 'loadingExpenses')} minHeightClassName="min-h-[220px]" size="md" />
             ) : (
             <table className="w-full text-left">
               <thead>
@@ -345,7 +367,7 @@ export default function Inventory() {
                     <td className="py-3 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{exp.date}</td>
                     <td className="py-3 px-4 whitespace-nowrap">
                       <p className="font-medium text-slate-800 dark:text-slate-200">{exp.description}</p>
-                      <p className="text-xs text-slate-400">{exp.category}</p>
+                      <p className="text-xs text-slate-400">{getExpenseCategoryLabel(exp.category)}</p>
                     </td>
                     <td className="py-3 px-4 text-right font-bold text-red-500 whitespace-nowrap">₹{exp.amount}</td>
                   </tr>

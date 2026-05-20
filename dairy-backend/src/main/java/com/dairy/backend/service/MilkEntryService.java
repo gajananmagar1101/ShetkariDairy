@@ -283,6 +283,9 @@ public class MilkEntryService {
 
     @Transactional
     public int autoGenerateEntriesForUser(String userId, LocalDate date) {
+        if (!milkEntryRepository.findByUserIdAndDate(userId, date).isEmpty()) {
+            return 0;
+        }
         List<Customer> activeCustomers = customerRepository.findByUserIdAndIsActiveTrue(userId);
         return autoGenerateEntriesForCustomers(userId, activeCustomers, date);
     }

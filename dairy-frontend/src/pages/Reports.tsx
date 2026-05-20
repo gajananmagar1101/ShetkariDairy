@@ -136,7 +136,7 @@ export default function Reports() {
         <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-6">{t(language, 'monthlyProfitTrend')}</h3>
         <div className="h-[400px] w-full">
           {isLoading ? (
-            <LoadingBlock label="Loading reports..." minHeightClassName="min-h-[400px]" />
+            <LoadingBlock label={t(language, 'loadingReports')} minHeightClassName="min-h-[400px]" />
           ) : (
             <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
               <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -157,9 +157,9 @@ export default function Reports() {
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
                   formatter={(value: any) => [`₹${Number(value).toFixed(2)}`, undefined]}
                 />
-                <Area type="monotone" dataKey="revenue" name="Sales" stroke="#3b82f6" fillOpacity={0} strokeWidth={2} />
-                <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#ef4444" fillOpacity={1} fill="url(#colorExpense)" strokeWidth={2} />
-                <Area type="monotone" dataKey="profit" name="Profit" stroke="#10b981" fillOpacity={1} fill="url(#colorProfit)" strokeWidth={2} />
+                <Area type="monotone" dataKey="revenue" name={t(language, 'sales')} stroke="#3b82f6" fillOpacity={0} strokeWidth={2} />
+                <Area type="monotone" dataKey="expenses" name={t(language, 'expenses')} stroke="#ef4444" fillOpacity={1} fill="url(#colorExpense)" strokeWidth={2} />
+                <Area type="monotone" dataKey="profit" name={t(language, 'profit')} stroke="#10b981" fillOpacity={1} fill="url(#colorProfit)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           )}

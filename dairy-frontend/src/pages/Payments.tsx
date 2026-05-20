@@ -74,7 +74,7 @@ export default function Payments() {
       <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <div className="overflow-x-auto">
           {isLoading ? (
-            <LoadingBlock label="Loading payments..." minHeightClassName="min-h-[220px]" size="md" />
+            <LoadingBlock label={t(language, 'loadingPayments')} minHeightClassName="min-h-[220px]" size="md" />
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
@@ -97,7 +97,7 @@ export default function Payments() {
                         <span className="font-medium text-slate-800 dark:text-slate-200">{payment.customerName}</span>
                         {payment.paidFromDate && payment.paidToDate ? (
                           <p className="mt-1 text-xs text-slate-500">
-                            {payment.paidFromDate} to {payment.paidToDate}
+                            {payment.paidFromDate} - {payment.paidToDate}
                           </p>
                         ) : null}
                       </td>
@@ -106,7 +106,7 @@ export default function Payments() {
                         <span className={`px-2 py-1 rounded-md text-xs font-medium ${
                           payment.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
                         }`}>
-                          {payment.status}
+                          {payment.status === 'PAID' ? t(language, 'paid') : t(language, 'completed')}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">+₹{payment.amount}</td>

@@ -191,9 +191,9 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
             </div>
             <div>
               <DialogTitle className="text-xl sm:text-2xl font-bold">{customer.name}</DialogTitle>
-              <DialogDescription className="sr-only">Detailed customer information and history.</DialogDescription>
+              <DialogDescription className="sr-only">{t(language, 'customerDetailsHistory')}</DialogDescription>
               <div className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
-                <span>{customer.phone || 'No phone'}</span>
+                <span>{customer.phone || t(language, 'noPhone')}</span>
                 <span>•</span>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${customer.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}>
                   {customer.active ? t(language, 'active') : t(language, 'inactive')}
@@ -204,11 +204,11 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
           
           <div className="flex gap-4 mt-4 sm:mt-6 overflow-x-auto no-scrollbar pb-1">
             {[
-              { id: 'info', label: 'Overview' },
-              { id: 'entries', label: `Entries (${entries.length})` },
-              { id: 'holidays', label: `${language === 'mr' ? 'सुट्टी' : 'Holidays'} (${filteredSkippedDates.length})` },
-              { id: 'invoices', label: `Bills (${invoices.length})` },
-              { id: 'payments', label: `Payments (${payments.length})` }
+              { id: 'info', label: t(language, 'overview') },
+              { id: 'entries', label: `${t(language, 'entriesLabel')} (${entries.length})` },
+              { id: 'holidays', label: `${t(language, 'holidays')} (${filteredSkippedDates.length})` },
+              { id: 'invoices', label: `${t(language, 'billsLabel')} (${invoices.length})` },
+              { id: 'payments', label: `${t(language, 'paymentsLabel')} (${payments.length})` }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -227,36 +227,36 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50 dark:bg-slate-900/20">
           {isLoading ? (
-            <LoadingBlock label="Loading details..." minHeightClassName="min-h-[200px]" size="md" />
+            <LoadingBlock label={t(language, 'loadingDetails')} minHeightClassName="min-h-[200px]" size="md" />
           ) : (
             <>
               {activeTab === 'info' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
-                    <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-4">Customer Details</h3>
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-4">{t(language, 'customerDetails')}</h3>
                     <div className="space-y-3 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Address</span>
+                        <span className="text-slate-500">{t(language, 'addressLabel')}</span>
                         <span className="font-medium text-right text-slate-800 dark:text-slate-200">{customer.address || '-'}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Milk Type</span>
+                        <span className="text-slate-500">{t(language, 'milkType')}</span>
                         <span className="font-medium text-slate-800 dark:text-slate-200">{getMilkTypeLabel(customer.milkType)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Daily Quantity</span>
+                        <span className="text-slate-500">{t(language, 'dailyQuantityLabel')}</span>
                         <span className="font-medium text-slate-800 dark:text-slate-200">{customer.dailyQuantity} L</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Rate / Liter</span>
+                        <span className="text-slate-500">{t(language, 'ratePerLiterLabel')}</span>
                         <span className="font-medium text-slate-800 dark:text-slate-200">₹{customer.ratePerLiter}</span>
                       </div>
                     </div>
                   </div>
                   <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
-                    <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-4">Financial Overview</h3>
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-4">{t(language, 'financialOverview')}</h3>
                     <div className="flex flex-col items-center justify-center h-24 bg-slate-50 dark:bg-slate-900 rounded-xl mb-4">
-                      <span className="text-sm font-medium text-slate-500">Current Balance</span>
+                      <span className="text-sm font-medium text-slate-500">{t(language, 'currentBalance')}</span>
                       <span className={`text-3xl font-extrabold ${customer.balance > 0 ? 'text-emerald-600' : customer.balance < 0 ? 'text-red-500' : 'text-slate-700 dark:text-slate-200'}`}>
                         ₹{customer.balance}
                       </span>
@@ -269,22 +269,22 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row gap-3 items-end px-1">
                     <div className="w-full sm:w-1/3">
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'filterEntries') || 'Filter Entries'}</label>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'filterEntries')}</label>
                       <select
                         value={entryFilterType}
                         onChange={(e) => setEntryFilterType(e.target.value as any)}
                         className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm"
                       >
-                        <option value="all">{t(language, 'allEntries') || 'All Entries'}</option>
-                        <option value="single">{t(language, 'specificDate') || 'Specific Date'}</option>
-                        <option value="range">{t(language, 'dateRange') || 'Date Range'}</option>
+                        <option value="all">{t(language, 'allEntries')}</option>
+                        <option value="single">{t(language, 'specificDate')}</option>
+                        <option value="range">{t(language, 'dateRange')}</option>
                       </select>
                     </div>
 
                     {entryFilterType === 'range' && (
                       <>
                         <div className="w-full sm:w-1/3">
-                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'fromDate') || 'From Date'}</label>
+                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'fromDate')}</label>
                           <input 
                             type="date" 
                             value={entryStartDate}
@@ -293,7 +293,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                           />
                         </div>
                         <div className="w-full sm:w-1/3">
-                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'toDate') || 'To Date'}</label>
+                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'toDate')}</label>
                           <input 
                             type="date" 
                             value={entryEndDate}
@@ -306,7 +306,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                     
                     {entryFilterType === 'single' && (
                       <div className="w-full sm:w-1/3">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'dateLabel') || 'Date'}</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'dateLabel')}</label>
                         <input 
                           type="date" 
                           value={entryStartDate}
@@ -320,36 +320,36 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                   <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden relative">
                     {entriesLoading && (
                       <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-10 flex items-center justify-center">
-                        <LoadingBlock label="Loading..." size="sm" />
+                        <LoadingBlock label={t(language, 'loadingShort')} size="sm" />
                       </div>
                     )}
                     <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
                         <tr>
-                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">Date</th>
-                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">Morning</th>
-                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">Evening</th>
-                          <th className="px-4 py-3 font-medium text-right text-slate-500 whitespace-nowrap">Amount</th>
+                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{t(language, 'dateWord')}</th>
+                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{t(language, 'morningWord')}</th>
+                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{t(language, 'eveningWord')}</th>
+                          <th className="px-4 py-3 font-medium text-right text-slate-500 whitespace-nowrap">{t(language, 'amountColumn')}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {entries.length === 0 ? (
-                          <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No entries this month.</td></tr>
+                          <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">{t(language, 'noEntriesThisMonth')}</td></tr>
                         ) : (
                           entries.map(entry => (
                             <tr key={entry.id} className="border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/30">
                               <td className="px-4 py-3 whitespace-nowrap">{formatDate(entry.date)}</td>
                               <td className="px-4 py-3 whitespace-nowrap">
                                 {(!entry.morningQuantity || entry.morningQuantity === 0) ? (
-                                  <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-500/20">{language === 'mr' ? 'सुट्टी' : 'Holiday'}</span>
+                                  <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-500/20">{t(language, 'holiday')}</span>
                                 ) : (
                                   `${entry.morningQuantity} L`
                                 )}
                               </td>
                               <td className="px-4 py-3 whitespace-nowrap">
                                 {(!entry.eveningQuantity || entry.eveningQuantity === 0) ? (
-                                  <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-500/20">{language === 'mr' ? 'सुट्टी' : 'Holiday'}</span>
+                                  <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-500/20">{t(language, 'holiday')}</span>
                                 ) : (
                                   `${entry.eveningQuantity} L`
                                 )}
@@ -369,22 +369,22 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row gap-3 items-end px-1">
                     <div className="w-full sm:w-1/3">
-                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'filterEntries') || 'Filter Entries'}</label>
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'filterEntries')}</label>
                       <select
                         value={entryFilterType}
                         onChange={(e) => setEntryFilterType(e.target.value as any)}
                         className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm"
                       >
-                        <option value="all">{t(language, 'allEntries') || 'All Entries'}</option>
-                        <option value="single">{t(language, 'specificDate') || 'Specific Date'}</option>
-                        <option value="range">{t(language, 'dateRange') || 'Date Range'}</option>
+                        <option value="all">{t(language, 'allEntries')}</option>
+                        <option value="single">{t(language, 'specificDate')}</option>
+                        <option value="range">{t(language, 'dateRange')}</option>
                       </select>
                     </div>
 
                     {entryFilterType === 'range' && (
                       <>
                         <div className="w-full sm:w-1/3">
-                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'fromDate') || 'From Date'}</label>
+                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'fromDate')}</label>
                           <input
                             type="date"
                             value={entryStartDate}
@@ -393,7 +393,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                           />
                         </div>
                         <div className="w-full sm:w-1/3">
-                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'toDate') || 'To Date'}</label>
+                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'toDate')}</label>
                           <input
                             type="date"
                             value={entryEndDate}
@@ -406,7 +406,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
 
                     {entryFilterType === 'single' && (
                       <div className="w-full sm:w-1/3">
-                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'dateLabel') || 'Date'}</label>
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'dateLabel')}</label>
                         <input
                           type="date"
                           value={entryStartDate}
@@ -422,20 +422,20 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                       <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
                           <tr>
-                            <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">Date</th>
-                            <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">Status</th>
+                            <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{t(language, 'dateWord')}</th>
+                            <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{t(language, 'statusColumn')}</th>
                           </tr>
                         </thead>
                         <tbody>
                           {filteredSkippedDates.length === 0 ? (
-                            <tr><td colSpan={2} className="px-4 py-8 text-center text-slate-500">{language === 'mr' ? 'सुट्टी आढळली नाही.' : 'No holidays found.'}</td></tr>
+                            <tr><td colSpan={2} className="px-4 py-8 text-center text-slate-500">{t(language, 'noHolidaysFound')}</td></tr>
                           ) : (
                             filteredSkippedDates.map((holidayDate) => (
                               <tr key={holidayDate} className="border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/30">
                                 <td className="px-4 py-3 whitespace-nowrap">{formatDate(holidayDate)}</td>
                                 <td className="px-4 py-3 whitespace-nowrap">
                                   <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-500/20">
-                                    {language === 'mr' ? 'सुट्टी' : 'Holiday'}
+                                    {t(language, 'holiday')}
                                   </span>
                                 </td>
                               </tr>
@@ -454,14 +454,14 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                     <table className="w-full text-left text-sm">
                       <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
                         <tr>
-                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">Period</th>
-                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">Status</th>
-                          <th className="px-4 py-3 font-medium text-right text-slate-500 whitespace-nowrap">Amount</th>
+                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{t(language, 'period')}</th>
+                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{t(language, 'statusColumn')}</th>
+                          <th className="px-4 py-3 font-medium text-right text-slate-500 whitespace-nowrap">{t(language, 'amountColumn')}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {invoices.length === 0 ? (
-                          <tr><td colSpan={3} className="px-4 py-8 text-center text-slate-500">No bills found.</td></tr>
+                          <tr><td colSpan={3} className="px-4 py-8 text-center text-slate-500">{t(language, 'noBillsFound')}</td></tr>
                         ) : (
                           invoices.map(invoice => (
                             <tr key={invoice.id} className="border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/30">
@@ -470,7 +470,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                                 <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
                                   invoice.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                                 }`}>
-                                  {invoice.status}
+                                  {invoice.status === 'PAID' ? t(language, 'paid') : t(language, 'pending')}
                                 </span>
                               </td>
                               <td className="px-4 py-3 font-medium text-right whitespace-nowrap">₹{invoice.totalAmount}</td>
@@ -489,14 +489,14 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                     <table className="w-full text-left text-sm">
                       <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
                         <tr>
-                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">Date</th>
-                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">Status</th>
-                          <th className="px-4 py-3 font-medium text-right text-slate-500 whitespace-nowrap">Amount</th>
+                          <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{t(language, 'dateWord')}</th>
+                            <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{t(language, 'statusColumn')}</th>
+                            <th className="px-4 py-3 font-medium text-right text-slate-500 whitespace-nowrap">{t(language, 'amountColumn')}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {payments.length === 0 ? (
-                          <tr><td colSpan={3} className="px-4 py-8 text-center text-slate-500">No payments found.</td></tr>
+                          <tr><td colSpan={3} className="px-4 py-8 text-center text-slate-500">{t(language, 'noPaymentsFound')}</td></tr>
                         ) : (
                           payments.map(payment => (
                             <tr key={payment.id} className="border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/30">
@@ -505,7 +505,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                                 <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
                                   payment.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'
                                 }`}>
-                                  {payment.status}
+                                  {payment.status === 'COMPLETED' ? t(language, 'completed') : t(language, 'pending')}
                                 </span>
                               </td>
                               <td className="px-4 py-3 font-medium text-emerald-600 text-right whitespace-nowrap">+₹{payment.amount}</td>

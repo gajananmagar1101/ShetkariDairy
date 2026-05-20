@@ -290,7 +290,7 @@ export default function MilkEntries() {
       }
     } catch (err) {
       console.error(err)
-      alert('Failed to update entry.')
+      alert(t(language, 'failedUpdateEntry'))
     } finally {
       setIsSubmitting(false)
     }
@@ -300,13 +300,13 @@ export default function MilkEntries() {
     e.preventDefault()
     if (isSubmitting) return
     if (!selectedCustomerId) {
-      toast.error('Please select a customer')
+      toast.error(t(language, 'pleaseSelectCustomer'))
       return
     }
 
     const customer = customers.find(c => c.id === selectedCustomerId);
     if (!customer) {
-      toast.error(language === 'mr' ? 'ग्राहक सापडला नाही.' : 'Customer not found.')
+      toast.error(t(language, 'customerNotFound'))
       return
     }
 
@@ -318,7 +318,7 @@ export default function MilkEntries() {
       const spEnd = customer.specialCondition.endDate;
       
       if (start <= spEnd && end >= spStart) {
-        setNoDeliveryError(language === 'mr' ? 'ही तारीख आधीच Special Quantity मध्ये वापरली आहे.' : 'Date is already used in Special Quantity.');
+        setNoDeliveryError(t(language, 'dateUsedSpecialQuantity'));
         return;
       }
     }
@@ -351,7 +351,7 @@ export default function MilkEntries() {
       }
     } catch (err) {
       console.error(err)
-      toast.error('Failed to mark no delivery.')
+      toast.error(t(language, 'failedMarkNoDelivery'))
     } finally {
       setIsSubmitting(false)
     }
@@ -374,7 +374,7 @@ export default function MilkEntries() {
       }
     } catch (err) {
       console.error(err)
-      toast.error('Failed to remove no delivery.')
+      toast.error(t(language, 'failedRemoveNoDelivery'))
     }
   }
 
@@ -397,13 +397,13 @@ export default function MilkEntries() {
     e.preventDefault()
     if (isSubmitting) return
     if (!overrideCustomerId || !overrideQuantity) {
-      toast.error('Please select customer and quantity')
+      toast.error(t(language, 'pleaseSelectCustomerAndQuantity'))
       return
     }
 
     const customer = customers.find(c => c.id === overrideCustomerId);
     if (!customer) {
-      toast.error(language === 'mr' ? 'ग्राहक सापडला नाही.' : 'Customer not found.')
+      toast.error(t(language, 'customerNotFound'))
       return
     }
 
@@ -416,7 +416,7 @@ export default function MilkEntries() {
       });
 
       if (hasOverlap) {
-        setOverrideError(language === 'mr' ? 'ही तारीख आधीच No Delivery मध्ये वापरली आहे.' : 'Date is already used in No Delivery.');
+        setOverrideError(t(language, 'dateUsedNoDelivery'));
         return;
       }
     }
@@ -459,7 +459,7 @@ export default function MilkEntries() {
       }
     } catch (err) {
       console.error(err)
-      toast.error('Failed to save special quantity.')
+      toast.error(t(language, 'failedSaveSpecialQuantity'))
     } finally {
       setIsSubmitting(false)
     }
@@ -493,7 +493,7 @@ export default function MilkEntries() {
         setCachedCustomers(nextCustomers)
       }
     } catch (err) {
-      console.error("Failed to turn off special condition", err);
+      console.error(t(language, 'failedSaveSpecialQuantity'), err);
     }
   }
 
@@ -587,7 +587,7 @@ export default function MilkEntries() {
               <DialogHeader>
                 <DialogTitle>{t(language, 'editEntryTitle')}</DialogTitle>
                 <DialogDescription>
-                  Update the milk quantities and optional fat or SNF values for this entry.
+                  {t(language, 'updateEntryDesc')}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleEditEntry} className="mt-3 space-y-4">
@@ -638,7 +638,7 @@ export default function MilkEntries() {
                   </div>
                 </div>
                 <Button type="submit" disabled={isSubmitting} className="mt-2 h-14 w-full rounded-[1.6rem] shadow-[0_12px_30px_rgba(139,92,246,0.28)]">
-                  {isSubmitting ? <LoadingInline label="Saving..." /> : t(language, 'saveChanges')}
+                  {isSubmitting ? <LoadingInline label={t(language, 'saveInProgress')} /> : t(language, 'saveChanges')}
                 </Button>
               </form>
             </DialogContent>
@@ -652,7 +652,7 @@ export default function MilkEntries() {
               className="h-auto min-w-0 flex-1 gap-2 rounded-[1.25rem] border-emerald-200 bg-emerald-50 px-4 py-2 text-emerald-700 hover:bg-emerald-100 xl:flex-none"
             >
               {isSubmitting ? <LoadingSpinner size="sm" /> : <Play className="h-4 w-4" />}
-              <span className="hidden lg:inline">{language === 'mr' ? 'ऑटो जनरेट' : 'Auto Generate'}</span>
+              <span className="hidden lg:inline">{t(language, 'autoGenerate')}</span>
               <span className="lg:hidden">{language === 'mr' ? 'ऑटो' : 'Auto'}</span>
             </Button>
             <Dialog open={isOverrideDialogOpen} onOpenChange={(open) => { setIsOverrideDialogOpen(open); if(open) setOverrideError(''); }}>
@@ -667,7 +667,7 @@ export default function MilkEntries() {
               <DialogHeader>
                 <DialogTitle>{t(language, 'specialQuantity')}</DialogTitle>
                 <DialogDescription>
-                  Set a special delivery quantity for a customer on one date or a date range.
+                  {t(language, 'specialQuantityDesc')}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleDeliveryOverride} className="mt-3 space-y-4">
@@ -730,7 +730,7 @@ export default function MilkEntries() {
                     onChange={e => { setOverrideCustomerId(e.target.value); setOverrideError(''); }}
                     className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 py-3.5 text-slate-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/40"
                   >
-                    <option value="" disabled>Select Customer</option>
+                    <option value="" disabled>{t(language, 'selectCustomerPlaceholder')}</option>
                     {activeCustomers.map(customer => (
                       <option key={customer.id} value={customer.id}>{customer.name}</option>
                     ))}
@@ -749,7 +749,7 @@ export default function MilkEntries() {
                   />
                 </div>
                 <Button type="submit" disabled={isSubmitting} className="mt-2 h-14 w-full rounded-[1.6rem] shadow-[0_12px_30px_rgba(139,92,246,0.28)]">
-                  {isSubmitting ? <LoadingInline label="Saving..." /> : t(language, 'saveSpecialQuantity')}
+                  {isSubmitting ? <LoadingInline label={t(language, 'saveInProgress')} /> : t(language, 'saveSpecialQuantity')}
                 </Button>
               </form>
             </DialogContent>
@@ -767,7 +767,7 @@ export default function MilkEntries() {
               <DialogHeader>
                 <DialogTitle>{t(language, 'noDelivery')}</DialogTitle>
                 <DialogDescription>
-                  Mark no-delivery days for a customer on one date or a date range.
+                  {t(language, 'noDeliveryDesc')}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleNoDelivery} className="mt-3 space-y-4">
@@ -827,14 +827,14 @@ export default function MilkEntries() {
                     onChange={e => { setSelectedCustomerId(e.target.value); setNoDeliveryError(''); }}
                     className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 py-3.5 text-slate-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/40"
                   >
-                    <option value="" disabled>Select Customer</option>
+                    <option value="" disabled>{t(language, 'selectCustomerPlaceholder')}</option>
                     {activeCustomers.map(customer => (
                       <option key={customer.id} value={customer.id}>{customer.name}</option>
                     ))}
                   </select>
                 </div>
                 <Button type="submit" disabled={isSubmitting} className="mt-2 h-14 w-full rounded-[1.6rem] shadow-[0_12px_30px_rgba(139,92,246,0.28)]">
-                  {isSubmitting ? <LoadingInline label="Saving..." /> : t(language, 'saveNoDelivery')}
+                  {isSubmitting ? <LoadingInline label={t(language, 'saveInProgress')} /> : t(language, 'saveNoDelivery')}
                 </Button>
               </form>
             </DialogContent>
@@ -952,14 +952,14 @@ export default function MilkEntries() {
                                   <button
                                     onClick={() => handleEditNoDelivery(customer)}
                                     className="rounded-full p-2 text-blue-600 transition-colors hover:bg-blue-100"
-                                    title="Edit"
+                                    title={t(language, 'edit')}
                                   >
                                     <PencilLine className="h-3.5 w-3.5" />
                                   </button>
                                   <button
                                     onClick={() => handleRemoveNoDelivery(customer.id)}
                                     className="rounded-full p-2 text-red-500 transition-colors hover:bg-red-100"
-                                    title="Turn Off"
+                                    title={t(language, 'turnOff')}
                                   >
                                     <X className="h-3.5 w-3.5" />
                                   </button>
@@ -1021,14 +1021,14 @@ export default function MilkEntries() {
                                   <button
                                     onClick={() => handleEditSpecialCondition(customer)}
                                     className="rounded-full p-2 text-blue-600 transition-colors hover:bg-blue-100"
-                                    title="Edit"
+                                    title={t(language, 'edit')}
                                   >
                                     <PencilLine className="h-3.5 w-3.5" />
                                   </button>
                                   <button
                                     onClick={() => handleTurnOffSpecialCondition(customer.id)}
                                     className="rounded-full p-2 text-red-500 transition-colors hover:bg-red-100"
-                                    title="Turn Off"
+                                    title={t(language, 'turnOff')}
                                   >
                                     <X className="h-3.5 w-3.5" />
                                   </button>
@@ -1049,7 +1049,7 @@ export default function MilkEntries() {
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto">
             {isLoading ? (
-              <LoadingBlock label="Loading milk entries..." minHeightClassName="min-h-[240px]" size="md" />
+              <LoadingBlock label={t(language, 'loadingMilkEntries')} minHeightClassName="min-h-[240px]" size="md" />
             ) : (
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -1096,7 +1096,7 @@ export default function MilkEntries() {
                               <>
                                 <Button
                                   variant="ghost" size="icon"
-                                  title="Edit Entry"
+                                  title={t(language, 'editEntryTitle')}
                                   className="h-8 w-8 text-blue-600 rounded-lg hover:bg-blue-50"
                                   onClick={() => openEditDialog(entry)}
                                 >
@@ -1112,7 +1112,7 @@ export default function MilkEntries() {
                                 </Button>
                                 <Button 
                                   variant="ghost" size="icon" 
-                                  title="WhatsApp Message"
+                                  title={t(language, 'whatsappMessage')}
                                   className="h-8 w-8 text-green-600 rounded-lg hover:bg-green-50"
                                   onClick={() => {
                                     const totalQty = entry.morningQuantity + entry.eveningQuantity;
@@ -1137,7 +1137,7 @@ export default function MilkEntries() {
           {/* Mobile Scrollable Table View */}
           <div className="md:hidden mt-4">
             {isLoading ? (
-              <LoadingBlock label="Loading milk entries..." minHeightClassName="min-h-[240px]" size="md" />
+              <LoadingBlock label={t(language, 'loadingMilkEntries')} minHeightClassName="min-h-[240px]" size="md" />
             ) : allDisplayEntries.length === 0 ? (
               <div className="py-8 text-center text-slate-500">{t(language, 'noEntries')}</div>
             ) : (
@@ -1250,7 +1250,7 @@ export default function MilkEntries() {
                 className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
               />
               <label htmlFor="autoGenRange" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                {t(language, 'selectDateRange') || 'Select Date Range (Multiple Days)'}
+                {t(language, 'selectDateRange')}
               </label>
             </div>
 
@@ -1258,7 +1258,7 @@ export default function MilkEntries() {
               {autoGenIsRange ? (
                 <>
                   <div className="flex-1 space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t(language, 'fromDate') || 'From Date'}</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t(language, 'fromDate')}</label>
                     <input 
                       type="date" 
                       value={autoGenStartDate}
@@ -1267,7 +1267,7 @@ export default function MilkEntries() {
                     />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t(language, 'toDate') || 'To Date'}</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t(language, 'toDate')}</label>
                     <input 
                       type="date" 
                       value={autoGenEndDate}
@@ -1278,7 +1278,7 @@ export default function MilkEntries() {
                 </>
               ) : (
                 <div className="w-full space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t(language, 'dateLabel') || 'Date'}</label>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t(language, 'dateLabel')}</label>
                   <input 
                     type="date" 
                     value={autoGenStartDate}
@@ -1310,7 +1310,7 @@ export default function MilkEntries() {
                 disabled={isSubmitting}
                 className="rounded-xl px-5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-semibold"
               >
-                {isSubmitting ? <span className="animate-pulse">...</span> : (language === 'mr' ? 'जनरेट करा' : 'Generate')}
+                {isSubmitting ? <span className="animate-pulse">...</span> : t(language, 'generateNow')}
               </Button>
             </div>
           </div>

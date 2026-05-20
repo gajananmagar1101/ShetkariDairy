@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Mail, Phone, User as UserIcon, Camera, Edit2, Check, X } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
+import { useSettingsStore } from '../store/settingsStore'
 import { resizeImage } from '../utils/imageUtils'
 import axios from 'axios'
 import { LoadingInline } from '../components/ui/loading'
@@ -8,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../compon
 
 const Profile: React.FC = () => {
   const { user, setAuth, token } = useAuthStore()
+  const { language } = useSettingsStore()
   
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -49,13 +51,13 @@ const Profile: React.FC = () => {
       setEditPicture(resizedBase64)
     } catch (error) {
       console.error('Failed to resize image:', error)
-      alert('Failed to process image. Please try another one.')
+      alert(language === 'mr' ? 'फोटो प्रक्रिया करता आली नाही. दुसरा फोटो वापरून पुन्हा प्रयत्न करा.' : 'Failed to process image. Please try another one.')
     }
   }
 
   const handleSave = async () => {
     if (!editName.trim()) {
-      alert('Name cannot be empty')
+      alert(language === 'mr' ? 'नाव रिकामे ठेवू शकत नाही.' : 'Name cannot be empty')
       return
     }
 
@@ -86,11 +88,11 @@ const Profile: React.FC = () => {
         }, nextToken as string)
         setIsEditing(false)
       } else {
-        alert(res.data.message || 'Failed to update profile')
+        alert(res.data.message || (language === 'mr' ? 'प्रोफाइल अपडेट करता आले नाही.' : 'Failed to update profile'))
       }
     } catch (error) {
       console.error('Error saving profile:', error)
-      alert('An error occurred while saving your profile.')
+      alert(language === 'mr' ? 'प्रोफाइल सेव्ह करताना त्रुटी आली.' : 'An error occurred while saving your profile.')
     } finally {
       setIsLoading(false)
     }
@@ -106,15 +108,15 @@ const Profile: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white tracking-tight">My Profile</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white tracking-tight">{language === 'mr' ? 'माझे प्रोफाइल' : 'My Profile'}</h1>
         {!isEditing ? (
           <button 
             onClick={() => setIsEditing(true)}
             className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors shadow-sm"
           >
             <Edit2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Edit Profile</span>
-            <span className="sm:hidden">Edit</span>
+            <span className="hidden sm:inline">{language === 'mr' ? 'प्रोफाइल बदला' : 'Edit Profile'}</span>
+            <span className="sm:hidden">{language === 'mr' ? 'बदला' : 'Edit'}</span>
           </button>
         ) : (
           <div className="flex items-center gap-2">
@@ -124,7 +126,7 @@ const Profile: React.FC = () => {
               className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors shadow-sm disabled:opacity-50"
             >
               <X className="w-4 h-4" />
-              <span className="hidden sm:inline">Cancel</span>
+              <span className="hidden sm:inline">{language === 'mr' ? 'रद्द करा' : 'Cancel'}</span>
             </button>
             <button 
               onClick={handleSave}
@@ -132,8 +134,8 @@ const Profile: React.FC = () => {
               className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
             >
               {isLoading ? <LoadingInline label="" className="gap-0" /> : <Check className="w-4 h-4" />}
-              <span className="hidden sm:inline">Save Changes</span>
-              <span className="sm:hidden">Save</span>
+              <span className="hidden sm:inline">{language === 'mr' ? 'बदल सेव्ह करा' : 'Save Changes'}</span>
+              <span className="sm:hidden">{language === 'mr' ? 'सेव्ह' : 'Save'}</span>
             </button>
           </div>
         )}
@@ -165,7 +167,7 @@ const Profile: React.FC = () => {
             {isEditing && (
               <div className="absolute inset-0 bg-black/40 backdrop-blur-md flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                 <Camera className="w-8 h-8 text-white mb-1" />
-                <span className="text-white text-xs font-medium tracking-wide shadow-sm">Change Photo</span>
+                <span className="text-white text-xs font-medium tracking-wide shadow-sm">{language === 'mr' ? 'फोटो बदला' : 'Change Photo'}</span>
               </div>
             )}
           </div>
@@ -186,9 +188,9 @@ const Profile: React.FC = () => {
           <div className="mt-10 w-full text-left space-y-5 max-w-3xl mx-auto">
             <div className="flex items-center gap-3 border-b border-slate-200/50 dark:border-slate-800/50 pb-3 px-2">
               <h3 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-200 tracking-tight">
-                Personal Details
+                {language === 'mr' ? 'वैयक्तिक माहिती' : 'Personal Details'}
               </h3>
-              {isEditing && <span className="px-2.5 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] sm:text-xs font-semibold rounded-full animate-pulse border border-blue-500/20">Editing</span>}
+              {isEditing && <span className="px-2.5 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] sm:text-xs font-semibold rounded-full animate-pulse border border-blue-500/20">{language === 'mr' ? 'बदल सुरू' : 'Editing'}</span>}
             </div>
             
             <div className="space-y-4 sm:space-y-5">
@@ -198,17 +200,17 @@ const Profile: React.FC = () => {
                   <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-colors ${isEditing ? 'bg-blue-500 text-white shadow-blue-500/30' : 'bg-slate-100/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
                     <UserIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
-                  <p className="text-xs font-semibold tracking-wider uppercase text-slate-500 dark:text-slate-400 sm:hidden">Full Name</p>
+                  <p className="text-xs font-semibold tracking-wider uppercase text-slate-500 dark:text-slate-400 sm:hidden">{language === 'mr' ? 'पूर्ण नाव' : 'Full Name'}</p>
                 </div>
                 <div className="flex-1 w-full">
-                  <p className="hidden sm:block text-[11px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-1.5">Full Name</p>
+                  <p className="hidden sm:block text-[11px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-1.5">{language === 'mr' ? 'पूर्ण नाव' : 'Full Name'}</p>
                   {isEditing ? (
                     <input 
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       className="w-full bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-700/80 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl px-4 py-2.5 text-sm sm:text-base text-slate-900 dark:text-white font-semibold outline-none transition-all shadow-sm"
-                      placeholder="Enter your full name"
+                      placeholder={language === 'mr' ? 'पूर्ण नाव टाका' : 'Enter your full name'}
                       autoFocus
                     />
                   ) : (
@@ -223,21 +225,21 @@ const Profile: React.FC = () => {
                   <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm transition-colors ${isEditing ? 'bg-green-500 text-white shadow-green-500/30' : 'bg-slate-100/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
                     <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
-                  <p className="text-xs font-semibold tracking-wider uppercase text-slate-500 dark:text-slate-400 sm:hidden">Mobile Number</p>
+                  <p className="text-xs font-semibold tracking-wider uppercase text-slate-500 dark:text-slate-400 sm:hidden">{language === 'mr' ? 'मोबाईल नंबर' : 'Mobile Number'}</p>
                 </div>
                 <div className="flex-1 w-full">
-                  <p className="hidden sm:block text-[11px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-1.5">Mobile Number</p>
+                  <p className="hidden sm:block text-[11px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-1.5">{language === 'mr' ? 'मोबाईल नंबर' : 'Mobile Number'}</p>
                   {isEditing ? (
                     <input 
                       type="tel"
                       value={editPhone}
                       onChange={(e) => setEditPhone(e.target.value)}
                       className="w-full bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-700/80 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl px-4 py-2.5 text-sm sm:text-base text-slate-900 dark:text-white font-semibold outline-none transition-all shadow-sm"
-                      placeholder="Enter your mobile number"
+                      placeholder={language === 'mr' ? 'मोबाईल नंबर टाका' : 'Enter your mobile number'}
                     />
                   ) : (
                     <p className="text-base sm:text-lg font-bold text-slate-800 dark:text-white/90">
-                      {user.phone ? user.phone : <span className="text-slate-400 italic text-sm sm:text-base font-normal">Not added yet</span>}
+                      {user.phone ? user.phone : <span className="text-slate-400 italic text-sm sm:text-base font-normal">{language === 'mr' ? 'अजून जोडलेले नाही' : 'Not added yet'}</span>}
                     </p>
                   )}
                 </div>
@@ -250,15 +252,15 @@ const Profile: React.FC = () => {
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-100/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center shrink-0 shadow-sm">
                       <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
-                    <p className="text-xs font-semibold tracking-wider uppercase text-slate-500 dark:text-slate-400 sm:hidden">Email Address</p>
+                    <p className="text-xs font-semibold tracking-wider uppercase text-slate-500 dark:text-slate-400 sm:hidden">{language === 'mr' ? 'ईमेल पत्ता' : 'Email Address'}</p>
                   </div>
                   <div className="flex-1 w-full overflow-hidden">
-                    <p className="hidden sm:block text-[11px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-1.5">Email Address</p>
+                    <p className="hidden sm:block text-[11px] font-bold tracking-widest uppercase text-slate-400 dark:text-slate-500 mb-1.5">{language === 'mr' ? 'ईमेल पत्ता' : 'Email Address'}</p>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
                       <p className="text-base sm:text-lg font-bold text-slate-800 dark:text-white/90 truncate">
                         {user.email}
                       </p>
-                      {isEditing && <span className="text-[10px] font-semibold text-slate-400 bg-slate-200/60 dark:bg-slate-700/60 px-2 py-0.5 rounded-md border border-slate-300/50 dark:border-slate-600/50 w-max shadow-sm">Unchangeable</span>}
+                      {isEditing && <span className="text-[10px] font-semibold text-slate-400 bg-slate-200/60 dark:bg-slate-700/60 px-2 py-0.5 rounded-md border border-slate-300/50 dark:border-slate-600/50 w-max shadow-sm">{language === 'mr' ? 'बदलता येणार नाही' : 'Unchangeable'}</span>}
                     </div>
                   </div>
                 </div>
@@ -270,9 +272,9 @@ const Profile: React.FC = () => {
 
       <Dialog open={isPhotoPreviewOpen} onOpenChange={setIsPhotoPreviewOpen}>
         <DialogContent plain className="max-w-3xl p-3 sm:p-4">
-          <DialogTitle className="sr-only">Profile photo preview</DialogTitle>
+          <DialogTitle className="sr-only">{language === 'mr' ? 'प्रोफाइल फोटो पूर्वदृश्य' : 'Profile photo preview'}</DialogTitle>
           <DialogDescription className="sr-only">
-            Enlarged preview of the profile photo
+            {language === 'mr' ? 'प्रोफाइल फोटोचे मोठे पूर्वदृश्य' : 'Enlarged preview of the profile photo'}
           </DialogDescription>
           <div className="overflow-hidden rounded-xl bg-white">
             {editPicture ? (
