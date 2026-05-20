@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Plus, Search, Trash, Clock, PencilLine, Ban, Mic, MicOff, Play, ChevronDown, ChevronUp, Eye } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
@@ -15,6 +15,7 @@ import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { LoadingBlock, LoadingInline } from '../components/ui/loading'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
+import { getDisplayLocale } from '../utils/numberFormat'
 import { setCachedCustomers } from '../lib/customerCache'
 import { CustomerDetailsDialog } from '../components/customers/CustomerDetailsDialog'
 
@@ -45,9 +46,24 @@ interface Customer {
   } | null
 }
 
+interface MilkEntrySummary {
+  date: string
+  morningQuantity: number
+  eveningQuantity: number
+  totalAmount?: number
+}
+
+interface CustomerRecentEntry {
+  date: string | null
+  quantity: number
+  amount: number
+  isSkipped: boolean
+}
+
 export default function Customers() {
   const { language } = useSettingsStore()
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [recentEntriesByCustomer, setRecentEntriesByCustomer] = useState<Record<string, CustomerRecentEntry>>({})
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -94,6 +110,77 @@ export default function Customers() {
   useEffect(() => {
     fetchCustomers()
   }, [])
+
+  useEffect(() => {
+    if (customers.length === 0) {
+      setRecentEntriesByCustomer({})
+      return
+    }
+
+    const fetchRecentEntries = async () => {
+      try {
+        const responses = await Promise.all(
+          customers.map((customer) =>
+            axios.get('/api/milk-entries/customer-range', {
+              params: {
+                customerId: customer.id,
+                startDate: '2000-01-01',
+                endDate: '2100-01-01',
+              },
+            })
+          )
+        )
+
+        const nextRecentEntries = customers.reduce<Record<string, CustomerRecentEntry>>((acc, customer, index) => {
+          const customerEntries = (responses[index].data?.data ?? []) as MilkEntrySummary[]
+          const latestEntryDate = customerEntries.reduce<string | null>((latestDate, entry) => {
+            const currentDate = entry.date?.slice(0, 10) ?? null
+            if (!currentDate) return latestDate
+            if (!latestDate || currentDate > latestDate) return currentDate
+            return latestDate
+          }, null)
+          const latestDateEntries = latestEntryDate
+            ? customerEntries.filter((entry) => entry.date?.slice(0, 10) === latestEntryDate)
+            : []
+          const latestSkippedDate = [...(customer.skippedDates ?? [])].sort().at(-1) ?? null
+          const shouldShowSkippedAsLatest =
+            !!latestSkippedDate && (!latestEntryDate || latestSkippedDate >= latestEntryDate)
+
+          acc[customer.id] = shouldShowSkippedAsLatest
+            ? {
+                date: latestSkippedDate,
+                quantity: 0,
+                amount: 0,
+                isSkipped: true,
+              }
+            : latestDateEntries.length > 0
+              ? {
+                  date: latestEntryDate,
+                  quantity: latestDateEntries.reduce(
+                    (sum, entry) => sum + (entry.morningQuantity || 0) + (entry.eveningQuantity || 0),
+                    0
+                  ),
+                  amount: latestDateEntries.reduce((sum, entry) => sum + Number(entry.totalAmount || 0), 0),
+                  isSkipped: false,
+                }
+              : {
+                date: null,
+                quantity: 0,
+                amount: 0,
+                isSkipped: false,
+              }
+
+          return acc
+        }, {})
+
+        setRecentEntriesByCustomer(nextRecentEntries)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+
+    void fetchRecentEntries()
+  }, [customers])
 
   const startVoiceTyping = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -238,19 +325,36 @@ export default function Customers() {
   const stoppedCustomers = filteredCustomers
     .filter((customer) => !customer.active)
     .sort((a, b) => new Date(b.stoppedAt || 0).getTime() - new Date(a.stoppedAt || 0).getTime())
-  const totalCustomerMilk = activeCustomers
-    .reduce((sum, customer) => sum + (customer.dailyQuantity || 0), 0)
+  const totalCustomerMilk = useMemo(
+    () => activeCustomers.reduce((sum, customer) => sum + (recentEntriesByCustomer[customer.id]?.quantity || 0), 0),
+    [activeCustomers, recentEntriesByCustomer]
+  )
+  const totalCustomerBalance = useMemo(
+    () => activeCustomers.reduce((sum, customer) => sum + (customer.balance || 0), 0),
+    [activeCustomers]
+  )
 
   const formatStoppedAt = (value?: string | null) => {
     if (!value) return '-'
     const parsed = new Date(value)
     if (Number.isNaN(parsed.getTime())) return '-'
-    return new Intl.DateTimeFormat(language === 'mr' ? 'mr-IN' : 'en-IN', {
+    return new Intl.DateTimeFormat(getDisplayLocale(language), {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+    }).format(parsed)
+  }
+
+  const formatEntryDate = (value?: string | null) => {
+    if (!value) return language === 'mr' ? 'नोंद नाही' : 'No entry'
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return value
+    return new Intl.DateTimeFormat(getDisplayLocale(language), {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
     }).format(parsed)
   }
 
@@ -458,10 +562,7 @@ export default function Customers() {
               <thead>
                 <tr className="border-b border-slate-200/60 dark:border-slate-600 text-slate-500 dark:text-slate-300 text-sm">
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'name')}</th>
-                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'milkType')}</th>
-                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'dailyQuantity')}</th>
-                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'status')}</th>
-                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'ratePerLiter')}</th>
+                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{language === 'mr' ? 'शेवटची नोंद' : 'Recent Entry'}</th>
                   <th className="pb-3 px-4 font-medium text-right whitespace-nowrap">Balance (₹)</th>
                   <th className="pb-3 px-4 font-medium text-right whitespace-nowrap">{t(language, 'actions')}</th>
                 </tr>
@@ -469,7 +570,7 @@ export default function Customers() {
               <tbody className="text-sm">
                 {activeCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-500 dark:text-slate-300">{t(language, 'noCustomersFound')}</td>
+                    <td colSpan={4} className="py-8 text-center text-slate-500 dark:text-slate-300">{t(language, 'noCustomersFound')}</td>
                   </tr>
                 ) : (
                   activeCustomers.map((customer) => (
@@ -502,18 +603,29 @@ export default function Customers() {
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${customer.milkType === 'COW' ? 'bg-orange-100 text-orange-700' : 'bg-slate-200 text-slate-700'}`}>
-                          {getMilkTypeLabel(customer.milkType)}
-                        </span>
+                      <td className="py-4 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-slate-800 dark:text-slate-200">
+                            {formatEntryDate(recentEntriesByCustomer[customer.id]?.date)}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            {getMilkTypeLabel(customer.milkType)}
+                          </span>
+                          {recentEntriesByCustomer[customer.id]?.isSkipped && (
+                            <span className="inline-flex w-fit items-center gap-1 rounded-md bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-700">
+                              <Ban className="h-3 w-3" /> {t(language, 'skipShort')}
+                            </span>
+                          )}
+                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-300">
+                            {language === 'mr' ? 'दूध: ' : 'Milk: '}
+                            {(recentEntriesByCustomer[customer.id]?.quantity ?? 0).toFixed(1)} L
+                          </span>
+                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-300">
+                            {language === 'mr' ? 'रक्कम: ' : 'Amount: '}
+                            ₹{(recentEntriesByCustomer[customer.id]?.amount ?? 0).toFixed(2)}
+                          </span>
+                        </div>
                       </td>
-                      <td className="py-4 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{customer.dailyQuantity} L</td>
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${customer.active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-700'}`}>
-                          {customer.active ? t(language, 'active') : t(language, 'inactive')}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">₹{customer.ratePerLiter}</td>
                       <td className="py-4 px-4 text-right font-medium whitespace-nowrap">
                         <span className={customer.balance > 0 ? 'text-emerald-600 dark:text-emerald-400' : customer.balance < 0 ? 'text-red-500 dark:text-red-400' : 'text-slate-600 dark:text-slate-300'}>
                           {customer.balance}
@@ -559,9 +671,17 @@ export default function Customers() {
         </div>
 
         <div className="mt-6 rounded-[1.75rem] border border-white/70 bg-white/45 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)] backdrop-blur-xl dark:border-slate-700/80 dark:bg-slate-900/60">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">{t(language, 'totalCustomerMilk')}</p>
-            <p className="text-2xl font-extrabold text-primary-700 dark:text-primary-300">{totalCustomerMilk.toFixed(1)} L</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center justify-between gap-3 sm:min-w-72">
+              <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">{t(language, 'totalCustomerMilk')}</p>
+              <p className="text-2xl font-extrabold text-primary-700 dark:text-primary-300">{totalCustomerMilk.toFixed(1)} L</p>
+            </div>
+            <div className="flex items-center justify-between gap-3 sm:min-w-72">
+              <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">{language === 'mr' ? 'एकूण बॅलन्स' : 'Total Balance'}</p>
+              <p className={`text-2xl font-extrabold ${totalCustomerBalance > 0 ? 'text-emerald-600 dark:text-emerald-400' : totalCustomerBalance < 0 ? 'text-red-500 dark:text-red-400' : 'text-slate-700 dark:text-slate-200'}`}>
+                ₹{totalCustomerBalance.toFixed(2)}
+              </p>
+            </div>
           </div>
         </div>
       </div>

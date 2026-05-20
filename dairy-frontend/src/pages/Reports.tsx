@@ -4,6 +4,7 @@ import axios from 'axios'
 import { TrendingUp, TrendingDown, IndianRupee } from 'lucide-react'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
+import { getDisplayLocale, toEnglishDigits } from '../utils/numberFormat'
 import { LoadingBlock } from '../components/ui/loading'
 import { getCachedViewData, setCachedViewData } from '../lib/viewCache'
 
@@ -34,7 +35,7 @@ export default function Reports() {
     }
 
     void fetchReport(true)
-  }, [year, month])
+  }, [year, month, language])
 
   const fetchReport = async (showLoader = true) => {
     if (showLoader) {
@@ -46,7 +47,12 @@ export default function Reports() {
         // Format date string for chart (e.g. "2024-05-01" -> "01 May")
         const formattedData = res.data.data.map((d: any) => ({
           ...d,
-          dayLabel: new Date(d.date).toLocaleDateString('default', { day: '2-digit', month: 'short' })
+          dayLabel: toEnglishDigits(
+            new Intl.DateTimeFormat(getDisplayLocale(language), {
+              day: '2-digit',
+              month: 'short',
+            }).format(new Date(d.date))
+          )
         }))
         setData(formattedData)
         setCachedViewData(`view-cache-reports-${year}-${month}`, formattedData)
@@ -79,7 +85,9 @@ export default function Reports() {
             className="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white/60 dark:bg-slate-900/60 dark:text-white shadow-sm"
           >
             {[...Array(12)].map((_, i) => (
-              <option key={i+1} value={i+1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
+              <option key={i+1} value={i+1}>
+                {toEnglishDigits(new Intl.DateTimeFormat(getDisplayLocale(language), { month: 'long' }).format(new Date(0, i)))}
+              </option>
             ))}
           </select>
           <input 

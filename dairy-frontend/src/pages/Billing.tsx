@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { Download, MessageCircle, Calculator, Trash2, CheckCircle } from 'lucide-react'
 import QRCode from 'qrcode'
@@ -15,6 +15,7 @@ import {
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
+import { getDisplayLocale, toEnglishDigits } from '../utils/numberFormat'
 import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
 import { fetchAppSettings } from '../lib/userSettings'
 import { LoadingBlock, LoadingInline, LoadingSpinner } from '../components/ui/loading'
@@ -37,6 +38,7 @@ interface Invoice {
 interface Customer {
   id: string
   name: string
+  active?: boolean
 }
 
 interface MilkEntryRow {
@@ -73,6 +75,10 @@ export default function Billing() {
   }
   const [startDate, setStartDate] = useState(formatLocalDate(new Date(today.getFullYear(), today.getMonth(), 1)))
   const [endDate, setEndDate] = useState(formatLocalDate(new Date(today.getFullYear(), today.getMonth() + 1, 0)))
+  const activeCustomers = useMemo(
+    () => customers.filter((customer) => customer.active !== false),
+    [customers]
+  )
 
   const formatDisplayDate = (value?: string) =>
     value ? value.split('-').reverse().join('/') : 'N/A'
@@ -84,7 +90,7 @@ export default function Billing() {
   const getInvoiceRangeLabel = (invoice: Invoice) =>
     invoice.periodStartDate && invoice.periodEndDate
       ? `${formatDisplayDate(invoice.periodStartDate)} - ${formatDisplayDate(invoice.periodEndDate)}`
-      : `${new Date(0, invoice.invoiceMonth - 1).toLocaleString('default', { month: 'short' })} ${invoice.invoiceYear}`
+      : toEnglishDigits(`${new Intl.DateTimeFormat(getDisplayLocale(language), { month: 'short' }).format(new Date(0, invoice.invoiceMonth - 1))} ${invoice.invoiceYear}`)
 
   useEffect(() => {
     const cachedInvoices = getCachedViewData<Invoice[]>(BILLING_CACHE_KEY, BILLING_CACHE_TTL_MS)
@@ -285,7 +291,7 @@ export default function Billing() {
 
     const rangeLabel = invoice.periodStartDate && invoice.periodEndDate
       ? `${formatDisplayDate(invoice.periodStartDate)} - ${formatDisplayDate(invoice.periodEndDate)}`
-      : `${new Date(0, invoice.invoiceMonth - 1).toLocaleString('default', { month: 'long' })} ${invoice.invoiceYear}`
+      : toEnglishDigits(`${new Intl.DateTimeFormat(getDisplayLocale(language), { month: 'long' }).format(new Date(0, invoice.invoiceMonth - 1))} ${invoice.invoiceYear}`)
     const formatDate = (value: string) => new Date(value).toLocaleDateString('en-GB')
 
     let totalLiters = 0
@@ -590,7 +596,7 @@ export default function Billing() {
                   className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 py-3.5 text-slate-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/40"
                 >
                   <option value="" disabled>Select Customer</option>
-                  {customers.map(c => (
+                  {activeCustomers.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>

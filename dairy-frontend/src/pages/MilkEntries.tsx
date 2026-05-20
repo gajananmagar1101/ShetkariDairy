@@ -14,6 +14,7 @@ import { getCachedViewData, setCachedViewData } from '../lib/viewCache'
 interface Customer {
   id: string
   name: string
+  active?: boolean
   skippedDates?: string[]
   specialCondition?: {
     startDate: string
@@ -339,6 +340,11 @@ export default function MilkEntries() {
         )
         setCustomers(nextCustomers)
         setCachedCustomers(nextCustomers)
+        if (date >= start && date <= end) {
+          const nextEntries = entries.filter((entry) => entry.customerId !== selectedCustomerId)
+          setEntries(nextEntries)
+          setCachedViewData(getMilkEntriesCacheKey(date), nextEntries)
+        }
         setIsDialogOpen(false)
         setSelectedCustomerId('')
         void fetchEntries(date, { showLoading: false })
@@ -501,41 +507,43 @@ export default function MilkEntries() {
     setIsOverrideDialogOpen(true);
   }
 
-  const totalLiters = useMemo(
-    () => entries.reduce((acc, curr) => acc + curr.morningQuantity + curr.eveningQuantity, 0),
-    [entries]
-  )
-  const totalAmount = useMemo(
-    () => entries.reduce((acc, curr) => acc + curr.totalAmount, 0),
-    [entries]
-  )
-  
   const todayDate = new Date();
   const todayStr = getLocalDataString(todayDate);
   const yesterdayDate = new Date();
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
   const yesterdayStr = getLocalDataString(yesterdayDate);
 
+  const activeCustomers = useMemo(
+    () => customers.filter((customer) => customer.active !== false),
+    [customers]
+  )
+
+  const activeCustomerIds = useMemo(
+    () => new Set(activeCustomers.map((customer) => customer.id)),
+    [activeCustomers]
+  )
+
   const activeNoDeliveryCustomers = useMemo(
-    () => customers.filter(customer => {
+    () => activeCustomers.filter(customer => {
       if (!customer.skippedDates || customer.skippedDates.length === 0) return false;
       return customer.skippedDates.includes(date);
     }),
-    [customers, date]
+    [activeCustomers, date]
   )
   
   const activeSpecialConditions = useMemo(
-    () => customers.filter(customer => {
+    () => activeCustomers.filter(customer => {
       const cond = customer.specialCondition;
       if (!cond || !cond.active) return false;
       return date >= cond.startDate && date <= cond.endDate;
     }),
-    [customers, date]
+    [activeCustomers, date]
   )
   
   const allDisplayEntries = useMemo(() => {
-    const actualCustomerIds = new Set(entries.map(e => e.customerId));
-    const customersSkippedForSelectedDate = customers.filter(customer => customer.skippedDates?.includes(date));
+    const visibleEntries = entries.filter((entry) => activeCustomerIds.has(entry.customerId));
+    const actualCustomerIds = new Set(visibleEntries.map(e => e.customerId));
+    const customersSkippedForSelectedDate = activeCustomers.filter(customer => customer.skippedDates?.includes(date));
     const virtualSkippedEntries = customersSkippedForSelectedDate
       .filter(c => !actualCustomerIds.has(c.id))
       .map(c => ({
@@ -551,8 +559,17 @@ export default function MilkEntries() {
         isVirtualSkipped: true
       }));
 
-    return [...entries, ...virtualSkippedEntries];
-  }, [customers, date, entries]);
+    return [...visibleEntries, ...virtualSkippedEntries];
+  }, [activeCustomerIds, activeCustomers, date, entries]);
+
+  const totalLiters = useMemo(
+    () => allDisplayEntries.reduce((acc, curr) => acc + curr.morningQuantity + curr.eveningQuantity, 0),
+    [allDisplayEntries]
+  )
+  const totalAmount = useMemo(
+    () => allDisplayEntries.reduce((acc, curr) => acc + curr.totalAmount, 0),
+    [allDisplayEntries]
+  )
 
   const totalOverridesCount = activeNoDeliveryCustomers.length + activeSpecialConditions.length;
 
@@ -714,7 +731,7 @@ export default function MilkEntries() {
                     className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 py-3.5 text-slate-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/40"
                   >
                     <option value="" disabled>Select Customer</option>
-                    {customers.map(customer => (
+                    {activeCustomers.map(customer => (
                       <option key={customer.id} value={customer.id}>{customer.name}</option>
                     ))}
                   </select>
@@ -811,7 +828,7 @@ export default function MilkEntries() {
                     className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 py-3.5 text-slate-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/40"
                   >
                     <option value="" disabled>Select Customer</option>
-                    {customers.map(customer => (
+                    {activeCustomers.map(customer => (
                       <option key={customer.id} value={customer.id}>{customer.name}</option>
                     ))}
                   </select>

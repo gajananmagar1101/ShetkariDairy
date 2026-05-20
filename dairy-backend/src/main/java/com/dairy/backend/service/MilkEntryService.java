@@ -15,8 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,15 @@ public class MilkEntryService {
 
     private BigDecimal safe(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private MilkEntry pickPreferredEntry(List<MilkEntry> entries) {
+        return entries.stream()
+                .max(Comparator
+                        .comparing((MilkEntry entry) -> entry.getUpdatedAt() != null ? entry.getUpdatedAt() : LocalDateTime.MIN)
+                        .thenComparing(entry -> entry.getCreatedAt() != null ? entry.getCreatedAt() : LocalDateTime.MIN)
+                        .thenComparing(entry -> entry.getId() != null ? entry.getId() : ""))
+                .orElseThrow(() -> new RuntimeException("Milk entry not found"));
     }
 
     private boolean clearConsumedCustomerConditions(Customer customer, LocalDate date) {
@@ -70,6 +81,7 @@ public class MilkEntryService {
 
     @Transactional
     public MilkEntryDto addMilkEntry(MilkEntryDto dto) {
+        String userId = SecurityUtils.getCurrentUserId();
         Customer customer = customerRepository.findById(dto.getCustomerId())
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
@@ -78,28 +90,45 @@ public class MilkEntryService {
         
         BigDecimal mQty = dto.getMorningQuantity() != null ? dto.getMorningQuantity() : BigDecimal.ZERO;
         BigDecimal eQty = dto.getEveningQuantity() != null ? dto.getEveningQuantity() : BigDecimal.ZERO;
+        LocalDate entryDate = dto.getDate() != null ? dto.getDate() : LocalDate.now();
         
         BigDecimal totalQty = mQty.add(eQty);
         BigDecimal totalAmount = totalQty.multiply(rate);
 
-        MilkEntry entry = MilkEntry.builder()
-                .customerId(customer.getId())
-                .date(dto.getDate() != null ? dto.getDate() : LocalDate.now())
-                .morningQuantity(mQty)
-                .eveningQuantity(eQty)
-                .fat(dto.getFat())
-                .snf(dto.getSnf())
-                .ratePerLiter(rate)
-                .totalAmount(totalAmount)
-                .build();
+        List<MilkEntry> sameDateEntries = milkEntryRepository.findByUserIdAndCustomerIdAndDate(userId, customer.getId(), entryDate);
+        MilkEntry entry;
+        BigDecimal previousGroupAmount = sameDateEntries.stream()
+                .map(MilkEntry::getTotalAmount)
+                .map(this::safe)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (!sameDateEntries.isEmpty()) {
+            entry = pickPreferredEntry(sameDateEntries);
+            final String preferredEntryId = entry.getId();
+            sameDateEntries.stream()
+                    .filter(existingEntry -> !existingEntry.getId().equals(preferredEntryId))
+                    .forEach(milkEntryRepository::delete);
+        } else {
+            entry = MilkEntry.builder()
+                    .customerId(customer.getId())
+                    .date(entryDate)
+                    .build();
+        }
+
+        entry.setMorningQuantity(mQty);
+        entry.setEveningQuantity(eQty);
+        entry.setFat(dto.getFat());
+        entry.setSnf(dto.getSnf());
+        entry.setRatePerLiter(rate);
+        entry.setTotalAmount(totalAmount);
 
         entry = milkEntryRepository.save(entry);
 
         // Update customer balance (Balance increases because dairy owes money to customer/farmer)
         // Note: Depending on whether the customer is buying or selling, logic changes. 
         // Assuming farmer selling to dairy -> Dairy owes Farmer -> Balance increases.
-        customer.setBalance(customer.getBalance().add(totalAmount));
-        clearConsumedCustomerConditions(customer, entry.getDate());
+        customer.setBalance(customer.getBalance().subtract(previousGroupAmount).add(totalAmount));
+        clearConsumedCustomerConditions(customer, entryDate);
         customerRepository.save(customer);
 
         return mapToDto(entry, customer.getName());
@@ -151,11 +180,16 @@ public class MilkEntryService {
     public MilkEntryDto updateMilkEntry(String id, MilkEntryDto dto) {
         MilkEntry entry = milkEntryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Milk entry not found"));
+        String userId = SecurityUtils.getCurrentUserId();
 
         Customer customer = customerRepository.findById(entry.getCustomerId())
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-        BigDecimal oldAmount = entry.getTotalAmount() != null ? entry.getTotalAmount() : BigDecimal.ZERO;
+        List<MilkEntry> sameDateEntries = milkEntryRepository.findByUserIdAndCustomerIdAndDate(userId, entry.getCustomerId(), entry.getDate());
+        BigDecimal previousGroupAmount = sameDateEntries.stream()
+                .map(MilkEntry::getTotalAmount)
+                .map(this::safe)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal rate = dto.getRatePerLiter() != null ? dto.getRatePerLiter() : entry.getRatePerLiter();
         BigDecimal morningQty = dto.getMorningQuantity() != null ? dto.getMorningQuantity() : BigDecimal.ZERO;
         BigDecimal eveningQty = dto.getEveningQuantity() != null ? dto.getEveningQuantity() : BigDecimal.ZERO;
@@ -168,9 +202,13 @@ public class MilkEntryService {
         entry.setRatePerLiter(rate);
         entry.setTotalAmount(totalAmount);
 
+        final String updatedEntryId = entry.getId();
+        sameDateEntries.stream()
+                .filter(existingEntry -> !existingEntry.getId().equals(updatedEntryId))
+                .forEach(milkEntryRepository::delete);
         milkEntryRepository.save(entry);
 
-        customer.setBalance(customer.getBalance().subtract(oldAmount).add(totalAmount));
+        customer.setBalance(customer.getBalance().subtract(previousGroupAmount).add(totalAmount));
         customerRepository.save(customer);
 
         return mapToDto(entry, customer.getName());

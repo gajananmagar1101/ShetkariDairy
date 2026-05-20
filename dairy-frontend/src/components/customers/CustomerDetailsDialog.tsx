@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import {
   Dialog,
@@ -10,6 +10,7 @@ import {
 import { LoadingBlock } from '../ui/loading'
 import { useSettingsStore } from '../../store/settingsStore'
 import { t } from '../../utils/translations'
+import { getDisplayLocale } from '../../utils/numberFormat'
 
 interface Customer {
   id: string
@@ -20,6 +21,7 @@ interface Customer {
   milkType: string
   ratePerLiter: number
   dailyQuantity: number
+  skippedDates?: string[]
   active: boolean
 }
 
@@ -29,6 +31,7 @@ interface MilkEntry {
   morningQuantity: number
   eveningQuantity: number
   totalAmount: number
+  isVirtualSkipped?: boolean
 }
 
 interface Invoice {
@@ -55,7 +58,7 @@ interface CustomerDetailsDialogProps {
 
 export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDetailsDialogProps) {
   const { language } = useSettingsStore()
-  const [activeTab, setActiveTab] = useState<'info' | 'entries' | 'invoices' | 'payments'>('info')
+  const [activeTab, setActiveTab] = useState<'info' | 'entries' | 'holidays' | 'invoices' | 'payments'>('info')
   const [entries, setEntries] = useState<MilkEntry[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
@@ -145,7 +148,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr)
     if (Number.isNaN(d.getTime())) return dateStr
-    return new Intl.DateTimeFormat(language === 'mr' ? 'mr-IN' : 'en-IN', {
+    return new Intl.DateTimeFormat(getDisplayLocale(language), {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
@@ -157,6 +160,24 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
     if (milkType === 'BUFFALO') return t(language, 'buffalo')
     return milkType
   }
+
+  const filteredSkippedDates = useMemo(() => {
+    if (!customer) return []
+
+    return (customer.skippedDates ?? [])
+      .filter((skippedDate) => {
+      if (entryFilterType === 'single') {
+        return skippedDate === entryStartDate
+      }
+
+      if (entryFilterType === 'range') {
+        return skippedDate >= entryStartDate && skippedDate <= entryEndDate
+      }
+
+      return true
+    })
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+  }, [customer, entries, entryEndDate, entryFilterType, entryStartDate])
 
   if (!customer) return null
 
@@ -185,6 +206,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
             {[
               { id: 'info', label: 'Overview' },
               { id: 'entries', label: `Entries (${entries.length})` },
+              { id: 'holidays', label: `${language === 'mr' ? 'सुट्टी' : 'Holidays'} (${filteredSkippedDates.length})` },
               { id: 'invoices', label: `Bills (${invoices.length})` },
               { id: 'payments', label: `Payments (${payments.length})` }
             ].map((tab) => (
@@ -340,6 +362,89 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose }: CustomerDet
                     </table>
                   </div>
                 </div>
+                </div>
+              )}
+
+              {activeTab === 'holidays' && (
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-3 items-end px-1">
+                    <div className="w-full sm:w-1/3">
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'filterEntries') || 'Filter Entries'}</label>
+                      <select
+                        value={entryFilterType}
+                        onChange={(e) => setEntryFilterType(e.target.value as any)}
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm"
+                      >
+                        <option value="all">{t(language, 'allEntries') || 'All Entries'}</option>
+                        <option value="single">{t(language, 'specificDate') || 'Specific Date'}</option>
+                        <option value="range">{t(language, 'dateRange') || 'Date Range'}</option>
+                      </select>
+                    </div>
+
+                    {entryFilterType === 'range' && (
+                      <>
+                        <div className="w-full sm:w-1/3">
+                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'fromDate') || 'From Date'}</label>
+                          <input
+                            type="date"
+                            value={entryStartDate}
+                            onChange={e => setEntryStartDate(e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm"
+                          />
+                        </div>
+                        <div className="w-full sm:w-1/3">
+                          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'toDate') || 'To Date'}</label>
+                          <input
+                            type="date"
+                            value={entryEndDate}
+                            onChange={e => setEntryEndDate(e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {entryFilterType === 'single' && (
+                      <div className="w-full sm:w-1/3">
+                        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{t(language, 'dateLabel') || 'Date'}</label>
+                        <input
+                          type="date"
+                          value={entryStartDate}
+                          onChange={e => setEntryStartDate(e.target.value)}
+                          className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+                          <tr>
+                            <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">Date</th>
+                            <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredSkippedDates.length === 0 ? (
+                            <tr><td colSpan={2} className="px-4 py-8 text-center text-slate-500">{language === 'mr' ? 'सुट्टी आढळली नाही.' : 'No holidays found.'}</td></tr>
+                          ) : (
+                            filteredSkippedDates.map((holidayDate) => (
+                              <tr key={holidayDate} className="border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                                <td className="px-4 py-3 whitespace-nowrap">{formatDate(holidayDate)}</td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-500/20">
+                                    {language === 'mr' ? 'सुट्टी' : 'Holiday'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               )}
 
