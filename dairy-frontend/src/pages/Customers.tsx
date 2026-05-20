@@ -337,6 +337,18 @@ export default function Customers() {
     () => activeCustomers.reduce((sum, customer) => sum + (recentEntriesByCustomer[customer.id]?.amount || 0), 0),
     [activeCustomers, recentEntriesByCustomer]
   )
+  const sharedRecentEntryDate = useMemo(() => {
+    if (activeCustomers.length === 0) return null
+
+    const datedCustomers = activeCustomers
+      .map((customer) => recentEntriesByCustomer[customer.id]?.date ?? null)
+      .filter((date): date is string => Boolean(date))
+
+    if (datedCustomers.length !== activeCustomers.length) return null
+
+    const firstDate = datedCustomers[0]
+    return datedCustomers.every((date) => date === firstDate) ? firstDate : null
+  }, [activeCustomers, recentEntriesByCustomer])
 
   const formatStoppedAt = (value?: string | null) => {
     if (!value) return '-'
@@ -541,19 +553,19 @@ export default function Customers() {
       </div>
 
       <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
-        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-          <div>
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
             <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">{t(language, 'activeCustomerList')}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-300">{activeCustomers.length}</p>
           </div>
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <div className="relative w-full md:w-80 md:min-w-[20rem]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input 
               type="text" 
               placeholder={t(language, 'searchCustomers')} 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white/40 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/80 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-80 shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80 dark:focus:bg-slate-800 dark:text-white"
+              className="w-full rounded-full border border-white/60 bg-white/40 py-2 pl-10 pr-4 text-sm shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-slate-700/80 dark:bg-slate-900/60 dark:text-white dark:focus:bg-slate-800"
             />
           </div>
         </div>
@@ -566,7 +578,16 @@ export default function Customers() {
               <thead>
                 <tr className="border-b border-slate-200/60 dark:border-slate-600 text-slate-500 dark:text-slate-300 text-sm">
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'name')}</th>
-                  <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'recentEntry')}</th>
+                  <th className="pb-3 px-4 font-medium whitespace-nowrap">
+                    <div className="flex flex-col">
+                      <span>{t(language, 'recentEntry')}</span>
+                      {sharedRecentEntryDate && (
+                        <span className="text-[11px] font-medium text-slate-400 dark:text-slate-400">
+                          {formatEntryDate(sharedRecentEntryDate)}
+                        </span>
+                      )}
+                    </div>
+                  </th>
                   <th className="pb-3 px-4 font-medium text-right whitespace-nowrap">{t(language, 'currentBalance')} (₹)</th>
                   <th className="pb-3 px-4 font-medium text-right whitespace-nowrap">{t(language, 'actions')}</th>
                 </tr>
@@ -609,9 +630,16 @@ export default function Customers() {
                       </td>
                       <td className="py-4 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
                         <div className="flex flex-col">
-                          <span className="font-medium text-slate-800 dark:text-slate-200">
-                            {formatEntryDate(recentEntriesByCustomer[customer.id]?.date)}
-                          </span>
+                          {recentEntriesByCustomer[customer.id]?.date && recentEntriesByCustomer[customer.id]?.date !== sharedRecentEntryDate ? (
+                            <span className="font-medium text-slate-800 dark:text-slate-200">
+                              {formatEntryDate(recentEntriesByCustomer[customer.id]?.date)}
+                            </span>
+                          ) : null}
+                          {!recentEntriesByCustomer[customer.id]?.date ? (
+                            <span className="font-medium text-slate-800 dark:text-slate-200">
+                              {formatEntryDate(recentEntriesByCustomer[customer.id]?.date)}
+                            </span>
+                          ) : null}
                           <span className="text-xs text-slate-400">
                             {getMilkTypeLabel(customer.milkType)}
                           </span>
