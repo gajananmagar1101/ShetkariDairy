@@ -7,45 +7,38 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "users")
-public class User {
+@Document(collection = "labour_recoveries")
+@CompoundIndexes({
+        @CompoundIndex(name = "labour_recovery_user_worker_date_idx", def = "{'userId': 1, 'workerId': 1, 'recoveryDate': -1}")
+})
+public class LabourRecovery {
 
     @Id
     private String id;
 
-    private String name;
+    private String userId;
 
-    @Indexed(unique = true, sparse = true)
-    private String googleId;
+    private String workerId;
 
-    private String picture;
+    private LocalDate recoveryDate;
 
-    @Indexed(unique = true, sparse = true)
-    private String phone;
+    private BigDecimal amount;
 
-    @Indexed(unique = true, sparse = true)
-    private String email;
+    private String paymentMethod;
 
-    private String password;
-
-    private Role role;
-
-    @Builder.Default
-    private String autoEntryTime = "21:30";
-
-    @Builder.Default
-    private String labourAutoAttendanceTime = "20:00";
-
-    private String upiId;
+    private String notes;
 
     @CreatedDate
     private LocalDateTime createdAt;

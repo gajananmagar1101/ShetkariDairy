@@ -11,6 +11,10 @@ const loadBilling = () => import('./pages/Billing')
 const loadPayments = () => import('./pages/Payments')
 const loadInventory = () => import('./pages/Inventory')
 const loadReports = () => import('./pages/Reports')
+const loadLabourWorkers = () => import('./pages/LabourWorkers')
+const loadLabourWorkerForm = () => import('./pages/LabourWorkerForm')
+const loadLabourAttendance = () => import('./pages/LabourAttendance')
+const loadLabourRecoveries = () => import('./pages/LabourRecoveries')
 const loadLogin = () => import('./pages/Login')
 const loadProfile = () => import('./pages/Profile')
 const loadSettings = () => import('./pages/Settings')
@@ -22,6 +26,10 @@ const Billing = lazy(loadBilling)
 const Payments = lazy(loadPayments)
 const Inventory = lazy(loadInventory)
 const Reports = lazy(loadReports)
+const LabourWorkers = lazy(loadLabourWorkers)
+const LabourWorkerForm = lazy(loadLabourWorkerForm)
+const LabourAttendance = lazy(loadLabourAttendance)
+const LabourRecoveries = lazy(loadLabourRecoveries)
 const Login = lazy(loadLogin)
 const Profile = lazy(loadProfile)
 const Settings = lazy(loadSettings)
@@ -34,6 +42,10 @@ const preloadAppRoutes = [
   loadPayments,
   loadInventory,
   loadReports,
+  loadLabourWorkers,
+  loadLabourWorkerForm,
+  loadLabourAttendance,
+  loadLabourRecoveries,
   loadProfile,
   loadSettings,
 ]
@@ -79,6 +91,11 @@ function AppRoutes() {
           <Route path="payments" element={<Payments />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="labour/workers" element={<LabourWorkers />} />
+          <Route path="labour/workers/new" element={<LabourWorkerForm />} />
+          <Route path="labour/workers/:workerId/edit" element={<LabourWorkerForm />} />
+          <Route path="labour/attendance" element={<LabourAttendance />} />
+          <Route path="labour/recoveries" element={<LabourRecoveries />} />
           <Route path="profile" element={<Profile />} />
           <Route path="settings" element={<Settings />} />
         </Route>

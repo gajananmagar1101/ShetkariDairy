@@ -2,6 +2,7 @@ package com.dairy.backend.scheduler;
 
 import com.dairy.backend.entity.User;
 import com.dairy.backend.repository.UserRepository;
+import com.dairy.backend.service.LabourService;
 import com.dairy.backend.service.MilkEntryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +22,12 @@ import java.util.Set;
 public class ScheduledTasks {
 
     private static final String DEFAULT_AUTO_ENTRY_TIME = "21:30";
+    private static final String DEFAULT_LABOUR_AUTO_ATTENDANCE_TIME = "20:00";
     private static final ZoneId AUTO_ENTRY_ZONE = ZoneId.of("Asia/Kolkata");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     private final MilkEntryService milkEntryService;
+    private final LabourService labourService;
     private final UserRepository userRepository;
 
     // Run every minute and trigger auto entry for users whose configured time matches now.
@@ -50,11 +53,40 @@ public class ScheduledTasks {
         }
     }
 
+    @Scheduled(cron = "0 * * * * ?", zone = "Asia/Kolkata")
+    public void autoMarkDailyLabourAttendance() {
+        LocalDate currentDate = LocalDate.now(AUTO_ENTRY_ZONE);
+        String currentTime = LocalTime.now(AUTO_ENTRY_ZONE).format(TIME_FORMATTER);
+        log.info("Running scheduled task: Checking labour attendance schedules for date {} at {}", currentDate, currentTime);
+        try {
+            int count = 0;
+            for (User user : userRepository.findAll()) {
+                String autoAttendanceTime = resolveLabourAutoAttendanceTime(user);
+                if (!currentTime.equals(autoAttendanceTime)) {
+                    continue;
+                }
+                for (String userId : resolveOwnedUserIds(user)) {
+                    count += labourService.autoMarkAttendanceForUser(userId, currentDate);
+                }
+            }
+            log.info("Labour attendance scheduler completed. Automatically marked {} attendance entries.", count);
+        } catch (Exception e) {
+            log.error("Error occurred while auto-marking labour attendance", e);
+        }
+    }
+
     private String resolveAutoEntryTime(User user) {
         if (user.getAutoEntryTime() == null || user.getAutoEntryTime().isBlank()) {
             return DEFAULT_AUTO_ENTRY_TIME;
         }
         return user.getAutoEntryTime();
+    }
+
+    private String resolveLabourAutoAttendanceTime(User user) {
+        if (user.getLabourAutoAttendanceTime() == null || user.getLabourAutoAttendanceTime().isBlank()) {
+            return DEFAULT_LABOUR_AUTO_ATTENDANCE_TIME;
+        }
+        return user.getLabourAutoAttendanceTime();
     }
 
     private Set<String> resolveOwnedUserIds(User user) {

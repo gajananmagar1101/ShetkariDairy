@@ -9,6 +9,7 @@ import { LoadingInline } from '../components/ui/loading'
 
 interface AutoEntrySettingsResponse {
   autoEntryTime: string
+  labourAutoAttendanceTime: string
   timezone: string
   upiId: string
 }
@@ -20,6 +21,8 @@ export default function Settings() {
   
   const [savedAutoEntryTime, setSavedAutoEntryTime] = useState('21:30')
   const [autoEntryTime, setAutoEntryTime] = useState('21:30')
+  const [savedLabourAutoAttendanceTime, setSavedLabourAutoAttendanceTime] = useState('20:00')
+  const [labourAutoAttendanceTime, setLabourAutoAttendanceTime] = useState('20:00')
   const [timezone, setTimezone] = useState('Asia/Kolkata')
   
   const [savedUpiId, setSavedUpiId] = useState('')
@@ -35,10 +38,13 @@ export default function Settings() {
       try {
         const data = await fetchAppSettings()
         const fetchedTime = data.autoEntryTime || '21:30'
+        const fetchedLabourTime = data.labourAutoAttendanceTime || '20:00'
         const fetchedUpi = data.upiId || ''
         
         setAutoEntryTime(fetchedTime)
         setSavedAutoEntryTime(fetchedTime)
+        setLabourAutoAttendanceTime(fetchedLabourTime)
+        setSavedLabourAutoAttendanceTime(fetchedLabourTime)
         setTimezone(data.timezone || 'Asia/Kolkata')
         
         setUpiId(fetchedUpi)
@@ -69,14 +75,18 @@ export default function Settings() {
     try {
       const res = await axios.put('/api/users/auto-entry-settings', { 
         autoEntryTime, 
+        labourAutoAttendanceTime,
         upiId: savedUpiId // Send the saved UPI ID, not the uncommitted one
       })
       if (res.data.success) {
         const data = res.data.data as AutoEntrySettingsResponse
         invalidateAppSettingsCache()
         const updatedTime = data.autoEntryTime || autoEntryTime
+        const updatedLabourTime = data.labourAutoAttendanceTime || labourAutoAttendanceTime
         setAutoEntryTime(updatedTime)
         setSavedAutoEntryTime(updatedTime)
+        setLabourAutoAttendanceTime(updatedLabourTime)
+        setSavedLabourAutoAttendanceTime(updatedLabourTime)
         
         // Sync UPI ID state just in case, but revert any uncommitted changes to UI
         const updatedUpi = data.upiId || savedUpiId
@@ -100,6 +110,7 @@ export default function Settings() {
     try {
       const res = await axios.put('/api/users/auto-entry-settings', { 
         autoEntryTime: savedAutoEntryTime, // Send the saved time, not the uncommitted one
+        labourAutoAttendanceTime: savedLabourAutoAttendanceTime,
         upiId 
       })
       if (res.data.success) {
@@ -114,6 +125,9 @@ export default function Settings() {
         const updatedTime = data.autoEntryTime || savedAutoEntryTime
         setAutoEntryTime(updatedTime)
         setSavedAutoEntryTime(updatedTime)
+        const updatedLabourTime = data.labourAutoAttendanceTime || savedLabourAutoAttendanceTime
+        setLabourAutoAttendanceTime(updatedLabourTime)
+        setSavedLabourAutoAttendanceTime(updatedLabourTime)
         
         toast.success(t(language, 'settingsSaved'))
       }
@@ -176,10 +190,31 @@ export default function Settings() {
             </p>
           </div>
 
+          <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950/40">
+            <label className="mb-3 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              {t(language, 'labourAutoAttendanceTimeLabel')}
+            </label>
+            {isLoading ? (
+              <div className="flex items-center gap-2 text-slate-500 dark:text-slate-300">
+                <LoadingInline />
+              </div>
+            ) : (
+              <input
+                type="time"
+                value={labourAutoAttendanceTime}
+                onChange={(e) => setLabourAutoAttendanceTime(e.target.value)}
+                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-lg font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            )}
+            <p className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
+              {t(language, 'labourAutoAttendanceTimeDesc')}
+            </p>
+          </div>
+
           <button
             type="button"
             onClick={handleSaveTime}
-            disabled={isLoading || isSavingTime || autoEntryTime === savedAutoEntryTime}
+            disabled={isLoading || isSavingTime || (autoEntryTime === savedAutoEntryTime && labourAutoAttendanceTime === savedLabourAutoAttendanceTime)}
             className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSavingTime ? <LoadingInline label="" className="gap-0" /> : <Save className="h-4 w-4" />}
