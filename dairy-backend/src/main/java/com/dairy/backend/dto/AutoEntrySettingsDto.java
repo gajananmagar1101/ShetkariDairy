@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AutoEntrySettingsDto {
     private String autoEntryTime;
+    private String labourAutoAttendanceTime;
     private String timezone;
     private String upiId;
 }

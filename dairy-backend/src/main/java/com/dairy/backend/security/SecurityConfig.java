@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/inventory/**").authenticated()
                 .requestMatchers("/api/reports/**").authenticated()
                 .requestMatchers("/api/dashboard/**").authenticated()
+                .requestMatchers("/api/labour/**").authenticated()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()
             )

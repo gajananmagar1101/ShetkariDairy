@@ -119,6 +119,7 @@ public class UserController {
                 "Auto entry settings fetched successfully",
                 AutoEntrySettingsDto.builder()
                         .autoEntryTime(resolveAutoEntryTime(user))
+                        .labourAutoAttendanceTime(resolveLabourAutoAttendanceTime(user))
                         .timezone(AUTO_ENTRY_TIME_ZONE)
                         .upiId(resolveUpiId(user))
                         .build()
@@ -131,9 +132,15 @@ public class UserController {
         String username = authentication.getName();
         User user = findCurrentUser(username);
 
-        String normalizedTime = normalizeAutoEntryTime(request.getAutoEntryTime());
+        String normalizedTime = request.getAutoEntryTime() == null
+                ? resolveAutoEntryTime(user)
+                : normalizeAutoEntryTime(request.getAutoEntryTime());
+        String normalizedLabourTime = request.getLabourAutoAttendanceTime() == null
+                ? resolveLabourAutoAttendanceTime(user)
+                : normalizeAutoEntryTime(request.getLabourAutoAttendanceTime());
         String normalizedUpiId = normalizeUpiId(request.getUpiId());
         user.setAutoEntryTime(normalizedTime);
+        user.setLabourAutoAttendanceTime(normalizedLabourTime);
         user.setUpiId(normalizedUpiId);
         User updatedUser = userRepository.save(user);
 
@@ -142,6 +149,7 @@ public class UserController {
                 "App settings updated successfully",
                 AutoEntrySettingsDto.builder()
                         .autoEntryTime(resolveAutoEntryTime(updatedUser))
+                        .labourAutoAttendanceTime(resolveLabourAutoAttendanceTime(updatedUser))
                         .timezone(AUTO_ENTRY_TIME_ZONE)
                         .upiId(resolveUpiId(updatedUser))
                         .build()
@@ -168,6 +176,13 @@ public class UserController {
             throw new RuntimeException("Auto entry time must be in HH:mm format");
         }
         return normalized;
+    }
+
+    private String resolveLabourAutoAttendanceTime(User user) {
+        if (user.getLabourAutoAttendanceTime() == null || user.getLabourAutoAttendanceTime().isBlank()) {
+            return "20:00";
+        }
+        return user.getLabourAutoAttendanceTime();
     }
 
     private String resolveUpiId(User user) {
