@@ -3,14 +3,13 @@ import { useEffect } from 'react'
 import axios from 'axios'
 import Sidebar from './Sidebar'
 import Header from './Header'
-import { useSettingsStore } from '../../store/settingsStore'
+import MobileDock from './MobileDock'
 import { useAuthStore } from '../../store/useAuthStore'
 import { Toaster } from 'react-hot-toast'
 import { GlobalLoadBar } from '../ui/loading'
 import { useNetworkActivity } from '../../lib/networkActivity'
 
 export default function AppLayout() {
-  const { isMobileMenuOpen, setMobileMenuOpen } = useSettingsStore()
   const { user, token, setAuth } = useAuthStore()
   const isNetworkBusy = useNetworkActivity()
 
@@ -43,27 +42,16 @@ export default function AppLayout() {
         <Sidebar />
       </div>
 
-      {/* Mobile Sidebar Overlay */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 md:hidden transition-opacity"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Mobile Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-[280px] p-5 transform transition-transform duration-300 ease-in-out md:hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <Sidebar />
-      </div>
-
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 z-10 p-2 sm:p-5 sm:pl-0 h-full overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 z-10 p-2 pb-2 sm:p-5 sm:pl-0 h-full overflow-hidden">
         <Header />
         
-        <main className="flex-1 overflow-y-auto overflow-x-hidden mt-2 sm:mt-4 rounded-[2rem] glass dark:glass-dark p-4 sm:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 dark:border-white/10 relative transition-all duration-500">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden mt-2 rounded-[2rem] glass p-4 pb-28 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 transition-all duration-500 sm:mt-4 sm:p-8">
           <Outlet />
         </main>
       </div>
+
+      <MobileDock />
 
       <Toaster position="top-center" toastOptions={{
         style: {

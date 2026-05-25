@@ -43,9 +43,7 @@ public class ScheduledTasks {
                 if (!currentTime.equals(autoEntryTime)) {
                     continue;
                 }
-                for (String userId : resolveOwnedUserIds(user)) {
-                    count += milkEntryService.autoGenerateEntriesForUser(userId, currentDate);
-                }
+                count += milkEntryService.autoGenerateEntriesForUser(user.getId(), currentDate);
             }
             log.info("Scheduled task completed. Successfully auto-generated {} milk entries.", count);
         } catch (Exception e) {

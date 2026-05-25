@@ -3,7 +3,8 @@ package com.dairy.backend.dto;
 import lombok.Data;
 
 @Data
-public class AuthRequest {
+public class OtpVerifyRequest {
     private String phone;
+    private String otp;
     private String name;
 }

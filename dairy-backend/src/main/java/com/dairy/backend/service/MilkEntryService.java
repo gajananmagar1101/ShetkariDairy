@@ -7,8 +7,10 @@ import com.dairy.backend.entity.Customer;
 import com.dairy.backend.entity.DeliveryOverride;
 import com.dairy.backend.entity.MilkEntry;
 import com.dairy.backend.entity.SpecialCondition;
+import com.dairy.backend.entity.User;
 import com.dairy.backend.repository.CustomerRepository;
 import com.dairy.backend.repository.MilkEntryRepository;
+import com.dairy.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +22,10 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +34,7 @@ public class MilkEntryService {
 
     private final MilkEntryRepository milkEntryRepository;
     private final CustomerRepository customerRepository;
+    private final UserRepository userRepository;
 
     private BigDecimal safe(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
@@ -237,8 +242,14 @@ public class MilkEntryService {
     @Transactional
     public int autoGenerateEntriesForRange(LocalDate startDate, LocalDate endDate) {
         String userId = SecurityUtils.getCurrentUserId();
+        Set<String> ownedUserIds = resolveOwnedUserIds(userId);
 
-        List<MilkEntry> existingEntries = milkEntryRepository.findByUserIdAndDateBetween(userId, startDate, endDate);
+        List<MilkEntry> existingEntries = ownedUserIds.stream()
+                .flatMap(ownedUserId -> milkEntryRepository.findByUserIdAndDateBetween(ownedUserId, startDate, endDate).stream())
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(MilkEntry::getId, entry -> entry, (existing, ignored) -> existing, LinkedHashMap::new),
+                        map -> new ArrayList<>(map.values())
+                ));
         if (!existingEntries.isEmpty()) {
             List<LocalDate> existingDates = existingEntries.stream()
                     .map(MilkEntry::getDate)
@@ -276,21 +287,28 @@ public class MilkEntryService {
 
         int totalGenerated = 0;
         for (Map.Entry<String, List<Customer>> entry : customersByUser.entrySet()) {
-            totalGenerated += autoGenerateEntriesForCustomers(entry.getKey(), entry.getValue(), date);
+            Set<String> ownedUserIds = resolveOwnedUserIds(entry.getKey());
+            String canonicalUserId = resolveCanonicalUserId(entry.getKey());
+            totalGenerated += autoGenerateEntriesForCustomers(canonicalUserId, ownedUserIds, entry.getValue(), date);
         }
         return totalGenerated;
     }
 
     @Transactional
     public int autoGenerateEntriesForUser(String userId, LocalDate date) {
-        if (!milkEntryRepository.findByUserIdAndDate(userId, date).isEmpty()) {
-            return 0;
-        }
-        List<Customer> activeCustomers = customerRepository.findByUserIdAndIsActiveTrue(userId);
-        return autoGenerateEntriesForCustomers(userId, activeCustomers, date);
+        Set<String> ownedUserIds = resolveOwnedUserIds(userId);
+        String canonicalUserId = resolveCanonicalUserId(userId);
+        List<Customer> activeCustomers = ownedUserIds.stream()
+                .flatMap(ownedUserId -> customerRepository.findByUserIdAndIsActiveTrue(ownedUserId).stream())
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(Customer::getId, customer -> customer, (existing, ignored) -> existing, LinkedHashMap::new),
+                        map -> new ArrayList<>(map.values())
+                ));
+
+        return autoGenerateEntriesForCustomers(canonicalUserId, ownedUserIds, activeCustomers, date);
     }
 
-    private int autoGenerateEntriesForCustomers(String userId, List<Customer> activeCustomers, LocalDate date) {
+    private int autoGenerateEntriesForCustomers(String userId, Set<String> ownedUserIds, List<Customer> activeCustomers, LocalDate date) {
         int generatedCount = 0;
 
         for (Customer customer : activeCustomers) {
@@ -305,7 +323,9 @@ public class MilkEntryService {
                     .findFirst()
                     .orElse(null);
 
-            if (!shouldAutoGenerate || skippedDates.contains(date) || milkEntryRepository.existsByUserIdAndCustomerIdAndDate(userId, customer.getId(), date)) {
+            if (!shouldAutoGenerate
+                    || skippedDates.contains(date)
+                    || milkEntryRepository.existsByUserIdInAndCustomerIdAndDate(ownedUserIds, customer.getId(), date)) {
                 continue;
             }
 
@@ -356,6 +376,41 @@ public class MilkEntryService {
             generatedCount++;
         }
         return generatedCount;
+    }
+
+    private Set<String> resolveOwnedUserIds(String userId) {
+        Set<String> ownedUserIds = new LinkedHashSet<>();
+        userRepository.findById(userId)
+                .or(() -> userRepository.findByEmail(userId))
+                .or(() -> userRepository.findByPhone(userId))
+                .ifPresentOrElse(
+                        user -> {
+                            if (user.getId() != null && !user.getId().isBlank()) {
+                                ownedUserIds.add(user.getId());
+                            }
+                            if (user.getPhone() != null && !user.getPhone().isBlank()) {
+                                ownedUserIds.add(user.getPhone());
+                            }
+                            if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                                ownedUserIds.add(user.getEmail());
+                            }
+                        },
+                        () -> {
+                            if (userId != null && !userId.isBlank()) {
+                                ownedUserIds.add(userId);
+                            }
+                        }
+                );
+        return ownedUserIds;
+    }
+
+    private String resolveCanonicalUserId(String userId) {
+        return userRepository.findById(userId)
+                .or(() -> userRepository.findByEmail(userId))
+                .or(() -> userRepository.findByPhone(userId))
+                .map(User::getId)
+                .filter(id -> id != null && !id.isBlank())
+                .orElse(userId);
     }
 
     @Transactional

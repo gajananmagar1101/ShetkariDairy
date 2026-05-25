@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import { Search, Menu, Moon, Sun, LogOut, Settings, User } from 'lucide-react'
+import { Search, Moon, Sun, LogOut, Settings, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useAuthStore } from '../../store/useAuthStore'
 
 export default function Header() {
-  const { language, theme, toggleLanguage, toggleTheme, toggleMobileMenu } = useSettingsStore()
+  const { language, theme, toggleLanguage, toggleTheme } = useSettingsStore()
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -29,12 +29,14 @@ export default function Header() {
   return (
     <header className="h-16 flex items-center justify-between gap-2 px-2 min-w-0">
       <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-        <button 
-          onClick={toggleMobileMenu}
-          className="md:hidden p-2 rounded-xl glass text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+        <div className="min-w-0 pr-2">
+          <h1
+            className="truncate text-[1.25rem] font-black leading-none text-slate-900"
+            style={{ fontFamily: "'Nunito', 'Plus Jakarta Sans', sans-serif" }}
+          >
+            Shetkari Vahi
+          </h1>
+        </div>
         <div className="relative hidden md:block group">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary-500" />
           <input 

@@ -9,17 +9,14 @@ import java.util.Collections;
 import com.dairy.backend.dto.AuthRequest;
 import com.dairy.backend.dto.AuthResponse;
 import com.dairy.backend.dto.RegisterRequest;
-import com.dairy.backend.entity.User;
 import com.dairy.backend.entity.Role;
+import com.dairy.backend.entity.User;
 import com.dairy.backend.repository.UserRepository;
 import com.dairy.backend.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import java.util.Optional;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -35,51 +32,81 @@ public class AuthService {
                     .build();
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
+    private final OtpService otpService;
 
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.findByPhone(request.getPhone()).isPresent()) {
-            throw new RuntimeException("Phone number already registered");
-        }
-
-        User user = User.builder()
-                .name(request.getName())
-                .phone(request.getPhone())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
-                .build();
-
-        userRepository.save(user);
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getPhone());
-        String token = jwtUtil.generateToken(userDetails);
-
-        return AuthResponse.builder()
-                .token(token)
-                .name(user.getName())
-                .role(user.getRole().name())
-                .build();
+        return authenticateByPhone(request.getPhone(), request.getName(), request.getRole());
     }
 
     public AuthResponse login(AuthRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getPhone(), request.getPassword())
-        );
+        return authenticateByPhone(request.getPhone(), request.getName(), Role.ROLE_ADMIN);
+    }
 
-        User user = userRepository.findByPhone(request.getPhone())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public AuthResponse mobileLogin(AuthRequest request) {
+        return authenticateByPhone(request.getPhone(), request.getName(), Role.ROLE_ADMIN);
+    }
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(request.getPhone());
+    public void sendOtp(String phone, String channel) {
+        otpService.sendOtp(normalizePhone(phone), channel);
+    }
+
+    public AuthResponse verifyOtpAndLogin(String phone, String otp, String name) {
+        String normalizedPhone = normalizePhone(phone);
+        otpService.verifyOtp(normalizedPhone, otp);
+        return authenticateByPhone(normalizedPhone, name, Role.ROLE_ADMIN);
+    }
+
+    private AuthResponse authenticateByPhone(String phone, String name, Role requestedRole) {
+        String normalizedPhone = normalizePhone(phone);
+
+        User user = userRepository.findByPhone(normalizedPhone)
+                .map(existingUser -> updateMissingProfile(existingUser, name))
+                .orElseGet(() -> userRepository.save(User.builder()
+                        .name(resolveDisplayName(name, normalizedPhone))
+                        .phone(normalizedPhone)
+                        .role(requestedRole != null ? requestedRole : Role.ROLE_ADMIN)
+                        .build()));
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(normalizedPhone);
         String token = jwtUtil.generateToken(userDetails);
 
         return AuthResponse.builder()
                 .token(token)
                 .name(user.getName())
                 .role(user.getRole().name())
+                .phone(user.getPhone())
+                .email(user.getEmail())
+                .picture(user.getPicture())
                 .build();
+    }
+
+    private User updateMissingProfile(User user, String name) {
+        if ((user.getName() == null || user.getName().isBlank()) && name != null && !name.isBlank()) {
+            user.setName(name.trim());
+            return userRepository.save(user);
+        }
+        return user;
+    }
+
+    private String normalizePhone(String phone) {
+        if (phone == null) {
+            throw new RuntimeException("Phone number is required");
+        }
+
+        String normalizedPhone = phone.replaceAll("\\s+", "").trim();
+        if (normalizedPhone.isBlank()) {
+            throw new RuntimeException("Phone number is required");
+        }
+        return normalizedPhone;
+    }
+
+    private String resolveDisplayName(String name, String phone) {
+        if (name != null && !name.isBlank()) {
+            return name.trim();
+        }
+        return "User " + phone.substring(Math.max(0, phone.length() - 4));
     }
 
     public AuthResponse googleLogin(java.util.Map<String, String> request) {

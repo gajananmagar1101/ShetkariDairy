@@ -14,7 +14,7 @@ type SidebarItem = {
 }
 
 const dairyNavItems: SidebarItem[] = [
-  { icon: Home, labelKey: 'dashboard', path: '/' },
+  { icon: Home, labelKey: 'dashboard', path: '/dashboard' },
   { icon: Users, labelKey: 'customers', path: '/customers' },
   { icon: Droplets, labelKey: 'milkEntries', path: '/milk-entries' },
   { icon: FileText, labelKey: 'billing', path: '/billing' },

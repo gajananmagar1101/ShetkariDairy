@@ -3,7 +3,7 @@ package com.dairy.backend.dto;
 import lombok.Data;
 
 @Data
-public class AuthRequest {
+public class OtpSendRequest {
     private String phone;
-    private String name;
+    private String channel;
 }

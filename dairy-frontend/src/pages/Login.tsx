@@ -3,30 +3,17 @@ import { GoogleLogin } from '@react-oauth/google'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Lock, Phone, User, ArrowRight } from 'lucide-react'
+import { BadgeCheck } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { useSettingsStore } from '../store/settingsStore'
-
-type Mode = 'login' | 'register'
 
 const Login: React.FC = () => {
   const setAuth = useAuthStore((state) => state.setAuth)
   const language = useSettingsStore((state) => state.language)
   const toggleLanguage = useSettingsStore((state) => state.toggleLanguage)
   const navigate = useNavigate()
-
-  const [mode, setMode] = useState<Mode>('login')
-  const [showPassword, setShowPassword] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false)
-  const [showMobileAuthOptions, setShowMobileAuthOptions] = useState(false)
-  const [form, setForm] = useState({
-    name: '',
-    phone: '',
-    password: '',
-  })
 
-  const isLoginMode = mode === 'login'
   const isMarathi = language === 'mr'
   const copy = {
     brandName: isMarathi ? 'शेतकरी वही' : 'Shetkari Vahi',
@@ -36,29 +23,13 @@ const Login: React.FC = () => {
     milkTracking: isMarathi ? 'दूध नोंद' : 'Milk tracking',
     customerBilling: isMarathi ? 'ग्राहक बिलिंग' : 'Customer billing',
     labourManagement: isMarathi ? 'मजूर व्यवस्थापन' : 'Labour management',
-    signIn: isMarathi ? 'साइन इन' : 'Sign In',
-    register: isMarathi ? 'नोंदणी' : 'Register',
+    signIn: isMarathi ? 'Google ने साइन इन' : 'Sign in with Google',
     welcomeBack: isMarathi ? 'पुन्हा स्वागत आहे' : 'Welcome back',
-    createAccount: isMarathi ? 'तुमचे खाते तयार करा' : 'Create your account',
     loginHelp: isMarathi
-      ? 'सुरू ठेवण्यासाठी मोबाईल नंबर आणि पासवर्ड वापरा.'
-      : 'Use your mobile number and password to continue.',
-    registerHelp: isMarathi
-      ? 'तुमची डेअरी सिस्टीम सांभाळण्यासाठी अॅडमिन खाते तयार करा.'
-      : 'Create an admin account to manage your dairy system.',
-    fullName: isMarathi ? 'पूर्ण नाव' : 'Full name',
-    fullNamePlaceholder: isMarathi ? 'तुमचे पूर्ण नाव टाका' : 'Enter your full name',
-    mobileNumber: isMarathi ? 'मोबाईल नंबर' : 'Mobile number',
-    mobilePlaceholder: isMarathi ? 'मोबाईल नंबर टाका' : 'Enter mobile number',
-    password: isMarathi ? 'पासवर्ड' : 'Password',
-    passwordPlaceholder: isMarathi ? 'पासवर्ड टाका' : 'Enter password',
-    signingIn: isMarathi ? 'साइन इन सुरू आहे...' : 'Signing in...',
-    creatingAccount: isMarathi ? 'खाते तयार होत आहे...' : 'Creating account...',
-    createAccountButton: isMarathi ? 'खाते तयार करा' : 'Create Account',
-    orContinue: isMarathi ? 'किंवा पुढे चालू ठेवा' : 'or continue with',
+      ? 'लॉगिनसाठी Google खाते वापरा.'
+      : 'Use your Google account to continue.',
+    verifiedText: isMarathi ? 'सोपे आणि सुरक्षित लॉगिन' : 'Simple and secure login',
     googleLoading: isMarathi ? 'Google ने साइन इन सुरू आहे...' : 'Signing you in with Google...',
-    hideAuth: isMarathi ? 'साइन इन / नोंदणी लपवा' : 'Hide Sign In / Register',
-    showAuth: isMarathi ? 'मोबाईल नंबर किंवा नोंदणी वापरा' : 'Use mobile number or register',
     languageA: isMarathi ? 'EN' : 'मराठी',
     languageB: isMarathi ? 'मराठी' : 'EN',
   }
@@ -76,42 +47,8 @@ const Login: React.FC = () => {
     navigate('/')
   }
 
-  const handleFormSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    if (isSubmitting || isGoogleSubmitting) return
-
-    setIsSubmitting(true)
-    try {
-      const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register'
-      const payload = isLoginMode
-        ? {
-            phone: form.phone.trim(),
-            password: form.password,
-          }
-        : {
-            name: form.name.trim(),
-            phone: form.phone.trim(),
-            password: form.password,
-            role: 'ROLE_ADMIN',
-          }
-
-      const response = await axios.post(endpoint, payload)
-      if (!response.data?.success || !response.data?.data) {
-        throw new Error(isLoginMode ? 'Login failed.' : 'Registration failed.')
-      }
-
-      completeAuth(response.data.data)
-      toast.success(isLoginMode ? 'Login successful.' : 'Account created successfully.')
-    } catch (error: any) {
-      console.error('Authentication error:', error)
-      toast.error(error?.response?.data?.message || error?.message || 'Unable to continue.')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   const handleGoogleSuccess = async (credentialResponse: any) => {
-    if (!credentialResponse?.credential || isSubmitting || isGoogleSubmitting) {
+    if (!credentialResponse?.credential || isGoogleSubmitting) {
       if (!credentialResponse?.credential) {
         toast.error('Google authentication token not received.')
       }
@@ -129,7 +66,7 @@ const Login: React.FC = () => {
       }
 
       completeAuth(response.data.data)
-      toast.success('Login successful.')
+      toast.success(isMarathi ? 'लॉगिन यशस्वी झाले.' : 'Login successful.')
     } catch (error: any) {
       console.error('Google login error:', error)
       toast.error(error?.response?.data?.message || error?.message || 'Google authentication failed.')
@@ -182,41 +119,41 @@ const Login: React.FC = () => {
               }}
             />
             <div className="relative rounded-[1.8rem] px-6 py-6">
-            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4">
                 <img
-                src="/custom-brand-logo-cropped.png"
-                alt="Gharcha Dudh Logo"
-                className="h-24 w-24 object-contain drop-shadow-[0_18px_36px_rgba(0,0,0,0.3)]"
-              />
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[0.34em] text-[#f5e6bd]">
-                  {copy.desktopEyebrow}
-                </p>
-                <h1
-                  className="mt-2 text-[2.8rem] font-black tracking-tight text-white"
-                  style={{ fontFamily: "'Nunito', sans-serif" }}
-                >
-                  {copy.brandName}
-                </h1>
+                  src="/custom-brand-logo-cropped.png"
+                  alt="Gharcha Dudh Logo"
+                  className="h-24 w-24 object-contain drop-shadow-[0_18px_36px_rgba(0,0,0,0.3)]"
+                />
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-[0.34em] text-[#f5e6bd]">
+                    {copy.desktopEyebrow}
+                  </p>
+                  <h1
+                    className="mt-2 text-[2.8rem] font-black tracking-tight text-white"
+                    style={{ fontFamily: "'Nunito', sans-serif" }}
+                  >
+                    {copy.brandName}
+                  </h1>
+                </div>
+              </div>
+
+              <h2 className="mt-14 max-w-[320px] text-base font-medium leading-7 text-white/95">
+                {copy.heroLine1}
+                <br />
+                {copy.heroLine2}
+              </h2>
+              <div className="mt-2 grid gap-3 sm:grid-cols-3">
+                {[copy.milkTracking, copy.customerBilling, copy.labourManagement].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-[1.4rem] border border-white/20 bg-white/12 px-4 py-4 text-sm font-semibold text-white shadow-lg shadow-black/10 backdrop-blur-md"
+                  >
+                    {item}
+                  </div>
+                ))}
               </div>
             </div>
-
-            <h2 className="mt-14 max-w-[320px] text-base font-medium leading-7 text-white/95">
-              {copy.heroLine1}
-              <br />
-              {copy.heroLine2}
-            </h2>
-            <div className="mt-2 grid gap-3 sm:grid-cols-3">
-              {[copy.milkTracking, copy.customerBilling, copy.labourManagement].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-[1.4rem] border border-white/20 bg-white/12 px-4 py-4 text-sm font-semibold text-white shadow-lg shadow-black/10 backdrop-blur-md"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
           </div>
         </section>
 
@@ -270,6 +207,7 @@ const Login: React.FC = () => {
                   'linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.38) 12%, rgba(0,0,0,0.8) 20%, black 28%, black 72%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,0.38) 88%, rgba(0,0,0,0) 100%)',
               }}
             />
+
             <div className="relative lg:hidden">
               <div className="flex flex-col items-center text-center">
                 <h1
@@ -307,146 +245,22 @@ const Login: React.FC = () => {
                   </div>
                 </div>
               )}
-
-              <button
-                type="button"
-                onClick={() => setShowMobileAuthOptions((current) => !current)}
-                className="mt-3 w-full rounded-full border border-white/35 bg-white/14 px-4 py-2.5 text-[0.92rem] font-bold text-white shadow-sm backdrop-blur-md transition hover:bg-white/20"
-              >
-                {showMobileAuthOptions ? copy.hideAuth : copy.showAuth}
-              </button>
-            </div>
-
-            <div className="relative hidden mt-3 rounded-full bg-white/18 p-1 backdrop-blur-sm dark:bg-slate-800/50 sm:mt-2 lg:flex">
-              <button
-                type="button"
-                onClick={() => setMode('login')}
-                className={`flex-1 rounded-full px-3 py-2 text-[0.95rem] font-bold transition sm:px-4 sm:py-3 sm:text-sm ${
-                  isLoginMode
-                    ? 'bg-white/96 text-slate-900 shadow dark:bg-slate-700 dark:text-white'
-                    : 'text-white dark:text-slate-300'
-                }`}
-              >
-                {copy.signIn}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('register')}
-                className={`flex-1 rounded-full px-3 py-2 text-[0.95rem] font-bold transition sm:px-4 sm:py-3 sm:text-sm ${
-                  !isLoginMode
-                    ? 'bg-white/96 text-slate-900 shadow dark:bg-slate-700 dark:text-white'
-                    : 'text-white dark:text-slate-300'
-                }`}
-              >
-                {copy.register}
-              </button>
             </div>
 
             <div className="relative hidden lg:block lg:mt-6">
-              <h2 className="text-[1.45rem] font-black leading-tight text-white sm:text-2xl">
-                {isLoginMode ? copy.welcomeBack : copy.createAccount}
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-[0.72rem] font-bold uppercase tracking-[0.2em] text-white/88">
+                <BadgeCheck className="h-3.5 w-3.5" />
+                {copy.verifiedText}
+              </div>
+              <h2 className="mt-3 text-[1.45rem] font-black leading-tight text-white sm:text-2xl">
+                {copy.welcomeBack}
               </h2>
               <p className="mt-1.5 text-[0.92rem] leading-5 text-white sm:mt-2 sm:text-sm sm:leading-6">
-                {isLoginMode ? copy.loginHelp : copy.registerHelp}
+                {copy.loginHelp}
               </p>
             </div>
 
-            <form className="relative hidden lg:block lg:mt-6 lg:space-y-4" onSubmit={handleFormSubmit}>
-              {!isLoginMode ? (
-                <label className="block">
-                  <span className="mb-1.5 block text-[0.95rem] font-semibold text-white sm:mb-2 sm:text-sm">
-                    {copy.fullName}
-                  </span>
-                  <div className="flex items-center gap-2.5 rounded-[1.15rem] border border-white/45 bg-white/88 px-3.5 py-2.5 dark:border-slate-700 dark:bg-slate-950/60 sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3">
-                    <User className="h-4 w-4 shrink-0 text-slate-500 sm:h-5 sm:w-5" />
-                    <input
-                      type="text"
-                      value={form.name}
-                      onChange={(event) =>
-                        setForm((current) => ({ ...current, name: event.target.value }))
-                      }
-                      placeholder={copy.fullNamePlaceholder}
-                      className="w-full min-w-0 bg-transparent text-[0.95rem] outline-none placeholder:text-slate-400 sm:text-base"
-                      required
-                      disabled={isSubmitting || isGoogleSubmitting}
-                    />
-                  </div>
-                </label>
-              ) : null}
-
-              <label className="block">
-                <span className="mb-1.5 block text-[0.95rem] font-semibold text-white sm:mb-2 sm:text-sm">
-                  {copy.mobileNumber}
-                </span>
-                <div className="flex items-center gap-2.5 rounded-[1.15rem] border border-white/45 bg-white/88 px-3.5 py-2.5 dark:border-slate-700 dark:bg-slate-950/60 sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3">
-                  <Phone className="h-4 w-4 shrink-0 text-slate-500 sm:h-5 sm:w-5" />
-                  <input
-                    type="tel"
-                    value={form.phone}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, phone: event.target.value }))
-                    }
-                    placeholder={copy.mobilePlaceholder}
-                    className="w-full min-w-0 bg-transparent text-[0.95rem] outline-none placeholder:text-slate-400 sm:text-base"
-                    required
-                    disabled={isSubmitting || isGoogleSubmitting}
-                  />
-                </div>
-              </label>
-
-              <label className="block">
-                <span className="mb-1.5 block text-[0.95rem] font-semibold text-white sm:mb-2 sm:text-sm">
-                  {copy.password}
-                </span>
-                <div className="flex items-center gap-2.5 rounded-[1.15rem] border border-white/45 bg-white/88 px-3.5 py-2.5 dark:border-slate-700 dark:bg-slate-950/60 sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3">
-                  <Lock className="h-4 w-4 shrink-0 text-slate-500 sm:h-5 sm:w-5" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={form.password}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, password: event.target.value }))
-                    }
-                    placeholder={copy.passwordPlaceholder}
-                    className="w-full min-w-0 bg-transparent text-[0.95rem] outline-none placeholder:text-slate-400 sm:text-base"
-                    required
-                    disabled={isSubmitting || isGoogleSubmitting}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((current) => !current)}
-                    className="shrink-0 text-slate-500 transition hover:text-slate-700 dark:hover:text-slate-200"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </label>
-
-              <button
-                type="submit"
-                disabled={isSubmitting || isGoogleSubmitting}
-                className="flex w-full items-center justify-center gap-2 rounded-[1.15rem] bg-slate-900/92 px-5 py-2.75 text-[1rem] font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-sky-600 dark:hover:bg-sky-500 sm:rounded-2xl sm:py-3.5 sm:text-base"
-              >
-                <span>
-                  {isSubmitting
-                    ? isLoginMode
-                      ? copy.signingIn
-                      : copy.creatingAccount
-                    : isLoginMode
-                      ? copy.signIn
-                      : copy.createAccountButton}
-                </span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </form>
-
-            <div className={`relative my-4 items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/82 sm:my-6 sm:gap-3 sm:text-xs sm:tracking-[0.28em] ${showMobileAuthOptions ? 'hidden lg:flex' : 'hidden lg:flex'}`}>
-              <span className="h-px flex-1 bg-white/45 dark:bg-slate-700" />
-              <span>{copy.orContinue}</span>
-              <span className="h-px flex-1 bg-white/45 dark:bg-slate-700" />
-            </div>
-
-            <div className="relative hidden justify-center lg:flex">
+            <div className="relative mt-6 hidden justify-center lg:flex">
               {isGoogleSubmitting ? (
                 <div className="flex w-full max-w-[300px] items-center justify-center gap-3 rounded-full border border-white/45 bg-white/90 px-5 py-2.5 text-[0.92rem] font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 sm:max-w-[320px] sm:px-6 sm:py-3 sm:text-sm">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700 dark:border-slate-600 dark:border-t-slate-200" />
@@ -463,146 +277,12 @@ const Login: React.FC = () => {
                     theme="outline"
                     size="large"
                     width="300"
-                    text={isLoginMode ? 'signin_with' : 'signup_with'}
+                    text="signin_with"
                   />
                 </div>
               )}
             </div>
           </div>
-
-          {showMobileAuthOptions ? (
-            <div className="fixed inset-0 z-30 flex items-end justify-center bg-[linear-gradient(180deg,rgba(15,23,42,0.18),rgba(15,23,42,0.44))] px-3 pb-5 pt-20 lg:hidden">
-              <div className="w-full max-w-[22rem] overflow-hidden rounded-[1.8rem] border border-white/28 bg-[linear-gradient(180deg,rgba(255,248,235,0.18)_0%,rgba(244,215,167,0.12)_44%,rgba(116,96,39,0.14)_100%)] p-4 shadow-[0_24px_80px_rgba(15,23,42,0.3)] backdrop-blur-[24px]">
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-[1.45rem] font-black leading-tight text-white">
-                      {isLoginMode ? copy.welcomeBack : copy.createAccount}
-                    </h2>
-                    <p className="mt-1 text-[0.9rem] leading-5 text-white/78">
-                      {isLoginMode ? copy.loginHelp : copy.registerHelp}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowMobileAuthOptions(false)}
-                    className="rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-sm"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                <div className="mt-3 flex rounded-full bg-white/22 p-1 backdrop-blur-sm">
-                  <button
-                    type="button"
-                    onClick={() => setMode('login')}
-                    className={`flex-1 rounded-full px-3 py-2 text-[0.95rem] font-bold transition ${
-                      isLoginMode ? 'bg-white/92 text-slate-900 shadow' : 'text-white/72'
-                    }`}
-                  >
-                    {copy.signIn}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMode('register')}
-                    className={`flex-1 rounded-full px-3 py-2 text-[0.95rem] font-bold transition ${
-                      !isLoginMode ? 'bg-white/92 text-slate-900 shadow' : 'text-white/72'
-                    }`}
-                  >
-                    {copy.register}
-                  </button>
-                </div>
-
-                <form className="mt-4 space-y-3" onSubmit={handleFormSubmit}>
-                  {!isLoginMode ? (
-                    <label className="block">
-                      <span className="mb-1.5 block text-[0.95rem] font-semibold text-white">
-                        {copy.fullName}
-                      </span>
-                      <div className="flex items-center gap-2.5 rounded-[1.15rem] border border-white/35 bg-white/78 px-3.5 py-2.5 backdrop-blur-sm">
-                        <User className="h-4 w-4 shrink-0 text-slate-500" />
-                        <input
-                          type="text"
-                          value={form.name}
-                          onChange={(event) =>
-                            setForm((current) => ({ ...current, name: event.target.value }))
-                          }
-                          placeholder={copy.fullNamePlaceholder}
-                          className="w-full min-w-0 bg-transparent text-[0.95rem] outline-none placeholder:text-slate-400"
-                          required
-                          disabled={isSubmitting || isGoogleSubmitting}
-                        />
-                      </div>
-                    </label>
-                  ) : null}
-
-                  <label className="block">
-                    <span className="mb-1.5 block text-[0.95rem] font-semibold text-white">
-                      {copy.mobileNumber}
-                    </span>
-                    <div className="flex items-center gap-2.5 rounded-[1.15rem] border border-white/35 bg-white/78 px-3.5 py-2.5 backdrop-blur-sm">
-                      <Phone className="h-4 w-4 shrink-0 text-slate-500" />
-                      <input
-                        type="tel"
-                        value={form.phone}
-                        onChange={(event) =>
-                          setForm((current) => ({ ...current, phone: event.target.value }))
-                        }
-                        placeholder={copy.mobilePlaceholder}
-                        className="w-full min-w-0 bg-transparent text-[0.95rem] outline-none placeholder:text-slate-400"
-                        required
-                        disabled={isSubmitting || isGoogleSubmitting}
-                      />
-                    </div>
-                  </label>
-
-                  <label className="block">
-                    <span className="mb-1.5 block text-[0.95rem] font-semibold text-white">
-                      {copy.password}
-                    </span>
-                    <div className="flex items-center gap-2.5 rounded-[1.15rem] border border-white/35 bg-white/78 px-3.5 py-2.5 backdrop-blur-sm">
-                      <Lock className="h-4 w-4 shrink-0 text-slate-500" />
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        value={form.password}
-                        onChange={(event) =>
-                          setForm((current) => ({ ...current, password: event.target.value }))
-                        }
-                        placeholder={copy.passwordPlaceholder}
-                        className="w-full min-w-0 bg-transparent text-[0.95rem] outline-none placeholder:text-slate-400"
-                        required
-                        disabled={isSubmitting || isGoogleSubmitting}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((current) => !current)}
-                        className="shrink-0 text-slate-500 transition hover:text-slate-700"
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </button>
-                    </div>
-                  </label>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || isGoogleSubmitting}
-                    className="flex w-full items-center justify-center gap-2 rounded-[1.15rem] bg-slate-900/92 px-5 py-3 text-[1rem] font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    <span>
-                      {isSubmitting
-                        ? isLoginMode
-                          ? copy.signingIn
-                          : copy.creatingAccount
-                        : isLoginMode
-                          ? copy.signIn
-                          : copy.createAccountButton}
-                    </span>
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </form>
-              </div>
-            </div>
-          ) : null}
         </section>
       </div>
     </div>

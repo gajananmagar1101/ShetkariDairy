@@ -95,7 +95,6 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: t(language, 'totalMilkToday'), value: `${data.totalMilkToday.toFixed(1)} L`, icon: Droplets, color: 'text-blue-500 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-500/10' },
@@ -124,7 +123,6 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Chart Section */}
       <div className="p-4 sm:p-8 rounded-[2rem] bg-white/40 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl h-[400px] sm:h-[450px]">
         <h3 className="text-xl font-extrabold text-slate-800 dark:text-white mb-4 sm:mb-8">{t(language, 'weeklyTrends')}</h3>
         <Suspense
