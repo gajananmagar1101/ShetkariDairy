@@ -43,11 +43,14 @@ export default function AppLayout() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 z-10 p-2 pb-2 sm:p-5 sm:pl-0 h-full overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 z-10 bg-sky-50/70 p-0 sm:bg-transparent sm:p-5 sm:pl-0 h-full overflow-hidden">
         <Header />
         
-        <main className="flex-1 overflow-y-auto overflow-x-hidden mt-2 rounded-[2rem] glass p-4 pb-28 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 transition-all duration-500 sm:mt-4 sm:p-8">
-          <Outlet />
+        <main className="mt-5 flex flex-1 flex-col overflow-hidden rounded-t-[2.4rem] rounded-b-none glass shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-x-0 border-b-0 border-white/60 transition-all duration-500 sm:mt-4 sm:rounded-[2rem] sm:border">
+          <div className="h-16 shrink-0 sm:hidden" />
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-6 pb-28 sm:p-8">
+            <Outlet />
+          </div>
         </main>
       </div>
 

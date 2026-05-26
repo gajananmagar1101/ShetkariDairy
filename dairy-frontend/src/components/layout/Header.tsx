@@ -27,8 +27,8 @@ export default function Header() {
   }, [])
 
   return (
-    <header className="h-16 flex items-center justify-between gap-2 px-2 min-w-0">
-      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+    <header className="flex h-[4.75rem] items-center justify-between gap-2 px-4 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0 self-center">
         <div className="min-w-0 pr-2">
           <h1
             className="truncate text-[1.25rem] font-black leading-none text-slate-900"
@@ -47,7 +47,7 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0 self-center">
         <button onClick={toggleLanguage} className="relative p-2.5 rounded-full glass hover:scale-105 active:scale-95 text-slate-600 dark:text-slate-300 hover:bg-white/80 transition-all font-bold text-sm w-10 h-10 flex items-center justify-center shadow-sm">
           {language === 'en' ? 'म' : 'EN'}
         </button>

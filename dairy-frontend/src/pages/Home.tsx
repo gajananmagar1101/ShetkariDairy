@@ -191,7 +191,7 @@ export default function Home() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 sm:pt-1">
       <section className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.96),_rgba(236,253,245,0.88)_30%,_rgba(255,247,237,0.72)_64%,_rgba(224,231,255,0.84)_100%)] p-5 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.5)] sm:p-7">
         <div className="absolute right-[-3rem] top-[-3rem] h-32 w-32 rounded-full bg-emerald-200/40 blur-3xl" />
         <div className="absolute bottom-[-4rem] left-[-3rem] h-36 w-36 rounded-full bg-orange-200/40 blur-3xl" />
