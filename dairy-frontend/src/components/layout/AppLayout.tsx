@@ -5,12 +5,14 @@ import Sidebar from './Sidebar'
 import Header from './Header'
 import MobileDock from './MobileDock'
 import { useAuthStore } from '../../store/useAuthStore'
+import { useSettingsStore } from '../../store/settingsStore'
 import { Toaster } from 'react-hot-toast'
 import { GlobalLoadBar } from '../ui/loading'
 import { useNetworkActivity } from '../../lib/networkActivity'
 
 export default function AppLayout() {
   const { user, token, setAuth } = useAuthStore()
+  const { theme } = useSettingsStore()
   const isNetworkBusy = useNetworkActivity()
 
   useEffect(() => {
@@ -29,6 +31,10 @@ export default function AppLayout() {
     fetchProfile()
   }, [])
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
+
   return (
     <div className="flex h-screen bg-[#fafafc] dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-500 overflow-hidden relative">
       <GlobalLoadBar active={isNetworkBusy} />
@@ -43,13 +49,14 @@ export default function AppLayout() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 z-10 bg-sky-50/70 p-0 sm:bg-transparent sm:p-5 sm:pl-0 h-full overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 z-10 bg-sky-100/70 dark:bg-black p-0 sm:bg-transparent sm:p-5 sm:pl-0 h-full overflow-hidden">
         <Header />
         
-        <main className="mt-5 flex flex-1 flex-col overflow-hidden rounded-t-[2.4rem] rounded-b-none glass shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-x-0 border-b-0 border-white/60 transition-all duration-500 sm:mt-4 sm:rounded-[2rem] sm:border">
-          <div className="h-16 shrink-0 sm:hidden" />
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-6 pb-28 sm:p-8">
-            <Outlet />
+        <main className="relative mt-5 flex-1 overflow-hidden rounded-t-[2.4rem] rounded-b-none bg-white shadow-[0_10px_26px_rgba(15,23,42,0.08)] border-x-0 border-b-0 border-slate-100 transition-all duration-500 sm:mt-4 sm:rounded-[2rem] sm:border dark:border-slate-800 dark:bg-[#141416] dark:shadow-[0_20px_40px_rgba(0,0,0,0.45)]">
+          <div className="h-full overflow-y-auto overflow-x-hidden rounded-t-[inherit] rounded-b-none bg-white dark:bg-[#141416]">
+            <div className="min-h-full px-6 pt-6 pb-28 sm:p-8">
+              <Outlet />
+            </div>
           </div>
         </main>
       </div>
@@ -59,10 +66,10 @@ export default function AppLayout() {
       <Toaster position="top-center" toastOptions={{
         style: {
           borderRadius: '16px',
-          background: '#fff',
-          color: '#334155',
+          background: theme === 'dark' ? '#1a1a1d' : '#fff',
+          color: theme === 'dark' ? '#e5e7eb' : '#334155',
           boxShadow: '0 8px 30px rgba(0,0,0,0.1)',
-          border: '1px solid rgba(226, 232, 240, 0.8)',
+          border: theme === 'dark' ? '1px solid rgba(51,65,85,0.8)' : '1px solid rgba(226, 232, 240, 0.8)',
           padding: '12px 16px',
           fontWeight: 500,
         },

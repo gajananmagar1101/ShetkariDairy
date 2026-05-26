@@ -31,7 +31,7 @@ export default function Header() {
       <div className="flex items-center gap-2 sm:gap-4 min-w-0 self-center">
         <div className="min-w-0 pr-2">
           <h1
-            className="truncate text-[1.25rem] font-black leading-none text-slate-900"
+            className="truncate text-[1.25rem] font-black leading-none text-slate-900 dark:text-white"
             style={{ fontFamily: "'Nunito', 'Plus Jakarta Sans', sans-serif" }}
           >
             Shetkari Vahi
@@ -48,10 +48,10 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 min-w-0 self-center">
-        <button onClick={toggleLanguage} className="relative p-2.5 rounded-full glass hover:scale-105 active:scale-95 text-slate-600 dark:text-slate-300 hover:bg-white/80 transition-all font-bold text-sm w-10 h-10 flex items-center justify-center shadow-sm">
+        <button onClick={toggleLanguage} className="relative flex h-10 w-10 items-center justify-center rounded-full p-2.5 text-sm font-bold text-slate-600 shadow-sm transition-all hover:scale-105 hover:bg-white/80 active:scale-95 dark:border dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
           {language === 'en' ? 'म' : 'EN'}
         </button>
-        <button onClick={toggleTheme} className="relative p-2.5 rounded-full glass hover:scale-105 active:scale-95 text-slate-600 dark:text-slate-300 hover:bg-white/80 transition-all flex items-center justify-center shadow-sm">
+        <button onClick={toggleTheme} className="relative flex items-center justify-center rounded-full p-2.5 text-slate-600 shadow-sm transition-all hover:scale-105 hover:bg-white/80 active:scale-95 dark:border dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
           {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
         
