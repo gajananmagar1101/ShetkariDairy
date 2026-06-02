@@ -47,7 +47,7 @@ const DialogContent = React.forwardRef<
         <div className="pointer-events-none absolute inset-0 rounded-[inherit]">
           <div className="absolute inset-x-6 top-0 h-px bg-white/80 dark:bg-white/20" />
           <div className="absolute inset-x-4 top-4 h-24 rounded-full bg-white/20 blur-3xl dark:bg-white/5" />
-          <div className="absolute -bottom-12 left-1/2 h-28 w-3/4 -translate-x-1/2 rounded-full bg-primary-300/15 blur-3xl dark:bg-primary-500/10" />
+          <div className="absolute -bottom-12 left-1/2 h-28 w-3/4 -translate-x-1/2 rounded-full bg-primary-300/15 blur-3xl dark:bg-white/5" />
         </div>
       ) : null}
       {children}

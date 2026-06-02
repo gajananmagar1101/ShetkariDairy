@@ -6,11 +6,13 @@ import { useNavigate } from 'react-router-dom'
 import { BadgeCheck } from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { useSettingsStore } from '../store/settingsStore'
+import { LoadingBlock } from '../components/ui/loading'
 
 const Login: React.FC = () => {
   const setAuth = useAuthStore((state) => state.setAuth)
   const language = useSettingsStore((state) => state.language)
   const toggleLanguage = useSettingsStore((state) => state.toggleLanguage)
+  const hasHydrated = useAuthStore((state) => state.hasHydrated)
   const navigate = useNavigate()
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false)
 
@@ -73,6 +75,10 @@ const Login: React.FC = () => {
     } finally {
       setIsGoogleSubmitting(false)
     }
+  }
+
+  if (!hasHydrated) {
+    return <LoadingBlock label={isMarathi ? 'लोड होत आहे...' : 'Loading login...'} minHeightClassName="min-h-screen" />
   }
 
   return (
@@ -265,6 +271,7 @@ const Login: React.FC = () => {
                 <div className="flex w-full max-w-[300px] items-center justify-center gap-3 rounded-full border border-white/45 bg-white/90 px-5 py-2.5 text-[0.92rem] font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 sm:max-w-[320px] sm:px-6 sm:py-3 sm:text-sm">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700 dark:border-slate-600 dark:border-t-slate-200" />
                   {copy.googleLoading}
+  
                 </div>
               ) : (
                 <div className="w-full max-w-[300px] overflow-hidden rounded-full sm:max-w-[320px]">

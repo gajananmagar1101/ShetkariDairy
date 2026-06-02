@@ -140,7 +140,8 @@ public class MilkEntryService {
     }
 
     public List<MilkEntryDto> getEntriesByDate(LocalDate date) {
-        return milkEntryRepository.findByUserId(SecurityUtils.getCurrentUserId()).stream()
+        Set<String> ownedUserIds = resolveOwnedUserIds(SecurityUtils.getCurrentUserId());
+        return milkEntryRepository.findByUserIdInAndDate(ownedUserIds, date).stream()
                 .filter(entry -> entry.getDate() != null)
                 .filter(entry -> entry.getDate().equals(date))
                 .map(entry -> {
@@ -174,7 +175,11 @@ public class MilkEntryService {
     }
 
     public List<MilkEntry> findEntriesByCustomerAndDateRange(String userId, String customerId, LocalDate startDate, LocalDate endDate) {
-        return milkEntryRepository.findByUserIdAndCustomerId(userId, customerId).stream()
+        Set<String> ownedUserIds = resolveOwnedUserIds(userId);
+        LocalDate queryStartDate = startDate.minusDays(1);
+        LocalDate queryEndDate = endDate.plusDays(1);
+        return milkEntryRepository.findByUserIdInAndDateBetween(ownedUserIds, queryStartDate, queryEndDate).stream()
+                .filter(entry -> customerId.equals(entry.getCustomerId()))
                 .filter(entry -> entry.getDate() != null)
                 .filter(entry -> !entry.getDate().isBefore(startDate) && !entry.getDate().isAfter(endDate))
                 .sorted(java.util.Comparator.comparing(MilkEntry::getDate))
@@ -242,36 +247,11 @@ public class MilkEntryService {
     @Transactional
     public int autoGenerateEntriesForRange(LocalDate startDate, LocalDate endDate) {
         String userId = SecurityUtils.getCurrentUserId();
-        Set<String> ownedUserIds = resolveOwnedUserIds(userId);
-
-        List<MilkEntry> existingEntries = ownedUserIds.stream()
-                .flatMap(ownedUserId -> milkEntryRepository.findByUserIdAndDateBetween(ownedUserId, startDate, endDate).stream())
-                .collect(Collectors.collectingAndThen(
-                        Collectors.toMap(MilkEntry::getId, entry -> entry, (existing, ignored) -> existing, LinkedHashMap::new),
-                        map -> new ArrayList<>(map.values())
-                ));
-        if (!existingEntries.isEmpty()) {
-            List<LocalDate> existingDates = existingEntries.stream()
-                    .map(MilkEntry::getDate)
-                    .filter(java.util.Objects::nonNull)
-                    .distinct()
-                    .sorted()
-                    .collect(Collectors.toList());
-
-            if (!existingDates.isEmpty()) {
-                if (existingDates.size() == 1) {
-                    throw new IllegalArgumentException("Entries already exist for " + existingDates.get(0) + ". Cannot generate.");
-                } else {
-                    LocalDate minDate = existingDates.get(0);
-                    LocalDate maxDate = existingDates.get(existingDates.size() - 1);
-                    throw new IllegalArgumentException("Entries already exist from " + minDate + " to " + maxDate + ". Cannot generate.");
-                }
-            }
-        }
 
         int totalGenerated = 0;
         LocalDate current = startDate;
         while (!current.isAfter(endDate)) {
+            // Generate each day independently so an existing entry on one date never blocks the rest of the range.
             totalGenerated += autoGenerateEntriesForUser(userId, current);
             current = current.plusDays(1);
         }
@@ -288,8 +268,7 @@ public class MilkEntryService {
         int totalGenerated = 0;
         for (Map.Entry<String, List<Customer>> entry : customersByUser.entrySet()) {
             Set<String> ownedUserIds = resolveOwnedUserIds(entry.getKey());
-            String canonicalUserId = resolveCanonicalUserId(entry.getKey());
-            totalGenerated += autoGenerateEntriesForCustomers(canonicalUserId, ownedUserIds, entry.getValue(), date);
+            totalGenerated += autoGenerateEntriesForCustomers(entry.getKey(), ownedUserIds, entry.getValue(), date);
         }
         return totalGenerated;
     }
@@ -297,7 +276,6 @@ public class MilkEntryService {
     @Transactional
     public int autoGenerateEntriesForUser(String userId, LocalDate date) {
         Set<String> ownedUserIds = resolveOwnedUserIds(userId);
-        String canonicalUserId = resolveCanonicalUserId(userId);
         List<Customer> activeCustomers = ownedUserIds.stream()
                 .flatMap(ownedUserId -> customerRepository.findByUserIdAndIsActiveTrue(ownedUserId).stream())
                 .collect(Collectors.collectingAndThen(
@@ -305,7 +283,7 @@ public class MilkEntryService {
                         map -> new ArrayList<>(map.values())
                 ));
 
-        return autoGenerateEntriesForCustomers(canonicalUserId, ownedUserIds, activeCustomers, date);
+        return autoGenerateEntriesForCustomers(userId, ownedUserIds, activeCustomers, date);
     }
 
     private int autoGenerateEntriesForCustomers(String userId, Set<String> ownedUserIds, List<Customer> activeCustomers, LocalDate date) {
@@ -402,15 +380,6 @@ public class MilkEntryService {
                         }
                 );
         return ownedUserIds;
-    }
-
-    private String resolveCanonicalUserId(String userId) {
-        return userRepository.findById(userId)
-                .or(() -> userRepository.findByEmail(userId))
-                .or(() -> userRepository.findByPhone(userId))
-                .map(User::getId)
-                .filter(id -> id != null && !id.isBlank())
-                .orElse(userId);
     }
 
     @Transactional

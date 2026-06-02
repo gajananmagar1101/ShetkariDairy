@@ -38,11 +38,11 @@ export default function Header() {
           </h1>
         </div>
         <div className="relative hidden md:block group">
-          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary-500" />
+          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary-500 dark:group-focus-within:text-white" />
           <input 
             type="text" 
             placeholder={language === 'mr' ? "काहीही शोधा..." : "Search anything..."} 
-            className="pl-11 pr-5 py-2.5 bg-white/40 dark:bg-slate-800/40 border border-white/60 dark:border-slate-700 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 w-72 shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80 dark:focus:bg-slate-800 dark:text-white"
+            className="pl-11 pr-5 py-2.5 bg-white/40 dark:bg-zinc-900 border border-white/60 dark:border-zinc-700 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:focus:ring-white/30 w-72 shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80 dark:focus:bg-black dark:text-white"
           />
         </div>
       </div>

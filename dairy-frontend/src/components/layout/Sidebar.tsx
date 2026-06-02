@@ -44,7 +44,7 @@ function SidebarLink({ item, onNavigate, language }: {
       className={({ isActive }) =>
         `flex items-center gap-3 px-4 py-3.5 rounded-[1.25rem] transition-all duration-300 relative ${
           isActive
-            ? 'text-primary-700 dark:text-primary-300 font-semibold'
+            ? 'text-primary-700 dark:text-white font-semibold'
             : 'text-slate-500 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/50'
         }`
       }
@@ -98,14 +98,14 @@ function SidebarSection({
         onClick={onToggle}
         className={`flex w-full items-center justify-between rounded-[1.4rem] px-4 py-3.5 text-left transition-all ${
           isExpanded
-            ? 'bg-white/75 text-primary-700 shadow-[0_4px_12px_rgb(0,0,0,0.03)] border border-white/80 dark:bg-slate-800/90 dark:border-slate-600 dark:text-primary-300'
+            ? 'bg-white/75 text-primary-700 shadow-[0_4px_12px_rgb(0,0,0,0.03)] border border-white/80 dark:bg-zinc-900 dark:border-zinc-700 dark:text-white'
             : 'text-slate-600 border border-transparent hover:bg-white/45 dark:text-slate-300 dark:hover:bg-slate-800/50'
         }`}
       >
         <span className="flex items-center gap-3 font-semibold">
           <span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
             isExpanded
-              ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-200'
+              ? 'bg-primary-100 text-primary-700 dark:bg-white/10 dark:text-white'
               : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300'
           }`}>
             <Icon className="h-5 w-5" />
@@ -155,15 +155,15 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="h-full min-h-0 rounded-[2rem] bg-white/45 dark:bg-[#0b1120] backdrop-blur-[24px] flex flex-col py-8 shadow-[0_10px_40px_-10px_rgba(124,58,237,0.08)] dark:shadow-none border border-white/60 dark:border-slate-800 relative overflow-hidden">
+    <div className="h-full min-h-0 rounded-[2rem] bg-white/45 dark:bg-[#090909] backdrop-blur-[24px] flex flex-col py-8 shadow-[0_10px_40px_-10px_rgba(124,58,237,0.08)] dark:shadow-none border border-white/60 dark:border-zinc-800 relative overflow-hidden">
       {/* Subtle sidebar inner glow */}
       <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white/40 dark:from-white/5 to-transparent pointer-events-none" />
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <div className="px-6 mb-10 flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary-500 to-primary-400 flex items-center justify-center shadow-[0_8px_20px_rgb(139,92,246,0.3)]">
-            <Sprout className="text-white w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary-500 to-primary-400 flex items-center justify-center shadow-[0_8px_20px_rgb(139,92,246,0.3)] dark:from-white dark:to-zinc-300 dark:shadow-none">
+            <Sprout className="text-white w-6 h-6 dark:text-black" />
           </div>
-          <span className="font-extrabold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-slate-800 to-primary-900 dark:from-white dark:to-primary-200">
+          <span className="font-extrabold text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-slate-800 to-primary-900 dark:from-white dark:to-zinc-400">
             {t(language, 'dairyName')}
           </span>
         </div>

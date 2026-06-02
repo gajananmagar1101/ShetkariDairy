@@ -68,7 +68,7 @@ public class MilkEntryController {
         int count = milkEntryService.autoGenerateEntriesForRange(startDate, endDate);
         String message = count > 0
                 ? "Auto-generated " + count + " entries"
-                : "Entries already exist for the selected dates. Skipped duplicate generation.";
+                : "No new entries were needed for the selected dates.";
         return ResponseEntity.ok(new ApiResponse<>(true, message, count));
     }
 
