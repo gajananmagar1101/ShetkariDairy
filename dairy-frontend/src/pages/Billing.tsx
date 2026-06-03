@@ -96,14 +96,14 @@ export default function Billing() {
     `${invoice.customerId ?? ''}|${invoice.periodStartDate ?? ''}|${invoice.periodEndDate ?? ''}`
 
   const preferInvoice = (current: Invoice, candidate: Invoice) => {
+    if (current.status !== candidate.status) {
+      return current.status === 'PAID' ? current : candidate
+    }
+
     const currentAmount = Number(current.totalAmount || 0)
     const candidateAmount = Number(candidate.totalAmount || 0)
     if (candidateAmount !== currentAmount) {
       return candidateAmount > currentAmount ? candidate : current
-    }
-
-    if (current.status !== candidate.status) {
-      return current.status === 'PAID' ? current : candidate
     }
 
     const currentDate = new Date(current.periodStartDate || '').getTime()

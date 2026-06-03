@@ -260,14 +260,14 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
   }
 
   const pickPreferredInvoice = (current: Invoice, candidate: Invoice) => {
+    if (current.status !== candidate.status) {
+      return current.status === 'PAID' ? current : candidate
+    }
+
     const currentAmount = Number(current.totalAmount || 0)
     const candidateAmount = Number(candidate.totalAmount || 0)
     if (candidateAmount !== currentAmount) {
       return candidateAmount > currentAmount ? candidate : current
-    }
-
-    if (current.status !== candidate.status) {
-      return current.status === 'PAID' ? current : candidate
     }
 
     const currentDate = new Date(current.periodStartDate || '').getTime()
@@ -484,12 +484,10 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
           0,
           group.billed - (group.paid + (paymentAllocationByMonth.get(group.key) ?? 0))
         ),
-        displayBalance: group.hasInvoice && group.invoiceStatus === 'PAID'
-          ? group.billed
-          : Math.max(
-              0,
-              group.billed - (group.paid + (paymentAllocationByMonth.get(group.key) ?? 0))
-            ),
+        displayBalance: Math.max(
+          0,
+          group.billed - (group.paid + (paymentAllocationByMonth.get(group.key) ?? 0))
+        ),
       }))
       .sort((a, b) => b.key.localeCompare(a.key))
   }, [allEntries, uniqueInvoices, payments, language])
@@ -751,7 +749,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                                   <span className="text-base font-bold text-slate-700 dark:text-white">
                                     ₹{group.displayBalance}
                                   </span>
-                                  {group.balance > 0 && group.invoiceStatus !== 'PAID' ? (
+                                  {group.balance > 0 ? (
                                     <Button
                                       type="button"
                                       size="sm"
@@ -1051,7 +1049,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
         title={t(language, 'payMonthBalanceTitle')}
         description={
           monthToPay
-            ? `${monthToPay.label} - ₹${monthToPay.balance}`
+        ? `${monthToPay.label} - ₹${monthToPay.displayBalance}`
             : t(language, 'payMonthBalanceDesc')
         }
         confirmText={isPayingMonth ? t(language, 'generating') : t(language, 'payMonthBalance')}
