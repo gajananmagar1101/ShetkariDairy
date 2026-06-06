@@ -644,7 +644,12 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-slate-50/50 dark:bg-slate-900/20">
-          <>
+          {!hasLoadedDetails ? (
+            <div className="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm p-4 sm:p-6">
+              <LoadingBlock label={t(language, 'loadingDetails')} minHeightClassName="min-h-[28rem]" size="md" />
+            </div>
+          ) : (
+            <>
               {activeTab === 'info' && (
                 <div className="grid grid-cols-1 md:grid-cols-[0.95fr_1.35fr] gap-3 md:items-start">
                   <div className="self-start bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
@@ -1047,6 +1052,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                 </div>
               )}
             </>
+          )}
         </div>
       </DialogContent>
 
