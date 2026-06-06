@@ -55,7 +55,10 @@ public class MilkEntryController {
     public ResponseEntity<ApiResponse<Integer>> autoGenerateEntries(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         int count = milkEntryService.autoGenerateEntries(date);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Auto-generated " + count + " entries", count));
+        String message = count > 0
+                ? "Auto-generated " + count + " entries"
+                : "Entries already exist for the selected date. Skipped duplicate generation.";
+        return ResponseEntity.ok(new ApiResponse<>(true, message, count));
     }
 
     @PostMapping("/auto-generate-range")
@@ -63,7 +66,10 @@ public class MilkEntryController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         int count = milkEntryService.autoGenerateEntriesForRange(startDate, endDate);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Auto-generated " + count + " entries", count));
+        String message = count > 0
+                ? "Auto-generated " + count + " entries"
+                : "No new entries were needed for the selected dates.";
+        return ResponseEntity.ok(new ApiResponse<>(true, message, count));
     }
 
     @DeleteMapping("/{id}")

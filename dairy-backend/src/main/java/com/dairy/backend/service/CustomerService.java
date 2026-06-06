@@ -9,6 +9,7 @@ import com.dairy.backend.repository.CustomerRepository;
 import com.dairy.backend.repository.InvoiceRepository;
 import com.dairy.backend.repository.MilkEntryRepository;
 import com.dairy.backend.repository.PaymentRepository;
+import com.dairy.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -33,9 +34,48 @@ public class CustomerService {
     private final MilkEntryService milkEntryService;
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
+    private final UserRepository userRepository;
 
     private BigDecimal safe(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private Set<String> resolveOwnedUserIds(String userId) {
+        Set<String> ownedUserIds = new HashSet<>();
+        userRepository.findById(userId)
+                .or(() -> userRepository.findByEmail(userId))
+                .or(() -> userRepository.findByPhone(userId))
+                .ifPresentOrElse(
+                        user -> {
+                            if (user.getId() != null && !user.getId().isBlank()) {
+                                ownedUserIds.add(user.getId());
+                            }
+                            if (user.getPhone() != null && !user.getPhone().isBlank()) {
+                                ownedUserIds.add(user.getPhone());
+                            }
+                            if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                                ownedUserIds.add(user.getEmail());
+                            }
+                        },
+                        () -> {
+                            if (userId != null && !userId.isBlank()) {
+                                ownedUserIds.add(userId);
+                            }
+                        }
+        );
+        return ownedUserIds;
+    }
+
+    private Set<String> resolveOwnedCustomerIds(Set<String> ownedUserIds) {
+        Set<String> ownedCustomerIds = new HashSet<>();
+        ownedUserIds.forEach(ownedUserId ->
+                customerRepository.findByUserId(ownedUserId).forEach(customer -> {
+                    if (customer.getId() != null && !customer.getId().isBlank()) {
+                        ownedCustomerIds.add(customer.getId());
+                    }
+                })
+        );
+        return ownedCustomerIds;
     }
 
     private BigDecimal resolveDailyQuantity(CustomerDto dto) {
@@ -46,8 +86,11 @@ public class CustomerService {
     }
 
     private BigDecimal calculateLiveBalance(String userId, Customer customer) {
+        Set<String> ownedUserIds = resolveOwnedUserIds(userId);
+        Set<String> ownedCustomerIds = resolveOwnedCustomerIds(ownedUserIds);
         Map<LocalDate, BigDecimal> entryAmountByDate = new HashMap<>();
-        BigDecimal milkEntriesTotal = milkEntryRepository.findByUserIdAndCustomerId(userId, customer.getId()).stream()
+        BigDecimal milkEntriesTotal = ownedUserIds.stream()
+                .flatMap(ownedUserId -> milkEntryRepository.findByUserIdAndCustomerId(ownedUserId, customer.getId()).stream())
                 .peek(entry -> {
                     if (entry.getDate() != null) {
                         entryAmountByDate.merge(entry.getDate(), safe(entry.getTotalAmount()), BigDecimal::add);
@@ -56,30 +99,45 @@ public class CustomerService {
                 .map(entry -> safe(entry.getTotalAmount()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Set<LocalDate> coveredPaidDates = new HashSet<>();
-        BigDecimal rangedPaymentsTotal = BigDecimal.ZERO;
+        BigDecimal paidInvoicesTotal = BigDecimal.ZERO;
         BigDecimal manualPaymentsTotal = BigDecimal.ZERO;
 
-        var payments = paymentRepository.findByUserIdAndCustomerId(userId, customer.getId()).stream()
+        var invoices = invoiceRepository.findAll().stream()
+                .filter(invoice -> invoice.getCustomerId() != null && customer.getId().equals(invoice.getCustomerId()))
+                .sorted(Comparator
+                        .comparing(com.dairy.backend.entity.Invoice::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(com.dairy.backend.entity.Invoice::getId, Comparator.nullsLast(String::compareTo)))
+                .collect(Collectors.toList());
+
+        var payments = paymentRepository.findAll().stream()
+                .filter(payment -> payment.getCustomerId() != null && ownedCustomerIds.contains(payment.getCustomerId()))
+                .filter(payment -> customer.getId().equals(payment.getCustomerId()))
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(
+                                payment -> payment.getId(),
+                                payment -> payment,
+                                (existing, ignored) -> existing,
+                                java.util.LinkedHashMap::new
+                        ),
+                        map -> new ArrayList<>(map.values())
+                ))
+                .stream()
                 .sorted(Comparator
                         .comparing(com.dairy.backend.entity.Payment::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(com.dairy.backend.entity.Payment::getId, Comparator.nullsLast(String::compareTo)))
                 .collect(Collectors.toList());
 
-        for (var payment : payments) {
-            if (payment.getPaidFromDate() != null && payment.getPaidToDate() != null) {
-                for (LocalDate date = payment.getPaidFromDate(); !date.isAfter(payment.getPaidToDate()); date = date.plusDays(1)) {
-                    if (coveredPaidDates.add(date)) {
-                        rangedPaymentsTotal = rangedPaymentsTotal.add(entryAmountByDate.getOrDefault(date, BigDecimal.ZERO));
-                    }
-                }
-                continue;
-            }
-
-            manualPaymentsTotal = manualPaymentsTotal.add(safe(payment.getAmount()));
+        for (var invoice : invoices) {
+            paidInvoicesTotal = paidInvoicesTotal.add(safe(invoice.getPaidAmount()));
         }
 
-        return milkEntriesTotal.subtract(rangedPaymentsTotal).subtract(manualPaymentsTotal);
+        for (var payment : payments) {
+            if (payment.getPaidFromDate() == null || payment.getPaidToDate() == null) {
+                manualPaymentsTotal = manualPaymentsTotal.add(safe(payment.getAmount()));
+            }
+        }
+
+        return milkEntriesTotal.subtract(paidInvoicesTotal).subtract(manualPaymentsTotal);
     }
 
     public CustomerDto createCustomer(CustomerDto dto) {

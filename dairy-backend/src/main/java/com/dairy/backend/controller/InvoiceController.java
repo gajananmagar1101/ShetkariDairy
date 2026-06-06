@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -38,7 +39,9 @@ public class InvoiceController {
     }
 
     @PutMapping("/{id}/pay")
-    public ResponseEntity<ApiResponse<InvoiceDto>> markAsPaid(@PathVariable String id) {
-        return ResponseEntity.ok(new ApiResponse<>(true, "Invoice marked as paid", invoiceService.markAsPaid(id)));
+    public ResponseEntity<ApiResponse<InvoiceDto>> markAsPaid(
+            @PathVariable String id,
+            @RequestParam(required = false) BigDecimal amount) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Invoice payment recorded", invoiceService.markAsPaid(id, amount)));
     }
 }

@@ -7,9 +7,13 @@ import com.dairy.backend.entity.Customer;
 import com.dairy.backend.entity.DeliveryOverride;
 import com.dairy.backend.entity.MilkEntry;
 import com.dairy.backend.entity.SpecialCondition;
+import com.dairy.backend.entity.User;
+import com.dairy.backend.event.MonthEndEntrySavedEvent;
 import com.dairy.backend.repository.CustomerRepository;
 import com.dairy.backend.repository.MilkEntryRepository;
+import com.dairy.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,8 +24,10 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +36,8 @@ public class MilkEntryService {
 
     private final MilkEntryRepository milkEntryRepository;
     private final CustomerRepository customerRepository;
+    private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private BigDecimal safe(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
@@ -130,12 +138,14 @@ public class MilkEntryService {
         customer.setBalance(customer.getBalance().subtract(previousGroupAmount).add(totalAmount));
         clearConsumedCustomerConditions(customer, entryDate);
         customerRepository.save(customer);
+        publishMonthEndInvoiceEvent(userId, customer.getId(), entryDate);
 
         return mapToDto(entry, customer.getName());
     }
 
     public List<MilkEntryDto> getEntriesByDate(LocalDate date) {
-        return milkEntryRepository.findByUserId(SecurityUtils.getCurrentUserId()).stream()
+        Set<String> ownedUserIds = resolveOwnedUserIds(SecurityUtils.getCurrentUserId());
+        return milkEntryRepository.findByUserIdInAndDate(ownedUserIds, date).stream()
                 .filter(entry -> entry.getDate() != null)
                 .filter(entry -> entry.getDate().equals(date))
                 .map(entry -> {
@@ -169,7 +179,11 @@ public class MilkEntryService {
     }
 
     public List<MilkEntry> findEntriesByCustomerAndDateRange(String userId, String customerId, LocalDate startDate, LocalDate endDate) {
-        return milkEntryRepository.findByUserIdAndCustomerId(userId, customerId).stream()
+        Set<String> ownedUserIds = resolveOwnedUserIds(userId);
+        LocalDate queryStartDate = startDate.minusDays(1);
+        LocalDate queryEndDate = endDate.plusDays(1);
+        return milkEntryRepository.findByUserIdInAndDateBetween(ownedUserIds, queryStartDate, queryEndDate).stream()
+                .filter(entry -> customerId.equals(entry.getCustomerId()))
                 .filter(entry -> entry.getDate() != null)
                 .filter(entry -> !entry.getDate().isBefore(startDate) && !entry.getDate().isAfter(endDate))
                 .sorted(java.util.Comparator.comparing(MilkEntry::getDate))
@@ -210,6 +224,7 @@ public class MilkEntryService {
 
         customer.setBalance(customer.getBalance().subtract(previousGroupAmount).add(totalAmount));
         customerRepository.save(customer);
+        publishMonthEndInvoiceEvent(userId, entry.getCustomerId(), entry.getDate());
 
         return mapToDto(entry, customer.getName());
     }
@@ -238,29 +253,10 @@ public class MilkEntryService {
     public int autoGenerateEntriesForRange(LocalDate startDate, LocalDate endDate) {
         String userId = SecurityUtils.getCurrentUserId();
 
-        List<MilkEntry> existingEntries = milkEntryRepository.findByUserIdAndDateBetween(userId, startDate, endDate);
-        if (!existingEntries.isEmpty()) {
-            List<LocalDate> existingDates = existingEntries.stream()
-                    .map(MilkEntry::getDate)
-                    .filter(java.util.Objects::nonNull)
-                    .distinct()
-                    .sorted()
-                    .collect(Collectors.toList());
-
-            if (!existingDates.isEmpty()) {
-                if (existingDates.size() == 1) {
-                    throw new IllegalArgumentException("Entries already exist for " + existingDates.get(0) + ". Cannot generate.");
-                } else {
-                    LocalDate minDate = existingDates.get(0);
-                    LocalDate maxDate = existingDates.get(existingDates.size() - 1);
-                    throw new IllegalArgumentException("Entries already exist from " + minDate + " to " + maxDate + ". Cannot generate.");
-                }
-            }
-        }
-
         int totalGenerated = 0;
         LocalDate current = startDate;
         while (!current.isAfter(endDate)) {
+            // Generate each day independently so an existing entry on one date never blocks the rest of the range.
             totalGenerated += autoGenerateEntriesForUser(userId, current);
             current = current.plusDays(1);
         }
@@ -276,21 +272,26 @@ public class MilkEntryService {
 
         int totalGenerated = 0;
         for (Map.Entry<String, List<Customer>> entry : customersByUser.entrySet()) {
-            totalGenerated += autoGenerateEntriesForCustomers(entry.getKey(), entry.getValue(), date);
+            Set<String> ownedUserIds = resolveOwnedUserIds(entry.getKey());
+            totalGenerated += autoGenerateEntriesForCustomers(entry.getKey(), ownedUserIds, entry.getValue(), date);
         }
         return totalGenerated;
     }
 
     @Transactional
     public int autoGenerateEntriesForUser(String userId, LocalDate date) {
-        if (!milkEntryRepository.findByUserIdAndDate(userId, date).isEmpty()) {
-            return 0;
-        }
-        List<Customer> activeCustomers = customerRepository.findByUserIdAndIsActiveTrue(userId);
-        return autoGenerateEntriesForCustomers(userId, activeCustomers, date);
+        Set<String> ownedUserIds = resolveOwnedUserIds(userId);
+        List<Customer> activeCustomers = ownedUserIds.stream()
+                .flatMap(ownedUserId -> customerRepository.findByUserIdAndIsActiveTrue(ownedUserId).stream())
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(Customer::getId, customer -> customer, (existing, ignored) -> existing, LinkedHashMap::new),
+                        map -> new ArrayList<>(map.values())
+                ));
+
+        return autoGenerateEntriesForCustomers(userId, ownedUserIds, activeCustomers, date);
     }
 
-    private int autoGenerateEntriesForCustomers(String userId, List<Customer> activeCustomers, LocalDate date) {
+    private int autoGenerateEntriesForCustomers(String userId, Set<String> ownedUserIds, List<Customer> activeCustomers, LocalDate date) {
         int generatedCount = 0;
 
         for (Customer customer : activeCustomers) {
@@ -305,7 +306,9 @@ public class MilkEntryService {
                     .findFirst()
                     .orElse(null);
 
-            if (!shouldAutoGenerate || skippedDates.contains(date) || milkEntryRepository.existsByUserIdAndCustomerIdAndDate(userId, customer.getId(), date)) {
+            if (!shouldAutoGenerate
+                    || skippedDates.contains(date)
+                    || milkEntryRepository.existsByUserIdInAndCustomerIdAndDate(ownedUserIds, customer.getId(), date)) {
                 continue;
             }
 
@@ -353,9 +356,48 @@ public class MilkEntryService {
             customer.setBalance(customer.getBalance().add(totalAmount));
             clearConsumedCustomerConditions(customer, date);
             customerRepository.save(customer);
+            publishMonthEndInvoiceEvent(userId, customer.getId(), date);
             generatedCount++;
         }
         return generatedCount;
+    }
+
+    private void publishMonthEndInvoiceEvent(String userId, String customerId, LocalDate entryDate) {
+        if (userId == null || customerId == null || entryDate == null) {
+            return;
+        }
+
+        if (entryDate.getDayOfMonth() != entryDate.lengthOfMonth()) {
+            return;
+        }
+
+        eventPublisher.publishEvent(new MonthEndEntrySavedEvent(userId, customerId, entryDate));
+    }
+
+    private Set<String> resolveOwnedUserIds(String userId) {
+        Set<String> ownedUserIds = new LinkedHashSet<>();
+        userRepository.findById(userId)
+                .or(() -> userRepository.findByEmail(userId))
+                .or(() -> userRepository.findByPhone(userId))
+                .ifPresentOrElse(
+                        user -> {
+                            if (user.getId() != null && !user.getId().isBlank()) {
+                                ownedUserIds.add(user.getId());
+                            }
+                            if (user.getPhone() != null && !user.getPhone().isBlank()) {
+                                ownedUserIds.add(user.getPhone());
+                            }
+                            if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                                ownedUserIds.add(user.getEmail());
+                            }
+                        },
+                        () -> {
+                            if (userId != null && !userId.isBlank()) {
+                                ownedUserIds.add(userId);
+                            }
+                        }
+                );
+        return ownedUserIds;
     }
 
     @Transactional

@@ -7,6 +7,7 @@ import { t } from '../utils/translations'
 import { getDisplayLocale, toEnglishDigits } from '../utils/numberFormat'
 import { LoadingBlock } from '../components/ui/loading'
 import { getCachedViewData, setCachedViewData } from '../lib/viewCache'
+import { fetchCustomersWithCache } from '../lib/customerCache'
 
 interface DailySummary {
   date: string
@@ -15,12 +16,20 @@ interface DailySummary {
   profit: number
 }
 
+interface CustomerBalanceSummary {
+  id: string
+  name: string
+  balance: number
+  active?: boolean
+}
+
 const REPORTS_CACHE_TTL_MS = 5 * 60_000
 
 export default function Reports() {
   const { language } = useSettingsStore()
   const [data, setData] = useState<DailySummary[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [outstandingBalance, setOutstandingBalance] = useState(0)
   const [year, setYear] = useState(new Date().getFullYear())
   const [month, setMonth] = useState(new Date().getMonth() + 1)
 
@@ -36,6 +45,22 @@ export default function Reports() {
 
     void fetchReport(true)
   }, [year, month, language])
+
+  useEffect(() => {
+    const fetchCustomerBalances = async () => {
+      try {
+        const customers = await fetchCustomersWithCache<CustomerBalanceSummary>()
+        const total = customers
+          .filter((customer) => customer.active !== false)
+          .reduce((sum, customer) => sum + (customer.balance || 0), 0)
+        setOutstandingBalance(total)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+
+    void fetchCustomerBalances()
+  }, [])
 
   const fetchReport = async (showLoader = true) => {
     if (showLoader) {
@@ -98,7 +123,7 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-white/60 dark:border-slate-700 shadow-sm p-6 flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
             <IndianRupee className="w-6 h-6" />
@@ -127,6 +152,18 @@ export default function Reports() {
             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t(language, 'netProfitLoss')}</p>
             <h3 className={`text-2xl font-bold ${totalProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
               ₹{totalProfit.toFixed(2)}
+            </h3>
+          </div>
+        </div>
+
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl border border-white/60 dark:border-slate-700 shadow-sm p-6 flex items-center gap-4">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${outstandingBalance >= 0 ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400' : 'bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-400'}`}>
+            <IndianRupee className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t(language, 'currentCustomerBalance')}</p>
+            <h3 className={`text-2xl font-bold ${outstandingBalance >= 0 ? 'text-amber-600 dark:text-amber-400' : 'text-sky-600 dark:text-sky-400'}`}>
+              ₹{outstandingBalance.toFixed(2)}
             </h3>
           </div>
         </div>

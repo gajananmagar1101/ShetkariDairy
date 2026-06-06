@@ -42,6 +42,9 @@ public class User {
     @Builder.Default
     private String autoEntryTime = "21:30";
 
+    @Builder.Default
+    private String labourAutoAttendanceTime = "20:00";
+
     private String upiId;
 
     @CreatedDate

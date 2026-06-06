@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import { Search, Menu, Moon, Sun, LogOut, Settings, User } from 'lucide-react'
+import { Search, Moon, Sun, LogOut, Settings, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useAuthStore } from '../../store/useAuthStore'
 
 export default function Header() {
-  const { language, theme, toggleLanguage, toggleTheme, toggleMobileMenu } = useSettingsStore()
+  const { language, theme, toggleLanguage, toggleTheme } = useSettingsStore()
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -27,29 +27,31 @@ export default function Header() {
   }, [])
 
   return (
-    <header className="h-16 flex items-center justify-between gap-2 px-2 min-w-0">
-      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-        <button 
-          onClick={toggleMobileMenu}
-          className="md:hidden p-2 rounded-xl glass text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+    <header className="flex h-[4.75rem] items-center justify-between gap-2 px-4 min-w-0">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0 self-center">
+        <div className="min-w-0 pr-2">
+          <h1
+            className="truncate text-[1.25rem] font-black leading-none text-slate-900 dark:text-white"
+            style={{ fontFamily: "'Nunito', 'Plus Jakarta Sans', sans-serif" }}
+          >
+            Shetkari Vahi
+          </h1>
+        </div>
         <div className="relative hidden md:block group">
-          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary-500" />
+          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-primary-500 dark:group-focus-within:text-white" />
           <input 
             type="text" 
             placeholder={language === 'mr' ? "काहीही शोधा..." : "Search anything..."} 
-            className="pl-11 pr-5 py-2.5 bg-white/40 dark:bg-slate-800/40 border border-white/60 dark:border-slate-700 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 w-72 shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80 dark:focus:bg-slate-800 dark:text-white"
+            className="pl-11 pr-5 py-2.5 bg-white/40 dark:bg-zinc-900 border border-white/60 dark:border-zinc-700 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:focus:ring-white/30 w-72 shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80 dark:focus:bg-black dark:text-white"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-        <button onClick={toggleLanguage} className="relative p-2.5 rounded-full glass hover:scale-105 active:scale-95 text-slate-600 dark:text-slate-300 hover:bg-white/80 transition-all font-bold text-sm w-10 h-10 flex items-center justify-center shadow-sm">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0 self-center">
+        <button onClick={toggleLanguage} className="relative flex h-10 w-10 items-center justify-center rounded-full p-2.5 text-sm font-bold text-slate-600 shadow-sm transition-all hover:scale-105 hover:bg-white/80 active:scale-95 dark:border dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
           {language === 'en' ? 'म' : 'EN'}
         </button>
-        <button onClick={toggleTheme} className="relative p-2.5 rounded-full glass hover:scale-105 active:scale-95 text-slate-600 dark:text-slate-300 hover:bg-white/80 transition-all flex items-center justify-center shadow-sm">
+        <button onClick={toggleTheme} className="relative flex items-center justify-center rounded-full p-2.5 text-slate-600 shadow-sm transition-all hover:scale-105 hover:bg-white/80 active:scale-95 dark:border dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
           {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
         

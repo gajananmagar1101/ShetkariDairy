@@ -4,13 +4,14 @@ import com.dairy.backend.util.SecurityUtils;
 
 import com.dairy.backend.dto.PaymentDto;
 import com.dairy.backend.entity.Customer;
+import com.dairy.backend.entity.MilkEntry;
 import com.dairy.backend.entity.Payment;
 import com.dairy.backend.entity.PaymentStatus;
 import com.dairy.backend.repository.CustomerRepository;
 import com.dairy.backend.repository.MilkEntryRepository;
 import com.dairy.backend.repository.PaymentRepository;
+import com.dairy.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,9 +32,48 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final CustomerRepository customerRepository;
     private final MilkEntryRepository milkEntryRepository;
+    private final UserRepository userRepository;
 
     private BigDecimal safe(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private Set<String> resolveOwnedUserIds(String userId) {
+        Set<String> ownedUserIds = new HashSet<>();
+        userRepository.findById(userId)
+                .or(() -> userRepository.findByEmail(userId))
+                .or(() -> userRepository.findByPhone(userId))
+                .ifPresentOrElse(
+                        user -> {
+                            if (user.getId() != null && !user.getId().isBlank()) {
+                                ownedUserIds.add(user.getId());
+                            }
+                            if (user.getPhone() != null && !user.getPhone().isBlank()) {
+                                ownedUserIds.add(user.getPhone());
+                            }
+                            if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                                ownedUserIds.add(user.getEmail());
+                            }
+                        },
+                        () -> {
+                            if (userId != null && !userId.isBlank()) {
+                                ownedUserIds.add(userId);
+                            }
+                        }
+        );
+        return ownedUserIds;
+    }
+
+    private Set<String> resolveOwnedCustomerIds(Set<String> ownedUserIds) {
+        Set<String> ownedCustomerIds = new HashSet<>();
+        ownedUserIds.forEach(ownedUserId ->
+                customerRepository.findByUserId(ownedUserId).forEach(customer -> {
+                    if (customer.getId() != null && !customer.getId().isBlank()) {
+                        ownedCustomerIds.add(customer.getId());
+                    }
+                })
+        );
+        return ownedCustomerIds;
     }
 
     @Transactional
@@ -42,15 +82,23 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
         BigDecimal amount = dto.getAmount();
+        List<MilkEntry> billableEntries = List.of();
         if ((amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
                 && dto.getPaidFromDate() != null
                 && dto.getPaidToDate() != null) {
-            amount = milkEntryRepository.findByUserIdAndCustomerIdAndDateBetween(
-                            SecurityUtils.getCurrentUserId(),
+            LocalDate queryStartDate = dto.getPaidFromDate().minusDays(1);
+            LocalDate queryEndDate = dto.getPaidToDate().plusDays(1);
+            billableEntries = resolveOwnedUserIds(SecurityUtils.getCurrentUserId()).stream()
+                    .flatMap(ownedUserId -> milkEntryRepository.findByUserIdAndCustomerIdAndDateBetween(
+                            ownedUserId,
                             customer.getId(),
-                            dto.getPaidFromDate(),
-                            dto.getPaidToDate()
-                    ).stream()
+                            queryStartDate,
+                            queryEndDate
+                    ).stream())
+                    .filter(entry -> entry.getDate() != null)
+                    .filter(entry -> !entry.getDate().isBefore(dto.getPaidFromDate()) && !entry.getDate().isAfter(dto.getPaidToDate()))
+                    .toList();
+            amount = billableEntries.stream()
                     .map(entry -> entry.getTotalAmount() != null ? entry.getTotalAmount() : BigDecimal.ZERO)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
         }
@@ -59,12 +107,28 @@ public class PaymentService {
             throw new RuntimeException("Payment amount must be greater than zero");
         }
 
+        LocalDate effectivePaidFromDate = dto.getPaidFromDate();
+        LocalDate effectivePaidToDate = dto.getPaidToDate();
+        if (!billableEntries.isEmpty()) {
+            effectivePaidFromDate = billableEntries.stream()
+                    .map(MilkEntry::getDate)
+                    .filter(date -> date != null)
+                    .min(LocalDate::compareTo)
+                    .orElse(effectivePaidFromDate);
+            effectivePaidToDate = billableEntries.stream()
+                    .map(MilkEntry::getDate)
+                    .filter(date -> date != null)
+                    .max(LocalDate::compareTo)
+                    .orElse(effectivePaidToDate);
+        }
+
         Payment payment = Payment.builder()
+                .userId(SecurityUtils.getCurrentUserId())
                 .customerId(customer.getId())
                 .amount(amount)
                 .paymentDate(dto.getPaymentDate() != null ? dto.getPaymentDate() : LocalDate.now())
-                .paidFromDate(dto.getPaidFromDate())
-                .paidToDate(dto.getPaidToDate())
+                .paidFromDate(effectivePaidFromDate)
+                .paidToDate(effectivePaidToDate)
                 .paymentMethod(dto.getPaymentMethod())
                 .status(PaymentStatus.PAID)
                 .build();
@@ -79,18 +143,30 @@ public class PaymentService {
     }
 
     public List<PaymentDto> getAllPayments() {
-        String userId = SecurityUtils.getCurrentUserId();
-        List<Payment> payments = paymentRepository.findByUserId(
-                        userId,
-                        Sort.by(Sort.Direction.ASC, "paymentDate", "createdAt")
-                );
+        Set<String> ownedUserIds = resolveOwnedUserIds(SecurityUtils.getCurrentUserId());
+        Set<String> ownedCustomerIds = resolveOwnedCustomerIds(ownedUserIds);
+        List<Payment> payments = paymentRepository.findAll().stream()
+                .filter(payment -> payment.getCustomerId() != null && ownedCustomerIds.contains(payment.getCustomerId()))
+                .sorted(Comparator
+                        .comparing(Payment::getPaymentDate, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(Payment::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(Payment::getId, Comparator.nullsLast(String::compareTo)))
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(
+                                Payment::getId,
+                                payment -> payment,
+                                (existing, ignored) -> existing,
+                                java.util.LinkedHashMap::new
+                        ),
+                        map -> new java.util.ArrayList<>(map.values())
+                ));
         Map<String, Map<LocalDate, BigDecimal>> customerEntryAmountByDate = new HashMap<>();
         Map<String, Set<LocalDate>> customerCoveredDates = new HashMap<>();
 
         List<PaymentDto> dtos = payments.stream()
                 .map(payment -> {
                     BigDecimal effectiveAmount = resolveEffectivePaymentAmount(
-                            userId,
+                            ownedUserIds,
                             payment,
                             customerEntryAmountByDate,
                             customerCoveredDates
@@ -117,35 +193,12 @@ public class PaymentService {
     }
 
     private BigDecimal resolveEffectivePaymentAmount(
-            String userId,
+            Set<String> ownedUserIds,
             Payment payment,
             Map<String, Map<LocalDate, BigDecimal>> customerEntryAmountByDate,
             Map<String, Set<LocalDate>> customerCoveredDates
     ) {
-        if (payment.getPaidFromDate() == null || payment.getPaidToDate() == null) {
-            return safe(payment.getAmount());
-        }
-
-        Map<LocalDate, BigDecimal> entryAmountByDate = customerEntryAmountByDate.computeIfAbsent(
-                payment.getCustomerId(),
-                customerId -> milkEntryRepository.findByUserIdAndCustomerId(userId, customerId).stream()
-                        .filter(entry -> entry.getDate() != null)
-                        .collect(Collectors.toMap(
-                                entry -> entry.getDate(),
-                                entry -> safe(entry.getTotalAmount()),
-                                BigDecimal::add
-                        ))
-        );
-        Set<LocalDate> coveredDates = customerCoveredDates.computeIfAbsent(payment.getCustomerId(), key -> new HashSet<>());
-
-        BigDecimal effectiveAmount = BigDecimal.ZERO;
-        for (LocalDate date = payment.getPaidFromDate(); !date.isAfter(payment.getPaidToDate()); date = date.plusDays(1)) {
-            if (coveredDates.add(date)) {
-                effectiveAmount = effectiveAmount.add(entryAmountByDate.getOrDefault(date, BigDecimal.ZERO));
-            }
-        }
-
-        return effectiveAmount;
+        return safe(payment.getAmount());
     }
 
     private PaymentDto mapToDto(Payment payment, String customerName) {

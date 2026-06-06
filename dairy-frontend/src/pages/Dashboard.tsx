@@ -95,8 +95,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[
           { label: t(language, 'totalMilkToday'), value: `${data.totalMilkToday.toFixed(1)} L`, icon: Droplets, color: 'text-blue-500 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-500/10' },
           { label: t(language, 'activeCustomers'), value: data.activeCustomers.toString(), icon: Users, color: 'text-violet-500 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-500/10' },
@@ -105,7 +104,7 @@ export default function Dashboard() {
         ].map((stat, i) => (
           <div
             key={i}
-            className="rounded-[2rem] bg-white/40 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/80 p-4 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:bg-white/60 dark:hover:bg-slate-800/80 group"
+            className="rounded-[2rem] bg-white border border-slate-100 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition-all duration-300 hover:shadow-[0_14px_32px_rgba(15,23,42,0.12)] sm:p-6 dark:bg-slate-900/60 dark:border-slate-700/80 dark:backdrop-blur-xl dark:hover:bg-slate-800/80 group"
           >
             <div className="flex items-center gap-4 sm:gap-5">
               <div className={`shrink-0 p-4 rounded-[1.25rem] ${stat.bg} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
@@ -124,8 +123,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Chart Section */}
-      <div className="p-4 sm:p-8 rounded-[2rem] bg-white/40 dark:bg-slate-900/60 border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl h-[400px] sm:h-[450px]">
+      <div className="h-[400px] rounded-[2rem] border border-slate-100 bg-white p-4 shadow-[0_10px_24px_rgba(15,23,42,0.08)] sm:h-[450px] sm:p-8 dark:bg-slate-900/60 dark:border-slate-700/80 dark:backdrop-blur-xl">
         <h3 className="text-xl font-extrabold text-slate-800 dark:text-white mb-4 sm:mb-8">{t(language, 'weeklyTrends')}</h3>
         <Suspense
           fallback={

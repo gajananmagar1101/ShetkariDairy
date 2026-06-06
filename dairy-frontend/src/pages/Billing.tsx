@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import toast from 'react-hot-toast'
-import { Download, MessageCircle, Calculator, Trash2, CheckCircle } from 'lucide-react'
+import { Download, MessageCircle, Calculator, Trash2 } from 'lucide-react'
 import QRCode from 'qrcode'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
@@ -18,7 +18,7 @@ import { t } from '../utils/translations'
 import { getDisplayLocale, toEnglishDigits } from '../utils/numberFormat'
 import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
 import { fetchAppSettings } from '../lib/userSettings'
-import { LoadingBlock, LoadingInline, LoadingSpinner } from '../components/ui/loading'
+import { LoadingBlock, LoadingInline } from '../components/ui/loading'
 import { getCachedViewData, setCachedViewData } from '../lib/viewCache'
 
 interface Invoice {
@@ -58,12 +58,10 @@ export default function Billing() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null)
   const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null)
   
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
-  const [markPaidConfirmId, setMarkPaidConfirmId] = useState<string | null>(null)
   const [selectedCustomer, setSelectedCustomer] = useState('')
   const [upiId, setUpiId] = useState('')
   const today = new Date()
@@ -92,10 +90,57 @@ export default function Billing() {
       ? `${formatDisplayDate(invoice.periodStartDate)} - ${formatDisplayDate(invoice.periodEndDate)}`
       : toEnglishDigits(`${new Intl.DateTimeFormat(getDisplayLocale(language), { month: 'short' }).format(new Date(0, invoice.invoiceMonth - 1))} ${invoice.invoiceYear}`)
 
+  const getInvoicePeriodKey = (invoice: Invoice) =>
+    `${invoice.customerId ?? ''}|${invoice.periodStartDate ?? ''}|${invoice.periodEndDate ?? ''}`
+
+  const preferInvoice = (current: Invoice, candidate: Invoice) => {
+    if (current.status !== candidate.status) {
+      return current.status === 'PAID' ? current : candidate
+    }
+
+    const currentAmount = Number(current.totalAmount || 0)
+    const candidateAmount = Number(candidate.totalAmount || 0)
+    if (candidateAmount !== currentAmount) {
+      return candidateAmount > currentAmount ? candidate : current
+    }
+
+    const currentDate = new Date(current.periodStartDate || '').getTime()
+    const candidateDate = new Date(candidate.periodStartDate || '').getTime()
+    if (!Number.isNaN(currentDate) && !Number.isNaN(candidateDate) && currentDate !== candidateDate) {
+      return currentDate > candidateDate ? current : candidate
+    }
+
+    return String(current.id) >= String(candidate.id) ? current : candidate
+  }
+
+  const uniqueInvoices = (rows: Invoice[]) => {
+    const deduped = new Map<string, Invoice>()
+    rows.forEach((invoice) => {
+      const key = getInvoicePeriodKey(invoice)
+      const existing = deduped.get(key)
+      if (!existing) {
+        deduped.set(key, invoice)
+        return
+      }
+      deduped.set(key, preferInvoice(existing, invoice))
+    })
+    return Array.from(deduped.values())
+  }
+
+  const normalizeInvoices = (rows: unknown): Invoice[] => {
+    if (!Array.isArray(rows)) {
+      return []
+    }
+
+    return rows.filter((row): row is Invoice => {
+      return !!row && typeof row === 'object' && 'id' in row
+    })
+  }
+
   useEffect(() => {
     const cachedInvoices = getCachedViewData<Invoice[]>(BILLING_CACHE_KEY, BILLING_CACHE_TTL_MS)
     if (cachedInvoices) {
-      setInvoices(cachedInvoices)
+      setInvoices(uniqueInvoices(normalizeInvoices(cachedInvoices)))
       setIsLoading(false)
       void Promise.all([fetchInvoices(), fetchCustomers(), fetchUpiSettings()])
       return
@@ -184,9 +229,9 @@ export default function Billing() {
     try {
       const res = await axios.get('/api/invoices')
       if (res.data.success) {
-        const rawInvoices = res.data.data as Invoice[]
+        const rawInvoices = normalizeInvoices(res.data.data)
         const reconciledInvoices = await Promise.all(rawInvoices.map((invoice) => reconcileInvoiceTotal(invoice, rawInvoices)))
-        const sortedInvoices = reconciledInvoices.sort((a: Invoice, b: Invoice) => {
+        const sortedInvoices = uniqueInvoices(reconciledInvoices).sort((a: Invoice, b: Invoice) => {
           // ObjectIDs can be sorted chronologically
           return b.id.localeCompare(a.id);
         })
@@ -222,7 +267,10 @@ export default function Billing() {
       const res = await axios.post(`/api/invoices/generate?customerId=${selectedCustomer}&startDate=${startDate}&endDate=${endDate}`)
       if (res.data.success) {
         invalidateCustomerCache()
-        const nextInvoices = [res.data.data, ...invoices]
+        const generatedInvoice = normalizeInvoices([res.data.data])[0]
+        const nextInvoices = generatedInvoice
+          ? uniqueInvoices([generatedInvoice, ...invoices])
+          : invoices
         setInvoices(nextInvoices)
         setCachedViewData(BILLING_CACHE_KEY, nextInvoices)
         setIsDialogOpen(false)
@@ -232,24 +280,6 @@ export default function Billing() {
       alert(t(language, 'failedGenerateBill'))
     } finally {
       setIsSubmitting(false)
-    }
-  }
-
-  const handleMarkAsPaid = async (invoiceId: string) => {
-    if (payingInvoiceId) return;
-    setPayingInvoiceId(invoiceId)
-    try {
-      const res = await axios.put(`/api/invoices/${invoiceId}/pay`)
-      if (res.data.success) {
-        invalidateCustomerCache()
-        await Promise.all([fetchInvoices(), fetchCustomers()])
-        toast.success(t(language, 'invoiceMarkedPaid'))
-      }
-    } catch (err) {
-      console.error(err)
-      toast.error(t(language, 'failedMarkPaid'))
-    } finally {
-      setPayingInvoiceId(null)
     }
   }
 
@@ -313,8 +343,7 @@ export default function Billing() {
 
         const startDate = parseDateInput(invoice.periodStartDate)
         const endDate = parseDateInput(invoice.periodEndDate)
-        const todayDate = new Date()
-        const actualEndDate = endDate > todayDate ? todayDate : endDate
+        const actualEndDate = endDate
 
         const allDays = [];
         for (let d = new Date(startDate); d <= actualEndDate; d.setDate(d.getDate() + 1)) {
@@ -447,7 +476,7 @@ export default function Billing() {
           .header-left-text h1 { margin: 0; font-size: 28px; color: #1e293b; }
           .header-left-text p { margin: 5px 0 0 0; color: #64748b; font-size: 14px; }
           .header-right { text-align: right; }
-          .header-right h2 { margin: 0; font-size: 20px; color: #3b82f6; }
+          .header-right h2 { margin: 0; font-size: 20px; color: #111; }
           .header-right p { margin: 5px 0 0 0; font-weight: 600; }
           
           .info-box {
@@ -477,10 +506,10 @@ export default function Billing() {
             align-items: center;
           }
           .summary-stats { display: flex; gap: 30px; color: #1d4ed8; }
-          .summary-stats div span { display: block; font-size: 12px; color: #3b82f6; text-transform: uppercase; }
+          .summary-stats div span { display: block; font-size: 12px; color: #111; text-transform: uppercase; }
           .summary-stats div strong { font-size: 16px; }
           .summary-total { text-align: right; }
-          .summary-total span { display: block; font-size: 12px; color: #3b82f6; text-transform: uppercase; }
+          .summary-total span { display: block; font-size: 12px; color: #111; text-transform: uppercase; }
           .summary-total strong { font-size: 24px; color: #1e40af; }
           
           @media print {
@@ -551,7 +580,7 @@ export default function Billing() {
         ${qrHtml}
         
         <div style="text-align: center; margin-top: 40px;">
-          <button onclick="window.print()" style="background-color: #3b82f6; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; font-family: inherit;">${t(language, 'printSavePdf')}</button>
+          <button onclick="window.print()" style="background-color: #111; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; font-family: inherit;">${t(language, 'printSavePdf')}</button>
         </div>
         <script>
           setTimeout(() => { window.print(); }, 1000);
@@ -574,12 +603,12 @@ export default function Billing() {
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2 rounded-xl shadow-md">
+            <Button className="gap-2 rounded-xl shadow-md dark:bg-white dark:text-black dark:hover:bg-zinc-200 dark:shadow-none">
               <Calculator className="w-4 h-4" />
               {t(language, 'generateBill')}
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="dark:border-zinc-700 dark:bg-[#101010]">
             <DialogHeader>
               <DialogTitle>{t(language, 'generateBill')}</DialogTitle>
               <DialogDescription>
@@ -593,7 +622,7 @@ export default function Billing() {
                   required
                   value={selectedCustomer}
                   onChange={e => setSelectedCustomer(e.target.value)}
-                  className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 py-3.5 text-slate-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                  className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 py-3.5 text-slate-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-slate-500 dark:border-zinc-700 dark:bg-[#111111] dark:text-white dark:focus:ring-white/30"
                 >
                   <option value="" disabled>{t(language, 'selectCustomerPlaceholder')}</option>
                   {activeCustomers.map(c => (
@@ -608,7 +637,7 @@ export default function Billing() {
                     type="date"
                     value={startDate}
                     onChange={e => setStartDate(e.target.value)}
-                    className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 pr-11 py-3.5 text-[15px] text-slate-800 [font-variant-numeric:tabular-nums] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/40 sm:text-base"
+                    className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 pr-11 py-3.5 text-[15px] text-slate-800 [font-variant-numeric:tabular-nums] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-slate-500 sm:text-base dark:border-zinc-700 dark:bg-[#111111] dark:text-white dark:focus:ring-white/30"
                   />
                 </div>
                 <div>
@@ -616,11 +645,11 @@ export default function Billing() {
                   <input 
                     type="date" value={endDate}
                     onChange={e => setEndDate(e.target.value)}
-                    className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 pr-11 py-3.5 text-[15px] text-slate-800 [font-variant-numeric:tabular-nums] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-primary-500/40 sm:text-base"
+                    className="w-full rounded-[1.4rem] border border-white/60 bg-white/45 px-4 pr-11 py-3.5 text-[15px] text-slate-800 [font-variant-numeric:tabular-nums] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-md focus:outline-none focus:ring-2 focus:ring-slate-500 sm:text-base dark:border-zinc-700 dark:bg-[#111111] dark:text-white dark:focus:ring-white/30"
                   />
                 </div>
               </div>
-              <Button type="submit" disabled={isSubmitting} className="mt-2 h-14 w-full rounded-[1.6rem] shadow-[0_12px_30px_rgba(139,92,246,0.28)]">
+              <Button type="submit" disabled={isSubmitting} className="mt-2 h-14 w-full rounded-[1.6rem] shadow-[0_12px_30px_rgba(139,92,246,0.28)] dark:bg-white dark:text-black dark:shadow-none dark:hover:bg-zinc-200">
                 {isSubmitting ? <LoadingInline label={t(language, 'generating')} /> : t(language, 'generateBill')}
               </Button>
             </form>
@@ -628,14 +657,14 @@ export default function Billing() {
         </Dialog>
       </div>
 
-      <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
+      <div className="bg-white/40 dark:bg-[#101010] backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-zinc-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <div className="overflow-x-auto">
           {isLoading ? (
             <LoadingBlock label={t(language, 'loadingBills')} minHeightClassName="min-h-[240px]" size="md" />
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200/60 dark:border-slate-600 text-slate-500 dark:text-slate-300 text-sm">
+                <tr className="border-b border-slate-200/60 dark:border-zinc-700 text-slate-500 dark:text-slate-300 text-sm">
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'customer')}</th>
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'billingPeriod')}</th>
                   <th className="pb-3 px-4 font-medium whitespace-nowrap">{t(language, 'totalValue')}</th>
@@ -650,7 +679,7 @@ export default function Billing() {
                   </tr>
                 ) : (
                   invoices.map((inv) => (
-                    <tr key={inv.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                    <tr key={inv.id} className="border-b border-slate-100 dark:border-zinc-800/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 transition-colors">
                       <td className="py-4 px-4 whitespace-nowrap">
                         <span className="font-medium text-slate-800 dark:text-slate-200">{inv.customerName}</span>
                       </td>
@@ -660,26 +689,15 @@ export default function Billing() {
                       <td className="py-4 px-4 font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">₹{inv.totalAmount}</td>
                       <td className="py-4 px-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-md text-xs font-medium ${
-                          inv.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
+                          inv.status === 'PAID' ? 'bg-slate-100 text-slate-700 dark:bg-white dark:text-black' : 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-white'
                         }`}>
                           {inv.status === 'PAID' ? t(language, 'paid') : t(language, 'pending')}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right flex justify-end gap-2 whitespace-nowrap">
-                        {inv.status !== 'PAID' && (
-                          <Button 
-                            variant="outline" size="icon" 
-                            disabled={payingInvoiceId === inv.id}
-                            className="h-8 w-8 text-emerald-600 rounded-lg border-emerald-200 hover:bg-emerald-50 disabled:opacity-50"
-                            title={t(language, 'markAsPaid')}
-                            onClick={() => setMarkPaidConfirmId(inv.id)}
-                          >
-                            {payingInvoiceId === inv.id ? <LoadingSpinner size="sm" className="text-current" /> : <CheckCircle className="w-4 h-4" />}
-                          </Button>
-                        )}
                         <Button 
                           variant="outline" size="icon" 
-                          className="h-8 w-8 text-blue-600 rounded-lg border-blue-200 hover:bg-blue-50"
+                          className="h-8 w-8 text-slate-700 rounded-lg border-slate-200 hover:bg-slate-50 dark:text-white dark:border-zinc-700 dark:hover:bg-zinc-800"
                           title={t(language, 'downloadBill')}
                           onClick={() => generatePDF(inv)}
                         >
@@ -687,7 +705,7 @@ export default function Billing() {
                         </Button>
                         <Button 
                           variant="outline" size="icon" 
-                          className="h-8 w-8 text-green-600 rounded-lg border-green-200 hover:bg-green-50"
+                          className="h-8 w-8 text-slate-700 rounded-lg border-slate-200 hover:bg-slate-50 dark:text-white dark:border-zinc-700 dark:hover:bg-zinc-800"
                           title={t(language, 'sendViaWhatsapp')}
                           onClick={() => {
                             if (!upiId) {
@@ -710,7 +728,7 @@ export default function Billing() {
                         </Button>
                         <Button 
                           variant="outline" size="icon" 
-                          className="h-8 w-8 text-red-500 rounded-lg border-red-200 hover:bg-red-50"
+                          className="h-8 w-8 text-slate-700 rounded-lg border-slate-200 hover:bg-slate-50 dark:text-white dark:border-zinc-700 dark:hover:bg-zinc-800"
                           title={t(language, 'deleteBill')}
                           onClick={() => setDeleteConfirmId(inv.id)}
                         >
@@ -725,21 +743,6 @@ export default function Billing() {
           )}
         </div>
         
-        <ConfirmDialog
-          isOpen={!!markPaidConfirmId}
-          onClose={() => setMarkPaidConfirmId(null)}
-          onConfirm={async () => {
-            if (!markPaidConfirmId) return
-            await handleMarkAsPaid(markPaidConfirmId)
-            setMarkPaidConfirmId(null)
-          }}
-          isProcessing={!!payingInvoiceId}
-          title={t(language, 'confirmPayment')}
-          description={t(language, 'confirmPaidDesc')}
-          confirmText={t(language, 'yesMarkPaid')}
-          cancelText={t(language, 'cancel')}
-        />
-
         <ConfirmDialog 
           isOpen={!!deleteConfirmId}
           onClose={() => setDeleteConfirmId(null)}

@@ -71,7 +71,7 @@ export default function Payments() {
         </div>
       </div>
 
-      <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
+      <div className="bg-white/40 dark:bg-[#101010] backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-zinc-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
         <div className="overflow-x-auto">
           {isLoading ? (
             <LoadingBlock label={t(language, 'loadingPayments')} minHeightClassName="min-h-[220px]" size="md" />
@@ -104,12 +104,12 @@ export default function Payments() {
                       <td className="py-4 px-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{payment.paymentDate}</td>
                       <td className="py-4 px-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-md text-xs font-medium ${
-                          payment.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
+                          payment.status === 'PAID' ? 'bg-slate-100 text-slate-700 dark:bg-white dark:text-black' : 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-white'
                         }`}>
                           {payment.status === 'PAID' ? t(language, 'paid') : t(language, 'completed')}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-right font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">+₹{payment.amount}</td>
+                      <td className="py-4 px-4 text-right font-bold text-slate-700 dark:text-white whitespace-nowrap">+₹{payment.amount}</td>
                     </tr>
                   ))
                 )}

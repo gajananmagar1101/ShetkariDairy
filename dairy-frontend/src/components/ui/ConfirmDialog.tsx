@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ interface ConfirmDialogProps {
   cancelText?: string
   isDestructive?: boolean
   isProcessing?: boolean
+  children?: ReactNode
 }
 
 export function ConfirmDialog({
@@ -29,6 +31,7 @@ export function ConfirmDialog({
   cancelText = 'Cancel',
   isDestructive = true,
   isProcessing = false,
+  children,
 }: ConfirmDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -39,6 +42,7 @@ export function ConfirmDialog({
             {description}
           </DialogDescription>
         </DialogHeader>
+        {children ? <div className="mt-4">{children}</div> : null}
         <div className="flex justify-end gap-3 mt-4">
           <Button variant="outline" onClick={onClose} disabled={isProcessing} className="rounded-full">
             {cancelText}

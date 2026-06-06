@@ -2,6 +2,7 @@ import axios from 'axios'
 
 export interface AppSettingsResponse {
   autoEntryTime: string
+  labourAutoAttendanceTime: string
   timezone: string
   upiId: string
 }
@@ -11,6 +12,7 @@ const SETTINGS_CACHE_TTL_MS = 60_000
 
 const fallbackSettings = {
   autoEntryTime: '21:30',
+  labourAutoAttendanceTime: '20:00',
   timezone: 'Asia/Kolkata',
   upiId: '',
 } satisfies AppSettingsResponse

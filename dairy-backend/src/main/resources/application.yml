@@ -17,3 +17,11 @@ app:
     connect-timeout-ms: ${MONGO_CONNECT_TIMEOUT_MS:5000}
     read-timeout-ms: ${MONGO_READ_TIMEOUT_MS:10000}
     server-selection-timeout-ms: ${MONGO_SERVER_SELECTION_TIMEOUT_MS:5000}
+  otp:
+    provider: ${OTP_PROVIDER:twilio}
+    expiry-minutes: ${OTP_EXPIRY_MINUTES:5}
+    twilio:
+      account-sid: ${TWILIO_ACCOUNT_SID:}
+      auth-token: ${TWILIO_AUTH_TOKEN:}
+      sms-from: ${TWILIO_SMS_FROM:}
+      whatsapp-from: ${TWILIO_WHATSAPP_FROM:}

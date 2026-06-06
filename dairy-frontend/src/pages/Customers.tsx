@@ -93,23 +93,36 @@ export default function Customers() {
   const estimatedAmount = effectiveDailyQuantity * effectiveRate
   const todayStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = async (): Promise<Customer[]> => {
     try {
       const res = await axios.get('/api/customers')
       if (res.data.success) {
         setCustomers(res.data.data)
         setCachedCustomers(res.data.data)
+        return res.data.data
       }
     } catch (err) {
       console.error(err)
     } finally {
       setIsLoading(false)
     }
+
+    return []
   }
 
   useEffect(() => {
     fetchCustomers()
   }, [])
+
+  const refreshViewingCustomer = async () => {
+    const nextCustomers = await fetchCustomers()
+    if (viewingCustomer) {
+      const updatedCustomer = nextCustomers.find((customer) => customer.id === viewingCustomer.id)
+      if (updatedCustomer) {
+        setViewingCustomer(updatedCustomer)
+      }
+    }
+  }
 
   useEffect(() => {
     if (customers.length === 0) {
@@ -552,7 +565,7 @@ export default function Customers() {
         />
       </div>
 
-      <div className="bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-slate-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8">
+      <div className="-mx-3 w-[calc(100%+1.5rem)] bg-white/40 dark:bg-[#0f0f10] backdrop-blur-xl rounded-[2rem] border border-white/60 dark:border-zinc-700/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:mx-0 sm:w-full sm:p-8">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
             <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">{t(language, 'activeCustomerList')}</h2>
@@ -565,7 +578,7 @@ export default function Customers() {
               placeholder={t(language, 'searchCustomers')} 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-full border border-white/60 bg-white/40 py-2 pl-10 pr-4 text-sm shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-slate-700/80 dark:bg-slate-900/60 dark:text-white dark:focus:bg-slate-800"
+              className="w-full rounded-full border border-white/60 bg-white/40 py-2 pl-10 pr-4 text-sm shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-zinc-700 dark:bg-[#111111] dark:text-white dark:focus:bg-black dark:focus:ring-white/30"
             />
           </div>
         </div>
@@ -602,7 +615,7 @@ export default function Customers() {
                     <tr key={customer.id} className="border-b border-slate-100 dark:border-slate-800/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="py-4 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xs">
+                          <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xs dark:bg-white dark:text-black">
                             {customer.name.charAt(0)}
                           </div>
                           <span className="font-medium text-slate-800 dark:text-slate-200">{customer.name}</span>
@@ -612,7 +625,7 @@ export default function Customers() {
                             </span>
                           )}
                           {customer.autoEntryEnabled && (
-                            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700" title={t(language, 'autoEntry930')}>
+                            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:bg-white dark:text-black" title={t(language, 'autoEntry930')}>
                               <Clock className="w-3 h-3" /> Auto
                             </span>
                           )}
@@ -685,11 +698,11 @@ export default function Customers() {
                             </>
                           )}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setViewingCustomer(customer)} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 ml-1">
+                        <Button variant="ghost" size="sm" onClick={() => setViewingCustomer(customer)} className="text-blue-600 dark:text-white hover:text-blue-700 dark:hover:text-slate-300 ml-1">
                           <Eye className="w-4 h-4 mr-1" />
                           {t(language, 'view')}
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 ml-1">{t(language, 'edit')}</Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(customer)} className="text-primary-600 dark:text-white hover:text-primary-700 dark:hover:text-slate-300 ml-1">{t(language, 'edit')}</Button>
                         <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmId(customer.id)} className="text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 ml-2 rounded-full">
                           <Trash className="w-4 h-4" />
                         </Button>
@@ -706,11 +719,11 @@ export default function Customers() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center justify-between gap-3 sm:min-w-72">
               <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">{t(language, 'totalCustomerMilk')}</p>
-              <p className="text-2xl font-extrabold text-primary-700 dark:text-primary-300">{totalCustomerMilk.toFixed(1)} L</p>
+              <p className="text-2xl font-extrabold text-primary-700 dark:text-white">{totalCustomerMilk.toFixed(1)} L</p>
             </div>
             <div className="flex items-center justify-between gap-3 sm:min-w-72">
               <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">{t(language, 'totalRecentAmount')}</p>
-              <p className="text-2xl font-extrabold text-blue-600 dark:text-blue-400">
+              <p className="text-2xl font-extrabold text-blue-600 dark:text-white">
                 ₹{totalRecentAmount.toFixed(2)}
               </p>
             </div>
@@ -832,6 +845,7 @@ export default function Customers() {
         customer={viewingCustomer}
         isOpen={!!viewingCustomer}
         onClose={() => setViewingCustomer(null)}
+        onCustomerUpdated={refreshViewingCustomer}
       />
     </div>
   )
