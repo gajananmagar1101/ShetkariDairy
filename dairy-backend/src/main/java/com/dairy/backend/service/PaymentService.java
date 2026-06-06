@@ -192,6 +192,36 @@ public class PaymentService {
         return dtos;
     }
 
+    public List<PaymentDto> getPaymentsByCustomer(String customerId) {
+        Set<String> ownedUserIds = resolveOwnedUserIds(SecurityUtils.getCurrentUserId());
+        List<Payment> payments = ownedUserIds.stream()
+                .flatMap(ownedUserId -> paymentRepository.findByUserIdAndCustomerId(ownedUserId, customerId).stream())
+                .sorted(Comparator
+                        .comparing(Payment::getPaymentDate, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(Payment::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(Payment::getId, Comparator.nullsLast(String::compareTo)))
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(
+                                Payment::getId,
+                                payment -> payment,
+                                (existing, ignored) -> existing,
+                                java.util.LinkedHashMap::new
+                        ),
+                        map -> new java.util.ArrayList<>(map.values())
+                ));
+
+        return payments.stream()
+                .map(payment -> {
+                    String name = customerRepository.findById(payment.getCustomerId())
+                            .map(Customer::getName).orElse("Unknown");
+                    return mapToDto(payment, name);
+                })
+                .sorted(Comparator
+                        .comparing(PaymentDto::getPaymentDate, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(PaymentDto::getId, Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
+    }
+
     private BigDecimal resolveEffectivePaymentAmount(
             Set<String> ownedUserIds,
             Payment payment,

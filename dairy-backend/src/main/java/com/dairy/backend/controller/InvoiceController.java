@@ -32,6 +32,11 @@ public class InvoiceController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Invoices fetched", invoiceService.getAllInvoices()));
     }
 
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<ApiResponse<List<InvoiceDto>>> getInvoicesByCustomer(@PathVariable String customerId) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Customer invoices fetched", invoiceService.getInvoicesByCustomer(customerId)));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteInvoice(@PathVariable String id) {
         invoiceService.deleteInvoice(id);

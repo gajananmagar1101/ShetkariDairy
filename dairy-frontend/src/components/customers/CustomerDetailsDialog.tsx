@@ -92,7 +92,6 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'info' | 'entries' | 'holidays' | 'invoices' | 'payments'>('info')
   const [entries, setEntries] = useState<MilkEntry[]>([])
-  const [allEntries, setAllEntries] = useState<MilkEntry[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
   const [hasLoadedDetails, setHasLoadedDetails] = useState(false)
@@ -120,7 +119,6 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
       setActiveTab('info')
       setHasLoadedDetails(false)
       setEntries([])
-      setAllEntries([])
       setInvoices([])
       setPayments([])
       void fetchCustomerData(customer.id)
@@ -162,41 +160,22 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
     }
   }
 
-  const fetchAllCustomerEntries = async (customerId: string) => {
-    try {
-      const entriesRes = await axios.get('/api/milk-entries/customer-range', {
-        params: { customerId, startDate: '2000-01-01', endDate: '2100-01-01' }
-      })
-
-      if (entriesRes.data.success) {
-        const sortedEntries = entriesRes.data.data.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        setAllEntries(sortedEntries)
-      }
-    } catch (err) {
-      console.error(err)
-    }
-  }
-
   const fetchCustomerData = async (customerId: string) => {
     try {
-      // Fetch invoices and payments (entries are handled by the other useEffect)
+      // Fetch only the current customer's financial data.
       const [invoicesRes, paymentsRes] = await Promise.all([
-        axios.get('/api/invoices'),
-        axios.get('/api/payments')
+        axios.get(`/api/invoices/customer/${customerId}`),
+        axios.get(`/api/payments/customer/${customerId}`)
       ])
 
-      await fetchAllCustomerEntries(customerId)
-
       if (invoicesRes.data.success) {
-        const customerInvoices = invoicesRes.data.data.filter((i: any) => i.customerId === customerId)
-        // Sort descending by date
+        const customerInvoices = invoicesRes.data.data
         customerInvoices.sort((a: any, b: any) => new Date(b.periodStartDate).getTime() - new Date(a.periodStartDate).getTime())
         setInvoices(customerInvoices)
       }
 
       if (paymentsRes.data.success) {
-        const customerPayments = paymentsRes.data.data.filter((p: any) => p.customerId === customerId)
-        // Sort descending by date
+        const customerPayments = paymentsRes.data.data
         customerPayments.sort((a: any, b: any) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
         setPayments(customerPayments)
       }
@@ -394,34 +373,6 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
   const monthlyFinancialGroups = useMemo(() => {
     const monthMap = new Map<string, MonthlyFinancialGroup>()
 
-    allEntries.forEach((entry) => {
-      const key = toMonthKey(entry.date)
-      if (!key) return
-      const existing = monthMap.get(key)
-
-      if (existing) {
-        existing.billed += entry.totalAmount
-        return
-      }
-
-      const date = new Date(entry.date)
-      const bounds = getMonthBounds(date.getFullYear(), date.getMonth())
-
-      monthMap.set(key, {
-        key,
-        label: formatMonthOnly(date.getFullYear(), date.getMonth()),
-        year: date.getFullYear(),
-        monthIndex: date.getMonth(),
-        billed: entry.totalAmount,
-        paid: 0,
-        balance: entry.totalAmount,
-        displayBalance: entry.totalAmount,
-        hasInvoice: false,
-        periodStartDate: bounds.startDate,
-        periodEndDate: bounds.endDate,
-      })
-    })
-
     uniqueInvoices.forEach((invoice) => {
       const date = new Date(invoice.periodStartDate)
       if (Number.isNaN(date.getTime())) return
@@ -463,11 +414,11 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
     })
 
     payments.forEach((payment) => {
-      const paymentMonthKey = toMonthKey(payment.paymentDate)
+      const paymentDateSource = payment.paidFromDate || payment.paymentDate
+      const paymentMonthKey = toMonthKey(paymentDateSource)
       if (!paymentMonthKey) return
 
       const existing = monthMap.get(paymentMonthKey)
-      if (existing?.hasInvoice) return
 
       if (!existing) {
         const [yearStr, monthStr] = paymentMonthKey.split('-')
@@ -504,7 +455,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
         displayBalance: group.balance > 0 ? group.balance : group.billed,
       }))
       .sort((a, b) => b.key.localeCompare(a.key))
-  }, [allEntries, uniqueInvoices, payments, language])
+  }, [uniqueInvoices, payments, language])
 
   const financialYears = useMemo(() => {
     const years = new Set<number>()

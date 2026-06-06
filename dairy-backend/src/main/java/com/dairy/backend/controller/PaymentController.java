@@ -25,4 +25,9 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<List<PaymentDto>>> getAllPayments() {
         return ResponseEntity.ok(new ApiResponse<>(true, "Payments fetched", paymentService.getAllPayments()));
     }
+
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<ApiResponse<List<PaymentDto>>> getPaymentsByCustomer(@PathVariable String customerId) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Customer payments fetched", paymentService.getPaymentsByCustomer(customerId)));
+    }
 }

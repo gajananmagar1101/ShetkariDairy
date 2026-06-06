@@ -228,6 +228,50 @@ public class InvoiceService {
                 .collect(Collectors.toList());
     }
 
+    public List<InvoiceDto> getInvoicesByCustomer(String customerId) {
+        Set<String> ownedUserIds = resolveOwnedUserIds(SecurityUtils.getCurrentUserId());
+        List<Invoice> invoices = ownedUserIds.stream()
+                .flatMap(ownedUserId -> invoiceRepository.findByUserIdAndCustomerId(ownedUserId, customerId).stream())
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(
+                                Invoice::getId,
+                                invoice -> invoice,
+                                (existing, ignored) -> existing,
+                                java.util.LinkedHashMap::new
+                        ),
+                        map -> new ArrayList<>(map.values())
+                ));
+
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        return dedupeInvoicesByPeriod(invoices).stream()
+                .map(inv -> {
+                    LocalDate startDate = resolveInvoiceStartDate(inv);
+                    LocalDate endDate = resolveInvoiceEndDate(inv);
+                    List<MilkEntry> entries = inv.getStatus() == PaymentStatus.PAID
+                            ? findBillableEntries(ownedUserIds, inv.getCustomerId(), startDate, endDate, inv.getId(), inv.getCreatedAt(), inv.getId())
+                            : findBillableEntries(ownedUserIds, inv.getCustomerId(), startDate, endDate, inv.getId(), null, null);
+                    List<LocalDate> skippedDates = resolveSkippedDates(
+                            customer,
+                            milkEntryService.findEntriesByCustomerAndDateRange(resolveCurrentUserId(ownedUserIds), inv.getCustomerId(), startDate, endDate),
+                            startDate,
+                            endDate
+                    );
+                    BigDecimal effectiveTotalAmount = resolveTotalAmount(entries);
+                    if (inv.getTotalAmount() == null || inv.getTotalAmount().compareTo(effectiveTotalAmount) != 0) {
+                        inv.setTotalAmount(effectiveTotalAmount);
+                        if (inv.getStatus() == PaymentStatus.PAID) {
+                            inv.setPaidAmount(effectiveTotalAmount);
+                        }
+                        invoiceRepository.save(inv);
+                    }
+                    return mapToDto(inv, customer.getName(), skippedDates, effectiveTotalAmount);
+                })
+                .sorted(Comparator.comparing((InvoiceDto inv) -> inv.getPeriodStartDate(), Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
+    }
+
     private String resolveCurrentUserId(Set<String> ownedUserIds) {
         return ownedUserIds.stream().findFirst().orElse(SecurityUtils.getCurrentUserId());
     }
