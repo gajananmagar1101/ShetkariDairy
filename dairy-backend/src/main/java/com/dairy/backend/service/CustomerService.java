@@ -99,14 +99,11 @@ public class CustomerService {
                 .map(entry -> safe(entry.getTotalAmount()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        Set<LocalDate> coveredPaidDates = new HashSet<>();
-        BigDecimal rangedInvoicesTotal = BigDecimal.ZERO;
-        BigDecimal rangedPaymentsTotal = BigDecimal.ZERO;
+        BigDecimal paidInvoicesTotal = BigDecimal.ZERO;
         BigDecimal manualPaymentsTotal = BigDecimal.ZERO;
 
         var invoices = invoiceRepository.findAll().stream()
                 .filter(invoice -> invoice.getCustomerId() != null && customer.getId().equals(invoice.getCustomerId()))
-                .filter(invoice -> invoice.getStatus() == com.dairy.backend.entity.PaymentStatus.PAID)
                 .sorted(Comparator
                         .comparing(com.dairy.backend.entity.Invoice::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(com.dairy.backend.entity.Invoice::getId, Comparator.nullsLast(String::compareTo)))
@@ -131,34 +128,16 @@ public class CustomerService {
                 .collect(Collectors.toList());
 
         for (var invoice : invoices) {
-            LocalDate startDate = invoice.getPeriodStartDate() != null
-                    ? invoice.getPeriodStartDate()
-                    : LocalDate.of(invoice.getInvoiceYear(), invoice.getInvoiceMonth(), 1);
-            LocalDate endDate = invoice.getPeriodEndDate() != null
-                    ? invoice.getPeriodEndDate()
-                    : startDate.withDayOfMonth(startDate.lengthOfMonth());
-
-            for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-                if (coveredPaidDates.add(date)) {
-                    rangedInvoicesTotal = rangedInvoicesTotal.add(entryAmountByDate.getOrDefault(date, BigDecimal.ZERO));
-                }
-            }
+            paidInvoicesTotal = paidInvoicesTotal.add(safe(invoice.getPaidAmount()));
         }
 
         for (var payment : payments) {
-            if (payment.getPaidFromDate() != null && payment.getPaidToDate() != null) {
-                for (LocalDate date = payment.getPaidFromDate(); !date.isAfter(payment.getPaidToDate()); date = date.plusDays(1)) {
-                    if (coveredPaidDates.add(date)) {
-                        rangedPaymentsTotal = rangedPaymentsTotal.add(entryAmountByDate.getOrDefault(date, BigDecimal.ZERO));
-                    }
-                }
-                continue;
+            if (payment.getPaidFromDate() == null || payment.getPaidToDate() == null) {
+                manualPaymentsTotal = manualPaymentsTotal.add(safe(payment.getAmount()));
             }
-
-            manualPaymentsTotal = manualPaymentsTotal.add(safe(payment.getAmount()));
         }
 
-        return milkEntriesTotal.subtract(rangedInvoicesTotal).subtract(rangedPaymentsTotal).subtract(manualPaymentsTotal);
+        return milkEntriesTotal.subtract(paidInvoicesTotal).subtract(manualPaymentsTotal);
     }
 
     public CustomerDto createCustomer(CustomerDto dto) {

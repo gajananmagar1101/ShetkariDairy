@@ -144,11 +144,14 @@ public class InvoiceService {
     }
 
     public InvoiceDto generateInvoice(String customerId, LocalDate startDate, LocalDate endDate) {
+        return generateInvoiceForUser(SecurityUtils.getCurrentUserId(), customerId, startDate, endDate);
+    }
+
+    public InvoiceDto generateInvoiceForUser(String userId, String customerId, LocalDate startDate, LocalDate endDate) {
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-        Set<String> ownedUserIds = resolveOwnedUserIds(SecurityUtils.getCurrentUserId());
-        String userId = SecurityUtils.getCurrentUserId();
+        Set<String> ownedUserIds = resolveOwnedUserIds(userId);
         List<MilkEntry> entries = findBillableEntries(ownedUserIds, customerId, startDate, endDate, null, null, null);
         List<LocalDate> skippedDates = resolveSkippedDates(customer, entries, startDate, endDate);
         BigDecimal totalAmount = resolveTotalAmount(entries);
@@ -207,7 +210,7 @@ public class InvoiceService {
                     List<LocalDate> skippedDates = customerRepository.findById(inv.getCustomerId())
                             .map(customer -> resolveSkippedDates(
                                     customer,
-                                    milkEntryService.findEntriesByCustomerAndDateRange(SecurityUtils.getCurrentUserId(), inv.getCustomerId(), startDate, endDate),
+                                    milkEntryService.findEntriesByCustomerAndDateRange(resolveCurrentUserId(ownedUserIds), inv.getCustomerId(), startDate, endDate),
                                     startDate,
                                     endDate
                             ))
@@ -225,6 +228,10 @@ public class InvoiceService {
                 .collect(Collectors.toList());
     }
 
+    private String resolveCurrentUserId(Set<String> ownedUserIds) {
+        return ownedUserIds.stream().findFirst().orElse(SecurityUtils.getCurrentUserId());
+    }
+
     private BigDecimal resolveTotalAmount(List<MilkEntry> entries) {
         return entries.stream()
                 .map(MilkEntry::getTotalAmount)
@@ -239,24 +246,6 @@ public class InvoiceService {
             String cutoffIdExclusive
     ) {
         Set<LocalDate> paidDates = new HashSet<>();
-        Set<String> ownedCustomerIds = resolveOwnedCustomerIds(ownedUserIds);
-        List<Payment> payments = paymentRepository.findAll().stream()
-                .filter(payment -> payment.getCustomerId() != null && ownedCustomerIds.contains(payment.getCustomerId()))
-                .filter(payment -> customerId.equals(payment.getCustomerId()))
-                .collect(Collectors.collectingAndThen(
-                        Collectors.toMap(
-                                Payment::getId,
-                                payment -> payment,
-                                (existing, ignored) -> existing,
-                                java.util.LinkedHashMap::new
-                        ),
-                        map -> new ArrayList<>(map.values())
-                ))
-                .stream()
-                .sorted(Comparator
-                        .comparing(Payment::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                        .thenComparing(Payment::getId, Comparator.nullsLast(String::compareTo)))
-                .collect(Collectors.toList());
         List<Invoice> invoices = ownedUserIds.stream()
                 .flatMap(ownedUserId -> invoiceRepository.findByUserIdAndCustomerId(ownedUserId, customerId).stream())
                 .collect(Collectors.collectingAndThen(
@@ -273,17 +262,6 @@ public class InvoiceService {
                         .comparing(Invoice::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(Invoice::getId, Comparator.nullsLast(String::compareTo)))
                 .collect(Collectors.toList());
-
-        for (Payment payment : payments) {
-            if (!shouldIncludeRecord(payment.getCreatedAt(), payment.getId(), cutoffCreatedAtExclusive, cutoffIdExclusive)) {
-                continue;
-            }
-            if (payment.getPaidFromDate() != null && payment.getPaidToDate() != null) {
-                for (LocalDate date = payment.getPaidFromDate(); !date.isAfter(payment.getPaidToDate()); date = date.plusDays(1)) {
-                    paidDates.add(date);
-                }
-            }
-        }
 
         for (Invoice invoice : invoices) {
             if (invoice.getStatus() != PaymentStatus.PAID) {
@@ -393,6 +371,10 @@ public class InvoiceService {
     }
 
     public InvoiceDto markAsPaid(String id) {
+        return markAsPaid(id, null);
+    }
+
+    public InvoiceDto markAsPaid(String id, BigDecimal paymentAmount) {
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Invoice not found"));
 
@@ -421,18 +403,28 @@ public class InvoiceService {
                 .filter(date -> date != null)
                 .max(LocalDate::compareTo)
                 .orElse(endDate);
+        BigDecimal alreadyPaid = invoice.getPaidAmount() != null ? invoice.getPaidAmount() : BigDecimal.ZERO;
+        BigDecimal remainingDue = totalAmount.subtract(alreadyPaid);
+        BigDecimal requestedPayment = paymentAmount != null ? paymentAmount : remainingDue;
+        if (requestedPayment.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Payment amount must be greater than zero");
+        }
+        if (requestedPayment.compareTo(remainingDue) > 0) {
+            throw new RuntimeException("Payment amount cannot exceed remaining due");
+        }
 
         invoice.setTotalAmount(totalAmount);
-        invoice.setStatus(PaymentStatus.PAID);
-        invoice.setPaidAmount(totalAmount);
+        invoice.setPaidAmount(alreadyPaid.add(requestedPayment));
+        invoice.setStatus(invoice.getPaidAmount().compareTo(totalAmount) >= 0 ? PaymentStatus.PAID : PaymentStatus.PENDING);
         invoice = invoiceRepository.save(invoice);
 
-        if (totalAmount.compareTo(BigDecimal.ZERO) > 0) {
+        if (requestedPayment.compareTo(BigDecimal.ZERO) > 0) {
+            final BigDecimal paymentToApply = requestedPayment;
             Payment payment = Payment.builder()
                     .userId(userId)
                     .customerId(invoice.getCustomerId())
-                    .amount(totalAmount)
-                    .paymentDate(LocalDate.now())
+                    .amount(paymentToApply)
+                    .paymentDate(effectiveEndDate)
                     .paidFromDate(effectiveStartDate)
                     .paidToDate(effectiveEndDate)
                     .paymentMethod("ONLINE")
@@ -442,7 +434,7 @@ public class InvoiceService {
 
             customerRepository.findById(invoice.getCustomerId()).ifPresent(customer -> {
                 BigDecimal currentBalance = customer.getBalance() != null ? customer.getBalance() : BigDecimal.ZERO;
-                customer.setBalance(currentBalance.subtract(totalAmount));
+                customer.setBalance(currentBalance.subtract(paymentToApply));
                 customerRepository.save(customer);
             });
         }

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
@@ -74,13 +75,8 @@ class InvoiceServiceTest {
                 .status(PaymentStatus.PENDING)
                 .build();
 
-        when(userRepository.findById("default-user-id")).thenReturn(Optional.empty());
-        when(userRepository.findByEmail("default-user-id")).thenReturn(Optional.empty());
-        when(userRepository.findByPhone("default-user-id")).thenReturn(Optional.empty());
         when(customerRepository.findById(customerId)).thenReturn(Optional.of(customer));
-        when(customerRepository.findByUserId("default-user-id")).thenReturn(List.of(customer));
         when(invoiceRepository.findByUserIdAndCustomerId("default-user-id", customerId)).thenReturn(List.of(existingInvoice));
-        when(paymentRepository.findAll()).thenReturn(List.of());
         when(milkEntryService.findEntriesByCustomerAndDateRange(any(), eq(customerId), eq(startDate), eq(endDate)))
                 .thenReturn(List.of());
 
@@ -128,15 +124,9 @@ class InvoiceServiceTest {
                 .build();
 
         when(invoiceRepository.findById("invoice-1")).thenReturn(Optional.of(invoice));
-        when(userRepository.findById("default-user-id")).thenReturn(Optional.empty());
-        when(userRepository.findByEmail("default-user-id")).thenReturn(Optional.empty());
-        when(userRepository.findByPhone("default-user-id")).thenReturn(Optional.empty());
-        when(customerRepository.findByUserId("default-user-id")).thenReturn(List.of(customer));
         when(customerRepository.findById(customerId)).thenReturn(Optional.of(customer));
-        when(invoiceRepository.findByUserIdAndCustomerId("default-user-id", customerId)).thenReturn(List.of(invoice));
         when(milkEntryService.findEntriesByCustomerAndDateRange("default-user-id", customerId, requestStartDate, requestEndDate))
                 .thenReturn(List.of(billableEntry));
-        when(paymentRepository.findAll()).thenReturn(List.of());
         when(invoiceRepository.save(any(Invoice.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(paymentRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(customerRepository.save(any(Customer.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -154,5 +144,52 @@ class InvoiceServiceTest {
         ArgumentCaptor<Customer> customerCaptor = ArgumentCaptor.forClass(Customer.class);
         verify(customerRepository).save(customerCaptor.capture());
         assertEquals(0, new BigDecimal("0").compareTo(customerCaptor.getValue().getBalance()));
+    }
+
+    @Test
+    void markAsPaid_rejectsAmountAboveRemainingDue() {
+        String customerId = "customer-1";
+        LocalDate requestDate = LocalDate.of(2026, 6, 1);
+
+        Customer customer = Customer.builder()
+                .id(customerId)
+                .userId("default-user-id")
+                .name("Test Customer")
+                .balance(new BigDecimal("50"))
+                .build();
+
+        Invoice invoice = Invoice.builder()
+                .id("invoice-1")
+                .userId("default-user-id")
+                .customerId(customerId)
+                .periodStartDate(requestDate)
+                .periodEndDate(requestDate)
+                .invoiceYear(2026)
+                .invoiceMonth(6)
+                .totalAmount(new BigDecimal("50"))
+                .paidAmount(BigDecimal.ZERO)
+                .status(PaymentStatus.PENDING)
+                .build();
+
+        MilkEntry billableEntry = MilkEntry.builder()
+                .id("entry-1")
+                .userId("default-user-id")
+                .customerId(customerId)
+                .date(requestDate)
+                .totalAmount(new BigDecimal("50"))
+                .build();
+
+        when(invoiceRepository.findById("invoice-1")).thenReturn(Optional.of(invoice));
+        when(milkEntryService.findEntriesByCustomerAndDateRange("default-user-id", customerId, requestDate, requestDate))
+                .thenReturn(List.of(billableEntry));
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () ->
+                invoiceService.markAsPaid("invoice-1", new BigDecimal("60"))
+        );
+
+        assertEquals("Payment amount cannot exceed remaining due", exception.getMessage());
+        verify(invoiceRepository, never()).save(any(Invoice.class));
+        verify(paymentRepository, never()).save(any());
+        verify(customerRepository, never()).save(any(Customer.class));
     }
 }

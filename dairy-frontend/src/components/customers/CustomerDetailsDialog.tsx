@@ -1,4 +1,5 @@
 import { Fragment, useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import {
@@ -8,7 +9,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '../ui/dialog'
-import { Button } from '../ui/button'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { LoadingBlock } from '../ui/loading'
 import { useSettingsStore } from '../../store/settingsStore'
@@ -74,6 +74,12 @@ interface MonthlyFinancialGroup {
   periodEndDate: string
 }
 
+interface MonthlyEntryRow {
+  date: string
+  type: 'entry' | 'holiday'
+  entry: MilkEntry | null
+}
+
 interface CustomerDetailsDialogProps {
   customer: Customer | null
   isOpen: boolean
@@ -83,6 +89,7 @@ interface CustomerDetailsDialogProps {
 
 export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpdated }: CustomerDetailsDialogProps) {
   const { language } = useSettingsStore()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'info' | 'entries' | 'holidays' | 'invoices' | 'payments'>('info')
   const [entries, setEntries] = useState<MilkEntry[]>([])
   const [allEntries, setAllEntries] = useState<MilkEntry[]>([])
@@ -93,6 +100,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
   const [isPayingMonth, setIsPayingMonth] = useState(false)
   const [entryFilterType, setEntryFilterType] = useState<'all' | 'single' | 'range'>('all')
   const [monthToPay, setMonthToPay] = useState<MonthlyFinancialGroup | null>(null)
+  const [monthPayAmount, setMonthPayAmount] = useState('')
 
   const [entryStartDate, setEntryStartDate] = useState(() => {
     const d = new Date();
@@ -224,6 +232,24 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
     }
   }
 
+  const filteredSkippedDates = useMemo(() => {
+    if (!customer) return []
+
+    return (customer.skippedDates ?? [])
+      .filter((skippedDate) => {
+        if (entryFilterType === 'single') {
+          return skippedDate.startsWith(entryMonth)
+        }
+
+        if (entryFilterType === 'range') {
+          return skippedDate >= entryStartDate && skippedDate <= entryEndDate
+        }
+
+        return true
+      })
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+  }, [customer, entryEndDate, entryFilterType, entryMonth, entryStartDate])
+
   const formatMonthOnly = (year: number, monthIndex: number) => {
     return new Intl.DateTimeFormat(getDisplayLocale(language), {
       month: 'long'
@@ -234,23 +260,6 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
     const date = new Date(dateString)
     if (Number.isNaN(date.getTime())) return null
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-  }
-
-  const getMonthKeysBetween = (startDate: string, endDate: string) => {
-    const start = new Date(startDate)
-    const end = new Date(endDate)
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return []
-
-    const keys: string[] = []
-    const cursor = new Date(start.getFullYear(), start.getMonth(), 1)
-    const last = new Date(end.getFullYear(), end.getMonth(), 1)
-
-    while (cursor <= last) {
-      keys.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`)
-      cursor.setMonth(cursor.getMonth() + 1)
-    }
-
-    return keys
   }
 
   const invoicePeriodKey = (invoice: Invoice) => {
@@ -299,48 +308,87 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
   }, [invoices])
 
   const monthlyEntryGroups = useMemo(() => {
-    const groups: Array<{
+    const monthMap = new Map<string, {
       key: string
       label: string
-      entries: MilkEntry[]
+      year: number
+      monthIndex: number
+      entries: MonthlyEntryRow[]
       deliveredDays: number
       totalLiters: number
       totalAmount: number
-    }> = []
+    }>()
+
+    const upsertGroup = (dateKey: string) => {
+      const date = new Date(dateKey)
+      if (Number.isNaN(date.getTime())) return null
+
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      const existing = monthMap.get(key)
+      if (existing) return existing
+
+      const created = {
+        key,
+        label: formatMonthYear(dateKey),
+        year: date.getFullYear(),
+        monthIndex: date.getMonth(),
+        entries: [] as MonthlyEntryRow[],
+        deliveredDays: 0,
+        totalLiters: 0,
+        totalAmount: 0,
+      }
+      monthMap.set(key, created)
+      return created
+    }
+
+    const skipDateSet = new Set(filteredSkippedDates.map((date) => date.slice(0, 10)))
+    const entryByDate = new Map<string, MilkEntry>()
 
     entries.forEach((entry) => {
-      const date = new Date(entry.date)
-      if (Number.isNaN(date.getTime())) return
+      if (!entry.date) return
+      entryByDate.set(entry.date.slice(0, 10), entry)
+    })
 
-      const key = `${date.getFullYear()}-${date.getMonth()}`
-      const existingGroup = groups[groups.length - 1]
-      const hasDelivery = entry.morningQuantity > 0 || entry.eveningQuantity > 0
-      const totalLiters = entry.morningQuantity + entry.eveningQuantity
+    const allDates = Array.from(new Set([
+      ...Array.from(entryByDate.keys()),
+      ...Array.from(skipDateSet),
+    ])).sort((a, b) => a.localeCompare(b))
 
-      if (!existingGroup || existingGroup.key !== key) {
-        groups.push({
-          key,
-          label: formatMonthYear(entry.date),
-          entries: [entry],
-          deliveredDays: hasDelivery ? 1 : 0,
-          totalLiters,
-          totalAmount: entry.totalAmount
+    allDates.forEach((dateKey) => {
+      const group = upsertGroup(dateKey)
+      if (!group) return
+
+      const entry = entryByDate.get(dateKey) ?? null
+      if (entry) {
+        const hasDelivery = (entry.morningQuantity ?? 0) > 0 || (entry.eveningQuantity ?? 0) > 0
+        group.entries.push({
+          date: dateKey,
+          type: 'entry',
+          entry,
         })
+        group.deliveredDays += hasDelivery ? 1 : 0
+        group.totalLiters += (entry.morningQuantity ?? 0) + (entry.eveningQuantity ?? 0)
+        group.totalAmount += Number(entry.totalAmount || 0)
         return
       }
 
-      existingGroup.entries.push(entry)
-      existingGroup.deliveredDays += hasDelivery ? 1 : 0
-      existingGroup.totalLiters += totalLiters
-      existingGroup.totalAmount += entry.totalAmount
+      group.entries.push({
+        date: dateKey,
+        type: 'holiday',
+        entry: null,
+      })
     })
 
-    return groups
-  }, [entries, language])
+    return Array.from(monthMap.values())
+      .map((group) => ({
+        ...group,
+        entries: [...group.entries].sort((a, b) => a.date.localeCompare(b.date)),
+      }))
+      .sort((a, b) => b.key.localeCompare(a.key))
+  }, [entries, filteredSkippedDates, language])
 
   const monthlyFinancialGroups = useMemo(() => {
     const monthMap = new Map<string, MonthlyFinancialGroup>()
-    const paymentAllocationByMonth = new Map<string, number>()
 
     allEntries.forEach((entry) => {
       const key = toMonthKey(entry.date)
@@ -381,11 +429,15 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
 
       if (existing) {
         existing.billed = existing.hasInvoice ? existing.billed + billedAmount : billedAmount
+        existing.paid = existing.hasInvoice ? existing.paid : Math.max(0, existing.paid)
         existing.hasInvoice = true
         existing.invoiceId = invoice.id
         existing.invoiceStatus = invoice.status
         existing.periodStartDate = invoice.periodStartDate || bounds.startDate
         existing.periodEndDate = invoice.periodEndDate || bounds.endDate
+        existing.paid = Number(invoice.paidAmount || 0)
+        existing.balance = Math.max(0, existing.billed - existing.paid)
+        existing.displayBalance = existing.balance > 0 ? existing.balance : existing.billed
         return
       }
 
@@ -395,9 +447,9 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
         year: date.getFullYear(),
         monthIndex: date.getMonth(),
         billed: billedAmount,
-        paid: 0,
-        balance: billedAmount,
-        displayBalance: billedAmount,
+        paid: Number(invoice.paidAmount || 0),
+        balance: Math.max(0, billedAmount - Number(invoice.paidAmount || 0)),
+        displayBalance: Math.max(0, billedAmount - Number(invoice.paidAmount || 0)) || billedAmount,
         hasInvoice: true,
         invoiceId: invoice.id,
         invoiceStatus: invoice.status,
@@ -407,25 +459,20 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
     })
 
     payments.forEach((payment) => {
-      const paidFromDate = payment.paidFromDate ?? null
-      const paidToDate = payment.paidToDate ?? null
       const paymentMonthKey = toMonthKey(payment.paymentDate)
-      const rangeKeys =
-        paidFromDate && paidToDate
-          ? getMonthKeysBetween(paidFromDate, paidToDate)
-          : (paymentMonthKey ? [paymentMonthKey] : [])
+      if (!paymentMonthKey) return
 
-      if (rangeKeys.length === 0) return
+      const existing = monthMap.get(paymentMonthKey)
+      if (existing?.hasInvoice) return
 
-      rangeKeys.forEach((monthKey) => {
-        if (monthMap.has(monthKey)) return
-        const [yearStr, monthStr] = monthKey.split('-')
+      if (!existing) {
+        const [yearStr, monthStr] = paymentMonthKey.split('-')
         const year = Number(yearStr)
         const monthIndex = Number(monthStr) - 1
         const bounds = getMonthBounds(year, monthIndex)
 
-        monthMap.set(monthKey, {
-          key: monthKey,
+        monthMap.set(paymentMonthKey, {
+          key: paymentMonthKey,
           label: formatMonthOnly(year, monthIndex),
           year,
           monthIndex,
@@ -437,57 +484,20 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
           periodStartDate: bounds.startDate,
           periodEndDate: bounds.endDate,
         })
-      })
-
-      const coveredEntriesByMonth = new Map<string, number>()
-      let coveredTotal = 0
-
-      if (paidFromDate && paidToDate) {
-        allEntries.forEach((entry) => {
-          if (entry.date < paidFromDate || entry.date > paidToDate) return
-          const monthKey = toMonthKey(entry.date)
-          if (!monthKey) return
-          const next = (coveredEntriesByMonth.get(monthKey) ?? 0) + entry.totalAmount
-          coveredEntriesByMonth.set(monthKey, next)
-          coveredTotal += entry.totalAmount
-        })
       }
 
-      const allocateAcrossMonths = (amount: number) => {
-        if (amount <= 0) return
-
-        if (!paidFromDate || !paidToDate || coveredTotal <= 0 || coveredEntriesByMonth.size === 0) {
-          const monthKey = rangeKeys[0]
-          paymentAllocationByMonth.set(monthKey, (paymentAllocationByMonth.get(monthKey) ?? 0) + amount)
-          return
-        }
-
-        let remainder = amount
-        rangeKeys.forEach((monthKey, index) => {
-          const monthCoveredAmount = coveredEntriesByMonth.get(monthKey) ?? 0
-          const allocated = index === rangeKeys.length - 1
-            ? remainder
-            : Number(((amount * monthCoveredAmount) / coveredTotal).toFixed(2))
-          remainder -= allocated
-          paymentAllocationByMonth.set(monthKey, (paymentAllocationByMonth.get(monthKey) ?? 0) + allocated)
-        })
-      }
-
-      allocateAcrossMonths(payment.amount)
+      const target = monthMap.get(paymentMonthKey)
+      if (!target) return
+      target.paid += Number(payment.amount || 0)
+      target.balance = Math.max(0, target.billed - target.paid)
+      target.displayBalance = target.balance > 0 ? target.balance : target.billed
     })
 
     return Array.from(monthMap.values())
       .map((group) => ({
         ...group,
-        paid: group.paid + (paymentAllocationByMonth.get(group.key) ?? 0),
-        balance: Math.max(
-          0,
-          group.billed - (group.paid + (paymentAllocationByMonth.get(group.key) ?? 0))
-        ),
-        displayBalance: Math.max(
-          0,
-          group.billed - (group.paid + (paymentAllocationByMonth.get(group.key) ?? 0))
-        ),
+        balance: Math.max(0, group.billed - group.paid),
+        displayBalance: group.balance > 0 ? group.balance : group.billed,
       }))
       .sort((a, b) => b.key.localeCompare(a.key))
   }, [allEntries, uniqueInvoices, payments, language])
@@ -566,6 +576,16 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
   const handlePayMonthBalance = async () => {
     if (!monthToPay || !customer) return
 
+    const parsedAmount = Number(monthPayAmount || monthToPay.balance || 0)
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      toast.error(language === 'mr' ? 'कृपया योग्य रक्कम भरा.' : 'Please enter a valid amount.')
+      return
+    }
+    if (parsedAmount > monthToPay.balance) {
+      toast.error(language === 'mr' ? 'बाकी रकमेपेक्षा जास्त भरणे शक्य नाही.' : 'Amount cannot exceed the remaining due.')
+      return
+    }
+
     setIsPayingMonth(true)
     try {
       let invoiceId = monthToPay.invoiceId
@@ -586,7 +606,11 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
         invoiceId = res.data.data.id
       }
 
-      const payRes = await axios.put(`/api/invoices/${invoiceId}/pay`)
+      const payRes = await axios.put(`/api/invoices/${invoiceId}/pay`, null, {
+        params: {
+          amount: parsedAmount,
+        },
+      })
       if (!payRes.data?.success) {
         throw new Error('Failed to pay invoice')
       }
@@ -597,6 +621,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
       await fetchCustomerData(customer.id)
       onCustomerUpdated?.()
       setMonthToPay(null)
+      setMonthPayAmount('')
       toast.success(t(language, 'monthBalancePaid'))
     } catch (err) {
       console.error(err)
@@ -606,35 +631,22 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
     }
   }
 
+  const openMonthDetails = (group: MonthlyFinancialGroup) => {
+    if (!customer) return
+    navigate(`/customers/${customer.id}/month/${group.year}/${group.monthIndex + 1}`)
+  }
+
   const getMilkTypeLabel = (milkType: string) => {
     if (milkType === 'COW') return t(language, 'cow')
     if (milkType === 'BUFFALO') return t(language, 'buffalo')
     return milkType
   }
 
-  const filteredSkippedDates = useMemo(() => {
-    if (!customer) return []
-
-    return (customer.skippedDates ?? [])
-      .filter((skippedDate) => {
-      if (entryFilterType === 'single') {
-        return skippedDate.startsWith(entryMonth)
-      }
-
-      if (entryFilterType === 'range') {
-        return skippedDate >= entryStartDate && skippedDate <= entryEndDate
-      }
-
-      return true
-    })
-      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-  }, [customer, entries, entryEndDate, entryFilterType, entryMonth, entryStartDate])
-
   if (!customer) return null
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-5xl max-h-[86vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="px-4 sm:px-6 pt-5 sm:pt-6 pb-2 border-b border-slate-200 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xl dark:bg-white dark:text-black">
@@ -653,7 +665,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
             </div>
           </div>
           
-          <div className="flex gap-4 mt-4 sm:mt-6 overflow-x-auto no-scrollbar pb-1">
+          <div className="flex gap-2 mt-4 sm:mt-5 overflow-x-auto no-scrollbar pb-1">
             {[
               { id: 'info', label: t(language, 'overview') },
               { id: 'entries', label: entriesTabLabel },
@@ -664,10 +676,10 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`pb-3 text-sm font-semibold whitespace-nowrap transition-colors border-b-2 ${
+                className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
                   activeTab === tab.id 
-                    ? 'border-primary-600 text-primary-600 dark:border-white dark:text-white' 
-                    : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                    ? 'border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-black' 
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-800 dark:border-slate-700 dark:bg-[#111111] dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white'
                 }`}
               >
                 {tab.label}
@@ -676,35 +688,35 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/50 dark:bg-slate-900/20">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-slate-50/50 dark:bg-slate-900/20">
           {isLoading ? (
             <LoadingBlock label={t(language, 'loadingDetails')} minHeightClassName="min-h-[200px]" size="md" />
           ) : (
             <>
               {activeTab === 'info' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
-                    <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-4">{t(language, 'customerDetails')}</h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
+                <div className="grid grid-cols-1 md:grid-cols-[0.95fr_1.35fr] gap-3 md:items-start">
+                  <div className="self-start bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-3">{t(language, 'customerDetails')}</h3>
+                    <div className="grid grid-cols-1 gap-2 text-sm">
+                      <div className="flex items-start justify-between gap-4 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-900">
                         <span className="text-slate-500">{t(language, 'addressLabel')}</span>
-                        <span className="font-medium text-right text-slate-800 dark:text-slate-200">{customer.address || '-'}</span>
+                        <span className="max-w-[55%] text-right font-medium text-slate-800 dark:text-slate-200">{customer.address || '-'}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-900">
                         <span className="text-slate-500">{t(language, 'milkType')}</span>
                         <span className="font-medium text-slate-800 dark:text-slate-200">{getMilkTypeLabel(customer.milkType)}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-900">
                         <span className="text-slate-500">{t(language, 'dailyQuantityLabel')}</span>
                         <span className="font-medium text-slate-800 dark:text-slate-200">{customer.dailyQuantity} L</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-900">
                         <span className="text-slate-500">{t(language, 'ratePerLiterLabel')}</span>
                         <span className="font-medium text-slate-800 dark:text-slate-200">₹{customer.ratePerLiter}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
+                  <div className="self-start bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <h3 className="font-semibold text-slate-700 dark:text-slate-200">{t(language, 'financialOverview')}</h3>
                       <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-right shadow-sm">
@@ -730,15 +742,27 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                           </select>
                         </div>
                       </div>
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-[26rem] overflow-y-auto">
                         {selectedYearMonthlyBalances.length === 0 ? (
-                          <div className="px-4 py-6 text-sm text-center text-slate-500">{t(language, 'noBillsFound')}</div>
+                          <div className="px-4 py-5 text-sm text-center text-slate-500">{t(language, 'noBillsFound')}</div>
                         ) : (
                           selectedYearMonthlyBalances.map((group) => (
-                            <div key={group.key} className="px-4 py-4 border-b border-slate-100 dark:border-slate-700 last:border-b-0">
+                            <div
+                              key={group.key}
+                              role="button"
+                              tabIndex={0}
+                              onClick={() => openMonthDetails(group)}
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  event.preventDefault()
+                                  openMonthDetails(group)
+                                }
+                              }}
+                              className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 last:border-b-0 cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                            >
                               <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
-                                  <span className="block text-base font-semibold text-slate-800 dark:text-slate-100">{group.label}</span>
+                                  <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">{group.label}</span>
                                   {group.invoiceStatus === 'PAID' ? (
                                     <span className="mt-1 inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:bg-white dark:text-black">
                                       {t(language, 'paid')}
@@ -746,18 +770,34 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                                   ) : null}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-base font-bold text-slate-700 dark:text-white">
-                                    ₹{group.displayBalance}
-                                  </span>
+                                  <div className="text-right">
+                                    <span className="block text-sm font-bold text-slate-700 dark:text-white">
+                                      ₹{group.billed > 0
+                                        ? (group.balance > 0 ? group.balance : group.billed)
+                                        : group.balance}
+                                    </span>
+                                    {group.paid > 0 && group.balance > 0 ? (
+                                      <span className="mt-0.5 block text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                                        {language === 'mr'
+                                          ? `भरले ₹${group.paid} • बाकी ₹${group.balance}`
+                                          : `Paid ₹${group.paid} • Due ₹${group.balance}`}
+                                      </span>
+                                    ) : null}
+                                  </div>
                                   {group.balance > 0 ? (
-                                    <Button
+                                    <button
                                       type="button"
-                                      size="sm"
-                                      onClick={() => setMonthToPay(group)}
-                                      className="h-8 rounded-full bg-white text-black shadow-none hover:bg-zinc-200 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+                                      onClick={(event) => {
+                                        event.stopPropagation()
+                                        setMonthToPay(group)
+                                        setMonthPayAmount(String(group.balance > 0 ? group.balance : group.billed || 0))
+                                      }}
+                                      className="h-8 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100 dark:border-slate-700 dark:bg-[#111111] dark:text-white dark:hover:bg-slate-800"
                                     >
-                                      {t(language, 'payMonthBalance')}
-                                    </Button>
+                                      {group.paid > 0
+                                        ? (language === 'mr' ? 'बाकी भरा' : 'Pay Due')
+                                        : t(language, 'payMonthBalance')}
+                                    </button>
                                   ) : null}
                                 </div>
                               </div>
@@ -854,24 +894,30 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                                   </div>
                                 </td>
                               </tr>
-                              {group.entries.map((entry) => (
-                                <tr key={entry.id} className="border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/30">
-                                  <td className="px-4 py-3 whitespace-nowrap">{formatDate(entry.date)}</td>
+                              {group.entries.map((row) => (
+                                <tr key={`${group.key}-${row.date}`} className="border-b border-slate-100 dark:border-slate-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                                  <td className="px-4 py-3 whitespace-nowrap">{formatDate(row.date)}</td>
                                   <td className="px-4 py-3 whitespace-nowrap">
-                                    {(!entry.morningQuantity || entry.morningQuantity === 0) ? (
+                                    {row.type === 'holiday' ? (
+                                      <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-500/20">{t(language, 'holiday')}</span>
+                                    ) : (!row.entry?.morningQuantity || row.entry.morningQuantity === 0) ? (
                                       <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-500/20">{t(language, 'holiday')}</span>
                                     ) : (
-                                      `${entry.morningQuantity} L`
+                                      `${row.entry.morningQuantity} L`
                                     )}
                                   </td>
                                   <td className="px-4 py-3 whitespace-nowrap">
-                                    {(!entry.eveningQuantity || entry.eveningQuantity === 0) ? (
+                                    {row.type === 'holiday' ? (
+                                      <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-500/20">{t(language, 'holiday')}</span>
+                                    ) : (!row.entry?.eveningQuantity || row.entry.eveningQuantity === 0) ? (
                                       <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 px-2 py-0.5 rounded-full border border-rose-100 dark:border-rose-500/20">{t(language, 'holiday')}</span>
                                     ) : (
-                                      `${entry.eveningQuantity} L`
+                                      `${row.entry.eveningQuantity} L`
                                     )}
                                   </td>
-                                  <td className="px-4 py-3 font-medium text-right whitespace-nowrap">₹{entry.totalAmount}</td>
+                                  <td className="px-4 py-3 font-medium text-right whitespace-nowrap">
+                                    {row.type === 'holiday' ? '₹0' : `₹${Number(row.entry?.totalAmount || 0)}`}
+                                  </td>
                                 </tr>
                               ))}
                             </Fragment>
@@ -1043,19 +1089,57 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
 
       <ConfirmDialog
         isOpen={!!monthToPay}
-        onClose={() => setMonthToPay(null)}
+        onClose={() => {
+          setMonthToPay(null)
+          setMonthPayAmount('')
+        }}
         onConfirm={handlePayMonthBalance}
         isProcessing={isPayingMonth}
         title={t(language, 'payMonthBalanceTitle')}
         description={
           monthToPay
-        ? `${monthToPay.label} - ₹${monthToPay.displayBalance}`
+        ? `${monthToPay.label} • ${language === 'mr'
+            ? `एकूण ₹${monthToPay.billed} • भरले ₹${monthToPay.paid} • बाकी ₹${monthToPay.balance}`
+            : `Total ₹${monthToPay.billed} • Paid ₹${monthToPay.paid} • Due ₹${monthToPay.balance}`}`
             : t(language, 'payMonthBalanceDesc')
         }
         confirmText={isPayingMonth ? t(language, 'generating') : t(language, 'payMonthBalance')}
         cancelText={t(language, 'cancel')}
         isDestructive={false}
-      />
+      >
+        {monthToPay ? (
+          <div className="space-y-3">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+              {language === 'mr'
+                ? `एकूण ₹${monthToPay.billed} • भरले ₹${monthToPay.paid} • बाकी ₹${monthToPay.balance}`
+                : `Total ₹${monthToPay.billed} • Paid ₹${monthToPay.paid} • Due ₹${monthToPay.balance}`}
+            </div>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              {language === 'mr' ? 'भरण्याची रक्कम' : 'Amount to pay'}
+            </label>
+            <input
+              type="number"
+              min="1"
+              max={String(monthToPay.balance || monthToPay.billed || 0)}
+              step="0.01"
+              value={monthPayAmount}
+              onChange={(event) => {
+                const nextValue = event.target.value
+                if (nextValue === '') {
+                  setMonthPayAmount('')
+                  return
+                }
+                const nextAmount = Number(nextValue)
+                if (Number.isFinite(nextAmount) && nextAmount <= (monthToPay.balance || monthToPay.billed || 0)) {
+                  setMonthPayAmount(nextValue)
+                }
+              }}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 dark:border-slate-700 dark:bg-[#111111] dark:text-white dark:focus:ring-white/30"
+              placeholder={String(monthToPay.balance || monthToPay.billed)}
+            />
+          </div>
+        ) : null}
+      </ConfirmDialog>
     </Dialog>
   )
 }

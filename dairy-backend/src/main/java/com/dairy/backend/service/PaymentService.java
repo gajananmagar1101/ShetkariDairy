@@ -198,31 +198,7 @@ public class PaymentService {
             Map<String, Map<LocalDate, BigDecimal>> customerEntryAmountByDate,
             Map<String, Set<LocalDate>> customerCoveredDates
     ) {
-        if (payment.getPaidFromDate() == null || payment.getPaidToDate() == null) {
-            return safe(payment.getAmount());
-        }
-
-        Map<LocalDate, BigDecimal> entryAmountByDate = customerEntryAmountByDate.computeIfAbsent(
-                payment.getCustomerId(),
-                customerId -> ownedUserIds.stream()
-                        .flatMap(ownedUserId -> milkEntryRepository.findByUserIdAndCustomerId(ownedUserId, customerId).stream())
-                        .filter(entry -> entry.getDate() != null)
-                        .collect(Collectors.toMap(
-                                entry -> entry.getDate(),
-                                entry -> safe(entry.getTotalAmount()),
-                                BigDecimal::add
-                        ))
-        );
-        Set<LocalDate> coveredDates = customerCoveredDates.computeIfAbsent(payment.getCustomerId(), key -> new HashSet<>());
-
-        BigDecimal effectiveAmount = BigDecimal.ZERO;
-        for (LocalDate date = payment.getPaidFromDate(); !date.isAfter(payment.getPaidToDate()); date = date.plusDays(1)) {
-            if (coveredDates.add(date)) {
-                effectiveAmount = effectiveAmount.add(entryAmountByDate.getOrDefault(date, BigDecimal.ZERO));
-            }
-        }
-
-        return effectiveAmount;
+        return safe(payment.getAmount());
     }
 
     private PaymentDto mapToDto(Payment payment, String customerName) {

@@ -8,10 +8,12 @@ import com.dairy.backend.entity.DeliveryOverride;
 import com.dairy.backend.entity.MilkEntry;
 import com.dairy.backend.entity.SpecialCondition;
 import com.dairy.backend.entity.User;
+import com.dairy.backend.event.MonthEndEntrySavedEvent;
 import com.dairy.backend.repository.CustomerRepository;
 import com.dairy.backend.repository.MilkEntryRepository;
 import com.dairy.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,7 @@ public class MilkEntryService {
     private final MilkEntryRepository milkEntryRepository;
     private final CustomerRepository customerRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private BigDecimal safe(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
@@ -135,6 +138,7 @@ public class MilkEntryService {
         customer.setBalance(customer.getBalance().subtract(previousGroupAmount).add(totalAmount));
         clearConsumedCustomerConditions(customer, entryDate);
         customerRepository.save(customer);
+        publishMonthEndInvoiceEvent(userId, customer.getId(), entryDate);
 
         return mapToDto(entry, customer.getName());
     }
@@ -220,6 +224,7 @@ public class MilkEntryService {
 
         customer.setBalance(customer.getBalance().subtract(previousGroupAmount).add(totalAmount));
         customerRepository.save(customer);
+        publishMonthEndInvoiceEvent(userId, entry.getCustomerId(), entry.getDate());
 
         return mapToDto(entry, customer.getName());
     }
@@ -351,9 +356,22 @@ public class MilkEntryService {
             customer.setBalance(customer.getBalance().add(totalAmount));
             clearConsumedCustomerConditions(customer, date);
             customerRepository.save(customer);
+            publishMonthEndInvoiceEvent(userId, customer.getId(), date);
             generatedCount++;
         }
         return generatedCount;
+    }
+
+    private void publishMonthEndInvoiceEvent(String userId, String customerId, LocalDate entryDate) {
+        if (userId == null || customerId == null || entryDate == null) {
+            return;
+        }
+
+        if (entryDate.getDayOfMonth() != entryDate.lengthOfMonth()) {
+            return;
+        }
+
+        eventPublisher.publishEvent(new MonthEndEntrySavedEvent(userId, customerId, entryDate));
     }
 
     private Set<String> resolveOwnedUserIds(String userId) {

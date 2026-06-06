@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import toast from 'react-hot-toast'
-import { Download, MessageCircle, Calculator, Trash2, CheckCircle } from 'lucide-react'
+import { Download, MessageCircle, Calculator, Trash2 } from 'lucide-react'
 import QRCode from 'qrcode'
 import axios from 'axios'
 import { Button } from '../components/ui/button'
@@ -18,7 +18,7 @@ import { t } from '../utils/translations'
 import { getDisplayLocale, toEnglishDigits } from '../utils/numberFormat'
 import { fetchCustomersWithCache, invalidateCustomerCache } from '../lib/customerCache'
 import { fetchAppSettings } from '../lib/userSettings'
-import { LoadingBlock, LoadingInline, LoadingSpinner } from '../components/ui/loading'
+import { LoadingBlock, LoadingInline } from '../components/ui/loading'
 import { getCachedViewData, setCachedViewData } from '../lib/viewCache'
 
 interface Invoice {
@@ -58,12 +58,10 @@ export default function Billing() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null)
   const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null)
   
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
-  const [markPaidConfirmId, setMarkPaidConfirmId] = useState<string | null>(null)
   const [selectedCustomer, setSelectedCustomer] = useState('')
   const [upiId, setUpiId] = useState('')
   const today = new Date()
@@ -285,24 +283,6 @@ export default function Billing() {
     }
   }
 
-  const handleMarkAsPaid = async (invoiceId: string) => {
-    if (payingInvoiceId) return;
-    setPayingInvoiceId(invoiceId)
-    try {
-      const res = await axios.put(`/api/invoices/${invoiceId}/pay`)
-      if (res.data.success) {
-        invalidateCustomerCache()
-        await Promise.all([fetchInvoices(), fetchCustomers()])
-        toast.success(t(language, 'invoiceMarkedPaid'))
-      }
-    } catch (err) {
-      console.error(err)
-      toast.error(t(language, 'failedMarkPaid'))
-    } finally {
-      setPayingInvoiceId(null)
-    }
-  }
-
   const handleDeleteInvoice = async () => {
     if (!deleteConfirmId || deletingInvoiceId) return;
 
@@ -363,8 +343,7 @@ export default function Billing() {
 
         const startDate = parseDateInput(invoice.periodStartDate)
         const endDate = parseDateInput(invoice.periodEndDate)
-        const todayDate = new Date()
-        const actualEndDate = endDate > todayDate ? todayDate : endDate
+        const actualEndDate = endDate
 
         const allDays = [];
         for (let d = new Date(startDate); d <= actualEndDate; d.setDate(d.getDate() + 1)) {
@@ -716,17 +695,6 @@ export default function Billing() {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right flex justify-end gap-2 whitespace-nowrap">
-                        {inv.status !== 'PAID' && (
-                          <Button 
-                            variant="outline" size="icon" 
-                            disabled={payingInvoiceId === inv.id}
-                            className="h-8 w-8 text-slate-700 rounded-lg border-slate-200 hover:bg-slate-50 disabled:opacity-50 dark:text-white dark:border-zinc-700 dark:hover:bg-zinc-800"
-                            title={t(language, 'markAsPaid')}
-                            onClick={() => setMarkPaidConfirmId(inv.id)}
-                          >
-                            {payingInvoiceId === inv.id ? <LoadingSpinner size="sm" className="text-current" /> : <CheckCircle className="w-4 h-4" />}
-                          </Button>
-                        )}
                         <Button 
                           variant="outline" size="icon" 
                           className="h-8 w-8 text-slate-700 rounded-lg border-slate-200 hover:bg-slate-50 dark:text-white dark:border-zinc-700 dark:hover:bg-zinc-800"
@@ -775,21 +743,6 @@ export default function Billing() {
           )}
         </div>
         
-        <ConfirmDialog
-          isOpen={!!markPaidConfirmId}
-          onClose={() => setMarkPaidConfirmId(null)}
-          onConfirm={async () => {
-            if (!markPaidConfirmId) return
-            await handleMarkAsPaid(markPaidConfirmId)
-            setMarkPaidConfirmId(null)
-          }}
-          isProcessing={!!payingInvoiceId}
-          title={t(language, 'confirmPayment')}
-          description={t(language, 'confirmPaidDesc')}
-          confirmText={t(language, 'yesMarkPaid')}
-          cancelText={t(language, 'cancel')}
-        />
-
         <ConfirmDialog 
           isOpen={!!deleteConfirmId}
           onClose={() => setDeleteConfirmId(null)}
