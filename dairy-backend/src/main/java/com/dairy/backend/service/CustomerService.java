@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Comparator;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Sort;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +37,30 @@ public class CustomerService {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
 
+    private static class CustomerRecentSummary {
+        private LocalDate date;
+        private BigDecimal quantity = BigDecimal.ZERO;
+        private BigDecimal amount = BigDecimal.ZERO;
+        private boolean skipped;
+    }
+
+    private static class DailyEntryAggregate {
+        private BigDecimal quantity = BigDecimal.ZERO;
+        private BigDecimal amount = BigDecimal.ZERO;
+
+        private void add(com.dairy.backend.entity.MilkEntry entry) {
+            quantity = quantity.add(
+                    safeStatic(entry.getMorningQuantity()).add(safeStatic(entry.getEveningQuantity()))
+            );
+            amount = amount.add(safeStatic(entry.getTotalAmount()));
+        }
+    }
+
     private BigDecimal safe(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
+    }
+
+    private static BigDecimal safeStatic(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
     }
 
@@ -85,59 +109,93 @@ public class CustomerService {
         return safe(dto.getDefaultMorningQuantity()).add(safe(dto.getDefaultEveningQuantity()));
     }
 
-    private BigDecimal calculateLiveBalance(String userId, Customer customer) {
-        Set<String> ownedUserIds = resolveOwnedUserIds(userId);
-        Set<String> ownedCustomerIds = resolveOwnedCustomerIds(ownedUserIds);
-        Map<LocalDate, BigDecimal> entryAmountByDate = new HashMap<>();
-        BigDecimal milkEntriesTotal = ownedUserIds.stream()
-                .flatMap(ownedUserId -> milkEntryRepository.findByUserIdAndCustomerId(ownedUserId, customer.getId()).stream())
-                .peek(entry -> {
-                    if (entry.getDate() != null) {
-                        entryAmountByDate.merge(entry.getDate(), safe(entry.getTotalAmount()), BigDecimal::add);
-                    }
-                })
+    private BigDecimal calculateLiveBalanceFromCollections(
+            Customer customer,
+            List<com.dairy.backend.entity.MilkEntry> milkEntries,
+            List<com.dairy.backend.entity.Invoice> invoices,
+            List<com.dairy.backend.entity.Payment> payments
+    ) {
+        BigDecimal milkEntriesTotal = milkEntries.stream()
+                .filter(entry -> customer.getId().equals(entry.getCustomerId()))
                 .map(entry -> safe(entry.getTotalAmount()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal paidInvoicesTotal = BigDecimal.ZERO;
-        BigDecimal manualPaymentsTotal = BigDecimal.ZERO;
+        BigDecimal paidInvoicesTotal = invoices.stream()
+                .filter(invoice -> customer.getId().equals(invoice.getCustomerId()))
+                .map(invoice -> safe(invoice.getPaidAmount()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        var invoices = invoiceRepository.findAll().stream()
-                .filter(invoice -> invoice.getCustomerId() != null && customer.getId().equals(invoice.getCustomerId()))
-                .sorted(Comparator
-                        .comparing(com.dairy.backend.entity.Invoice::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                        .thenComparing(com.dairy.backend.entity.Invoice::getId, Comparator.nullsLast(String::compareTo)))
-                .collect(Collectors.toList());
-
-        var payments = paymentRepository.findAll().stream()
-                .filter(payment -> payment.getCustomerId() != null && ownedCustomerIds.contains(payment.getCustomerId()))
+        BigDecimal manualPaymentsTotal = payments.stream()
                 .filter(payment -> customer.getId().equals(payment.getCustomerId()))
-                .collect(Collectors.collectingAndThen(
-                        Collectors.toMap(
-                                payment -> payment.getId(),
-                                payment -> payment,
-                                (existing, ignored) -> existing,
-                                java.util.LinkedHashMap::new
-                        ),
-                        map -> new ArrayList<>(map.values())
-                ))
-                .stream()
-                .sorted(Comparator
-                        .comparing(com.dairy.backend.entity.Payment::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                        .thenComparing(com.dairy.backend.entity.Payment::getId, Comparator.nullsLast(String::compareTo)))
-                .collect(Collectors.toList());
-
-        for (var invoice : invoices) {
-            paidInvoicesTotal = paidInvoicesTotal.add(safe(invoice.getPaidAmount()));
-        }
-
-        for (var payment : payments) {
-            if (payment.getPaidFromDate() == null || payment.getPaidToDate() == null) {
-                manualPaymentsTotal = manualPaymentsTotal.add(safe(payment.getAmount()));
-            }
-        }
+                .filter(payment -> payment.getPaidFromDate() == null || payment.getPaidToDate() == null)
+                .map(payment -> safe(payment.getAmount()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return milkEntriesTotal.subtract(paidInvoicesTotal).subtract(manualPaymentsTotal);
+    }
+
+    private BigDecimal calculateLiveBalance(String userId, Customer customer) {
+        Set<String> ownedUserIds = resolveOwnedUserIds(userId);
+        List<com.dairy.backend.entity.MilkEntry> milkEntries = milkEntryRepository.findByUserIdIn(ownedUserIds);
+        List<com.dairy.backend.entity.Invoice> invoices = invoiceRepository.findByUserIdIn(ownedUserIds, Sort.by(Sort.Direction.ASC, "createdAt"));
+        List<com.dairy.backend.entity.Payment> payments = paymentRepository.findByUserIdIn(ownedUserIds, Sort.by(Sort.Direction.ASC, "createdAt"));
+        return calculateLiveBalanceFromCollections(customer, milkEntries, invoices, payments);
+    }
+
+    private CustomerRecentSummary buildRecentSummary(Customer customer, List<com.dairy.backend.entity.MilkEntry> milkEntries) {
+        Map<LocalDate, DailyEntryAggregate> entriesByDate = new HashMap<>();
+        for (var entry : milkEntries) {
+            if (!customer.getId().equals(entry.getCustomerId()) || entry.getDate() == null) {
+                continue;
+            }
+            entriesByDate.computeIfAbsent(entry.getDate(), ignored -> new DailyEntryAggregate()).add(entry);
+        }
+
+        LocalDate latestEntryDate = entriesByDate.keySet().stream().max(LocalDate::compareTo).orElse(null);
+        LocalDate latestSkippedDate = customer.getSkippedDates() != null && !customer.getSkippedDates().isEmpty()
+                ? customer.getSkippedDates().stream().max(LocalDate::compareTo).orElse(null)
+                : null;
+
+        CustomerRecentSummary summary = new CustomerRecentSummary();
+        if (latestSkippedDate != null && (latestEntryDate == null || !latestSkippedDate.isBefore(latestEntryDate))) {
+            summary.date = latestSkippedDate;
+            summary.skipped = true;
+            return summary;
+        }
+
+        if (latestEntryDate != null) {
+            DailyEntryAggregate aggregate = entriesByDate.get(latestEntryDate);
+            summary.date = latestEntryDate;
+            summary.quantity = aggregate != null ? aggregate.quantity : BigDecimal.ZERO;
+            summary.amount = aggregate != null ? aggregate.amount : BigDecimal.ZERO;
+        }
+
+        return summary;
+    }
+
+    private CustomerDto mapToDto(Customer customer, BigDecimal balance, CustomerRecentSummary recentSummary) {
+        return CustomerDto.builder()
+                .id(customer.getId())
+                .name(customer.getName())
+                .phone(customer.getPhone())
+                .address(customer.getAddress())
+                .balance(balance)
+                .milkType(customer.getMilkType())
+                .ratePerLiter(customer.getRatePerLiter())
+                .dailyQuantity(customer.getDailyQuantity())
+                .autoEntryEnabled(customer.isAutoEntryEnabled())
+                .defaultMorningQuantity(customer.getDefaultMorningQuantity())
+                .defaultEveningQuantity(customer.getDefaultEveningQuantity())
+                .skippedDates(customer.getSkippedDates())
+                .deliveryOverrides(customer.getDeliveryOverrides())
+                .specialCondition(customer.getSpecialCondition())
+                .active(customer.isActive())
+                .stoppedAt(customer.getStoppedAt())
+                .recentEntryDate(recentSummary != null ? recentSummary.date : null)
+                .recentEntryQuantity(recentSummary != null ? recentSummary.quantity : BigDecimal.ZERO)
+                .recentEntryAmount(recentSummary != null ? recentSummary.amount : BigDecimal.ZERO)
+                .recentEntrySkipped(recentSummary != null && recentSummary.skipped)
+                .build();
     }
 
     public CustomerDto createCustomer(CustomerDto dto) {
@@ -166,8 +224,18 @@ public class CustomerService {
 
     public List<CustomerDto> getAllCustomers() {
         String userId = SecurityUtils.getCurrentUserId();
-        return customerRepository.findByUserId(userId).stream()
-                .map(customer -> mapToDto(customer, calculateLiveBalance(userId, customer)))
+        Set<String> ownedUserIds = resolveOwnedUserIds(userId);
+        List<Customer> customers = customerRepository.findByUserId(userId);
+        List<com.dairy.backend.entity.MilkEntry> milkEntries = milkEntryRepository.findByUserIdIn(ownedUserIds);
+        List<com.dairy.backend.entity.Invoice> invoices = invoiceRepository.findByUserIdIn(ownedUserIds, Sort.by(Sort.Direction.ASC, "createdAt"));
+        List<com.dairy.backend.entity.Payment> payments = paymentRepository.findByUserIdIn(ownedUserIds, Sort.by(Sort.Direction.ASC, "createdAt"));
+
+        return customers.stream()
+                .map(customer -> mapToDto(
+                        customer,
+                        calculateLiveBalanceFromCollections(customer, milkEntries, invoices, payments),
+                        buildRecentSummary(customer, milkEntries)
+                ))
                 .collect(Collectors.toList());
     }
 
@@ -282,23 +350,6 @@ public class CustomerService {
     }
 
     private CustomerDto mapToDto(Customer customer, BigDecimal balance) {
-        return CustomerDto.builder()
-                .id(customer.getId())
-                .name(customer.getName())
-                .phone(customer.getPhone())
-                .address(customer.getAddress())
-                .balance(balance)
-                .milkType(customer.getMilkType())
-                .ratePerLiter(customer.getRatePerLiter())
-                .dailyQuantity(customer.getDailyQuantity())
-                .autoEntryEnabled(customer.isAutoEntryEnabled())
-                .defaultMorningQuantity(customer.getDefaultMorningQuantity())
-                .defaultEveningQuantity(customer.getDefaultEveningQuantity())
-                .skippedDates(customer.getSkippedDates())
-                .deliveryOverrides(customer.getDeliveryOverrides())
-                .specialCondition(customer.getSpecialCondition())
-                .active(customer.isActive())
-                .stoppedAt(customer.getStoppedAt())
-                .build();
+        return mapToDto(customer, balance, null);
     }
 }

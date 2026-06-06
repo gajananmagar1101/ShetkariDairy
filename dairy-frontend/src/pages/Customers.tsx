@@ -44,26 +44,15 @@ interface Customer {
     quantity: number
     active: boolean
   } | null
-}
-
-interface MilkEntrySummary {
-  date: string
-  morningQuantity: number
-  eveningQuantity: number
-  totalAmount?: number
-}
-
-interface CustomerRecentEntry {
-  date: string | null
-  quantity: number
-  amount: number
-  isSkipped: boolean
+  recentEntryDate?: string | null
+  recentEntryQuantity?: number
+  recentEntryAmount?: number
+  recentEntrySkipped?: boolean
 }
 
 export default function Customers() {
   const { language } = useSettingsStore()
   const [customers, setCustomers] = useState<Customer[]>([])
-  const [recentEntriesByCustomer, setRecentEntriesByCustomer] = useState<Record<string, CustomerRecentEntry>>({})
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -123,77 +112,6 @@ export default function Customers() {
       }
     }
   }
-
-  useEffect(() => {
-    if (customers.length === 0) {
-      setRecentEntriesByCustomer({})
-      return
-    }
-
-    const fetchRecentEntries = async () => {
-      try {
-        const responses = await Promise.all(
-          customers.map((customer) =>
-            axios.get('/api/milk-entries/customer-range', {
-              params: {
-                customerId: customer.id,
-                startDate: '2000-01-01',
-                endDate: '2100-01-01',
-              },
-            })
-          )
-        )
-
-        const nextRecentEntries = customers.reduce<Record<string, CustomerRecentEntry>>((acc, customer, index) => {
-          const customerEntries = (responses[index].data?.data ?? []) as MilkEntrySummary[]
-          const latestEntryDate = customerEntries.reduce<string | null>((latestDate, entry) => {
-            const currentDate = entry.date?.slice(0, 10) ?? null
-            if (!currentDate) return latestDate
-            if (!latestDate || currentDate > latestDate) return currentDate
-            return latestDate
-          }, null)
-          const latestDateEntries = latestEntryDate
-            ? customerEntries.filter((entry) => entry.date?.slice(0, 10) === latestEntryDate)
-            : []
-          const latestSkippedDate = [...(customer.skippedDates ?? [])].sort().at(-1) ?? null
-          const shouldShowSkippedAsLatest =
-            !!latestSkippedDate && (!latestEntryDate || latestSkippedDate >= latestEntryDate)
-
-          acc[customer.id] = shouldShowSkippedAsLatest
-            ? {
-                date: latestSkippedDate,
-                quantity: 0,
-                amount: 0,
-                isSkipped: true,
-              }
-            : latestDateEntries.length > 0
-              ? {
-                  date: latestEntryDate,
-                  quantity: latestDateEntries.reduce(
-                    (sum, entry) => sum + (entry.morningQuantity || 0) + (entry.eveningQuantity || 0),
-                    0
-                  ),
-                  amount: latestDateEntries.reduce((sum, entry) => sum + Number(entry.totalAmount || 0), 0),
-                  isSkipped: false,
-                }
-              : {
-                date: null,
-                quantity: 0,
-                amount: 0,
-                isSkipped: false,
-              }
-
-          return acc
-        }, {})
-
-        setRecentEntriesByCustomer(nextRecentEntries)
-      } catch (err) {
-        console.error(err)
-      }
-    }
-
-    void fetchRecentEntries()
-  }, [customers])
 
   const startVoiceTyping = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -339,29 +257,29 @@ export default function Customers() {
     .filter((customer) => !customer.active)
     .sort((a, b) => new Date(b.stoppedAt || 0).getTime() - new Date(a.stoppedAt || 0).getTime())
   const totalCustomerMilk = useMemo(
-    () => activeCustomers.reduce((sum, customer) => sum + (recentEntriesByCustomer[customer.id]?.quantity || 0), 0),
-    [activeCustomers, recentEntriesByCustomer]
+    () => activeCustomers.reduce((sum, customer) => sum + (customer.recentEntryQuantity || 0), 0),
+    [activeCustomers]
   )
   const totalCustomerBalance = useMemo(
     () => activeCustomers.reduce((sum, customer) => sum + (customer.balance || 0), 0),
     [activeCustomers]
   )
   const totalRecentAmount = useMemo(
-    () => activeCustomers.reduce((sum, customer) => sum + (recentEntriesByCustomer[customer.id]?.amount || 0), 0),
-    [activeCustomers, recentEntriesByCustomer]
+    () => activeCustomers.reduce((sum, customer) => sum + (customer.recentEntryAmount || 0), 0),
+    [activeCustomers]
   )
   const sharedRecentEntryDate = useMemo(() => {
     if (activeCustomers.length === 0) return null
 
     const datedCustomers = activeCustomers
-      .map((customer) => recentEntriesByCustomer[customer.id]?.date ?? null)
+      .map((customer) => customer.recentEntryDate ?? null)
       .filter((date): date is string => Boolean(date))
 
     if (datedCustomers.length !== activeCustomers.length) return null
 
     const firstDate = datedCustomers[0]
     return datedCustomers.every((date) => date === firstDate) ? firstDate : null
-  }, [activeCustomers, recentEntriesByCustomer])
+  }, [activeCustomers])
 
   const formatStoppedAt = (value?: string | null) => {
     if (!value) return '-'
@@ -643,31 +561,31 @@ export default function Customers() {
                       </td>
                       <td className="py-4 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
                         <div className="flex flex-col">
-                          {recentEntriesByCustomer[customer.id]?.date && recentEntriesByCustomer[customer.id]?.date !== sharedRecentEntryDate ? (
+                          {customer.recentEntryDate && customer.recentEntryDate !== sharedRecentEntryDate ? (
                             <span className="font-medium text-slate-800 dark:text-slate-200">
-                              {formatEntryDate(recentEntriesByCustomer[customer.id]?.date)}
+                              {formatEntryDate(customer.recentEntryDate)}
                             </span>
                           ) : null}
-                          {!recentEntriesByCustomer[customer.id]?.date ? (
+                          {!customer.recentEntryDate ? (
                             <span className="font-medium text-slate-800 dark:text-slate-200">
-                              {formatEntryDate(recentEntriesByCustomer[customer.id]?.date)}
+                              {formatEntryDate(customer.recentEntryDate)}
                             </span>
                           ) : null}
                           <span className="text-xs text-slate-400">
                             {getMilkTypeLabel(customer.milkType)}
                           </span>
-                          {recentEntriesByCustomer[customer.id]?.isSkipped && (
+                          {customer.recentEntrySkipped && (
                             <span className="inline-flex w-fit items-center gap-1 rounded-md bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-700">
                               <Ban className="h-3 w-3" /> {t(language, 'skipShort')}
                             </span>
                           )}
                           <span className="text-xs font-semibold text-slate-500 dark:text-slate-300">
                             {t(language, 'milkLabel')}: 
-                            {(recentEntriesByCustomer[customer.id]?.quantity ?? 0).toFixed(1)} L
+                            {(customer.recentEntryQuantity ?? 0).toFixed(1)} L
                           </span>
                           <span className="text-xs font-semibold text-slate-500 dark:text-slate-300">
                             {t(language, 'amountLabel')}: 
-                            ₹{(recentEntriesByCustomer[customer.id]?.amount ?? 0).toFixed(2)}
+                            ₹{(customer.recentEntryAmount ?? 0).toFixed(2)}
                           </span>
                         </div>
                       </td>

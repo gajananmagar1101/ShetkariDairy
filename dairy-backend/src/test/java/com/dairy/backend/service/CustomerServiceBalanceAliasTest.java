@@ -27,7 +27,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyCollection;
 
 @ExtendWith(MockitoExtension.class)
 class CustomerServiceBalanceAliasTest {
@@ -84,7 +86,7 @@ class CustomerServiceBalanceAliasTest {
             when(userRepository.findByEmail(alias)).thenReturn(Optional.empty());
             when(userRepository.findByPhone(alias)).thenReturn(Optional.of(user));
             when(customerRepository.findByUserId(alias)).thenReturn(List.of(customer));
-            when(milkEntryRepository.findByUserIdAndCustomerId(canonicalUserId, customerId)).thenReturn(List.of(
+            when(milkEntryRepository.findByUserIdIn(anyCollection())).thenReturn(List.of(
                     MilkEntry.builder()
                             .userId(canonicalUserId)
                             .customerId(customerId)
@@ -92,8 +94,8 @@ class CustomerServiceBalanceAliasTest {
                             .totalAmount(new BigDecimal("70"))
                             .build()
             ));
-            when(milkEntryRepository.findByUserIdAndCustomerId(alias, customerId)).thenReturn(List.of());
-            when(milkEntryRepository.findByUserIdAndCustomerId("alias@example.com", customerId)).thenReturn(List.of());
+            when(invoiceRepository.findByUserIdIn(anyCollection(), eq(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "createdAt")))).thenReturn(List.of());
+            when(paymentRepository.findByUserIdIn(anyCollection(), eq(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "createdAt")))).thenReturn(List.of());
             List<CustomerDto> customers = customerService.getAllCustomers();
 
             assertEquals(1, customers.size());
@@ -134,7 +136,7 @@ class CustomerServiceBalanceAliasTest {
             when(userRepository.findByEmail(alias)).thenReturn(Optional.empty());
             when(userRepository.findByPhone(alias)).thenReturn(Optional.of(user));
             when(customerRepository.findByUserId(alias)).thenReturn(List.of(customer));
-            when(milkEntryRepository.findByUserIdAndCustomerId(canonicalUserId, customerId)).thenReturn(List.of(
+            when(milkEntryRepository.findByUserIdIn(anyCollection())).thenReturn(List.of(
                     MilkEntry.builder()
                             .userId(canonicalUserId)
                             .customerId(customerId)
@@ -142,9 +144,7 @@ class CustomerServiceBalanceAliasTest {
                             .totalAmount(new BigDecimal("2100"))
                             .build()
             ));
-            when(milkEntryRepository.findByUserIdAndCustomerId(alias, customerId)).thenReturn(List.of());
-            when(milkEntryRepository.findByUserIdAndCustomerId("alias@example.com", customerId)).thenReturn(List.of());
-            when(invoiceRepository.findAll()).thenReturn(List.of(
+            when(invoiceRepository.findByUserIdIn(anyCollection(), eq(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "createdAt")))).thenReturn(List.of(
                     Invoice.builder()
                             .id("invoice-1")
                             .userId(canonicalUserId)
@@ -158,6 +158,7 @@ class CustomerServiceBalanceAliasTest {
                             .status(PaymentStatus.PENDING)
                             .build()
             ));
+            when(paymentRepository.findByUserIdIn(anyCollection(), eq(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "createdAt")))).thenReturn(List.of());
 
             List<CustomerDto> customers = customerService.getAllCustomers();
 

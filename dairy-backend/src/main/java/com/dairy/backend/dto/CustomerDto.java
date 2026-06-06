@@ -33,4 +33,8 @@ public class CustomerDto {
     private SpecialCondition specialCondition;
     private Boolean active;
     private LocalDateTime stoppedAt;
+    private LocalDate recentEntryDate;
+    private BigDecimal recentEntryQuantity;
+    private BigDecimal recentEntryAmount;
+    private Boolean recentEntrySkipped;
 }

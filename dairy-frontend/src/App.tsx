@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Suspense, lazy, useEffect } from 'react'
+import { Suspense, lazy } from 'react'
 import AppLayout from './components/layout/AppLayout'
 import AuthGuard from './components/auth/AuthGuard'
 import { LoadingBlock } from './components/ui/loading'
@@ -42,54 +42,7 @@ const Login = lazy(loadLogin)
 const Profile = lazy(loadProfile)
 const Settings = lazy(loadSettings)
 
-const preloadAppRoutes = [
-  loadDashboard,
-  loadHome,
-  loadDairyHub,
-  loadCustomers,
-  loadMilkEntries,
-  loadBilling,
-  loadPayments,
-  loadInventory,
-  loadReports,
-  loadCustomerMonthView,
-  loadLabourWorkers,
-  loadLabourHub,
-  loadLabourWorkerForm,
-  loadLabourAttendance,
-  loadLabourRecoveries,
-  loadProfile,
-  loadSettings,
-]
-
 function AppRoutes() {
-  useEffect(() => {
-    const warmRoutes = () => {
-      preloadAppRoutes.forEach((loadRoute) => {
-        void loadRoute()
-      })
-    }
-
-    const canUseIdleCallback =
-      typeof window !== 'undefined' && 'requestIdleCallback' in window
-
-    if (canUseIdleCallback) {
-      const idleId = (window as typeof window & {
-        requestIdleCallback: (callback: () => void) => number
-        cancelIdleCallback: (id: number) => void
-      }).requestIdleCallback(warmRoutes)
-
-      return () => {
-        ;(window as typeof window & {
-          cancelIdleCallback: (id: number) => void
-        }).cancelIdleCallback(idleId)
-      }
-    }
-
-    const timeoutId = globalThis.setTimeout(warmRoutes, 600)
-    return () => globalThis.clearTimeout(timeoutId)
-  }, [])
-
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
