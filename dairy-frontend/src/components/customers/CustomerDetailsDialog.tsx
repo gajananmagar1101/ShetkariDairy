@@ -95,7 +95,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
   const [allEntries, setAllEntries] = useState<MilkEntry[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [hasLoadedDetails, setHasLoadedDetails] = useState(false)
   const [entriesLoading, setEntriesLoading] = useState(false)
   const [isPayingMonth, setIsPayingMonth] = useState(false)
   const [entryFilterType, setEntryFilterType] = useState<'all' | 'single' | 'range'>('all')
@@ -118,12 +118,17 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
   useEffect(() => {
     if (isOpen && customer) {
       setActiveTab('info')
-      fetchCustomerData(customer.id)
+      setHasLoadedDetails(false)
+      setEntries([])
+      setAllEntries([])
+      setInvoices([])
+      setPayments([])
+      void fetchCustomerData(customer.id)
     }
   }, [isOpen, customer])
 
   useEffect(() => {
-    if (isOpen && customer) {
+    if (isOpen && customer && (activeTab === 'entries' || activeTab === 'holidays')) {
       let start = entryStartDate;
       let end = entryEndDate;
       
@@ -137,7 +142,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
       
       fetchCustomerEntries(customer.id, start, end)
     }
-  }, [isOpen, customer, entryStartDate, entryEndDate, entryFilterType, entryMonth])
+  }, [isOpen, customer, entryStartDate, entryEndDate, entryFilterType, entryMonth, activeTab])
 
   const fetchCustomerEntries = async (customerId: string, start: string, end: string) => {
     setEntriesLoading(true)
@@ -173,7 +178,6 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
   }
 
   const fetchCustomerData = async (customerId: string) => {
-    setIsLoading(true)
     try {
       // Fetch invoices and payments (entries are handled by the other useEffect)
       const [invoicesRes, paymentsRes] = await Promise.all([
@@ -200,7 +204,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
     } catch (err) {
       console.error(err)
     } finally {
-      setIsLoading(false)
+      setHasLoadedDetails(true)
     }
   }
 
@@ -689,10 +693,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-slate-50/50 dark:bg-slate-900/20">
-          {isLoading ? (
-            <LoadingBlock label={t(language, 'loadingDetails')} minHeightClassName="min-h-[200px]" size="md" />
-          ) : (
-            <>
+          <>
               {activeTab === 'info' && (
                 <div className="grid grid-cols-1 md:grid-cols-[0.95fr_1.35fr] gap-3 md:items-start">
                   <div className="self-start bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
@@ -743,7 +744,9 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                         </div>
                       </div>
                       <div className="max-h-[26rem] overflow-y-auto">
-                        {selectedYearMonthlyBalances.length === 0 ? (
+                        {!hasLoadedDetails ? (
+                          <LoadingBlock label={t(language, 'loadingDetails')} minHeightClassName="min-h-[14rem]" size="sm" />
+                        ) : selectedYearMonthlyBalances.length === 0 ? (
                           <div className="px-4 py-5 text-sm text-center text-slate-500">{t(language, 'noBillsFound')}</div>
                         ) : (
                           selectedYearMonthlyBalances.map((group) => (
@@ -863,6 +866,10 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                   </div>
                   
                   <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden relative">
+                    {!hasLoadedDetails ? (
+                      <LoadingBlock label={t(language, 'loadingDetails')} minHeightClassName="min-h-[18rem]" size="md" />
+                    ) : (
+                      <>
                     {entriesLoading && (
                       <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-10 flex items-center justify-center">
                         <LoadingBlock label={t(language, 'loadingShort')} size="sm" />
@@ -925,7 +932,9 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                         )}
                       </tbody>
                     </table>
-                  </div>
+                    </div>
+                      </>
+                    )}
                 </div>
                 </div>
               )}
@@ -983,8 +992,11 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                   </div>
 
                   <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
+                    {!hasLoadedDetails ? (
+                      <LoadingBlock label={t(language, 'loadingDetails')} minHeightClassName="min-h-[18rem]" size="md" />
+                    ) : (
+                      <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
                           <tr>
                             <th className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">{t(language, 'dateWord')}</th>
@@ -1007,8 +1019,9 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                             ))
                           )}
                         </tbody>
-                      </table>
-                    </div>
+                    </table>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1083,7 +1096,6 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                 </div>
               )}
             </>
-          )}
         </div>
       </DialogContent>
 
