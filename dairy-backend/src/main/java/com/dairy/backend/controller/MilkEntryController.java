@@ -2,6 +2,7 @@ package com.dairy.backend.controller;
 
 import com.dairy.backend.dto.ApiResponse;
 import com.dairy.backend.dto.MilkEntryDto;
+import com.dairy.backend.dto.MilkYearSummaryDto;
 import com.dairy.backend.service.MilkEntryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -44,6 +45,13 @@ public class MilkEntryController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         return ResponseEntity.ok(new ApiResponse<>(true, "Milk entries fetched", milkEntryService.getEntriesByCustomerAndDateRange(customerId, startDate, endDate)));
+    }
+
+    @GetMapping("/customer-year-summary")
+    public ResponseEntity<ApiResponse<List<MilkYearSummaryDto>>> getCustomerYearSummary(
+            @RequestParam String customerId,
+            @RequestParam int year) {
+        return ResponseEntity.ok(new ApiResponse<>(true, "Milk year summary fetched", milkEntryService.getMonthlySummaryByCustomerAndYear(customerId, year)));
     }
 
     @PutMapping("/{id}")

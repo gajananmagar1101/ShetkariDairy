@@ -39,6 +39,14 @@ interface MilkEntry {
   isVirtualSkipped?: boolean
 }
 
+interface MilkYearSummary {
+  year: number
+  month: number
+  totalAmount: number
+  totalQuantity: number
+  deliveredDays: number
+}
+
 interface Invoice {
   id: string
   customerId?: string
@@ -92,9 +100,11 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'info' | 'entries' | 'holidays' | 'invoices' | 'payments'>('info')
   const [entries, setEntries] = useState<MilkEntry[]>([])
+  const [monthlyEntrySummaries, setMonthlyEntrySummaries] = useState<MilkYearSummary[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
   const [hasLoadedDetails, setHasLoadedDetails] = useState(false)
+  const [summaryLoading, setSummaryLoading] = useState(false)
   const [entriesLoading, setEntriesLoading] = useState(false)
   const [isPayingMonth, setIsPayingMonth] = useState(false)
   const [entryFilterType, setEntryFilterType] = useState<'all' | 'single' | 'range'>('all')
@@ -119,6 +129,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
       setActiveTab('info')
       setHasLoadedDetails(false)
       setEntries([])
+      setMonthlyEntrySummaries([])
       setInvoices([])
       setPayments([])
       void fetchCustomerData(customer.id)
@@ -160,6 +171,22 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
     }
   }
 
+  const fetchCustomerYearSummary = async (customerId: string, year: number) => {
+    setSummaryLoading(true)
+    try {
+      const summaryRes = await axios.get('/api/milk-entries/customer-year-summary', {
+        params: { customerId, year }
+      })
+      if (summaryRes.data.success) {
+        setMonthlyEntrySummaries(summaryRes.data.data)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSummaryLoading(false)
+    }
+  }
+
   const fetchCustomerData = async (customerId: string) => {
     try {
       // Fetch only the current customer's financial data.
@@ -186,6 +213,12 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
       setHasLoadedDetails(true)
     }
   }
+
+  useEffect(() => {
+    if (isOpen && customer) {
+      void fetchCustomerYearSummary(customer.id, selectedFinancialYear)
+    }
+  }, [isOpen, customer, selectedFinancialYear])
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr)
@@ -373,6 +406,26 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
   const monthlyFinancialGroups = useMemo(() => {
     const monthMap = new Map<string, MonthlyFinancialGroup>()
 
+    monthlyEntrySummaries.forEach((summary) => {
+      const monthIndex = summary.month - 1
+      const key = `${summary.year}-${String(summary.month).padStart(2, '0')}`
+      const bounds = getMonthBounds(summary.year, monthIndex)
+
+      monthMap.set(key, {
+        key,
+        label: formatMonthOnly(summary.year, monthIndex),
+        year: summary.year,
+        monthIndex,
+        billed: Number(summary.totalAmount || 0),
+        paid: 0,
+        balance: Number(summary.totalAmount || 0),
+        displayBalance: Number(summary.totalAmount || 0),
+        hasInvoice: false,
+        periodStartDate: bounds.startDate,
+        periodEndDate: bounds.endDate,
+      })
+    })
+
     uniqueInvoices.forEach((invoice) => {
       const date = new Date(invoice.periodStartDate)
       if (Number.isNaN(date.getTime())) return
@@ -455,7 +508,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
         displayBalance: group.balance > 0 ? group.balance : group.billed,
       }))
       .sort((a, b) => b.key.localeCompare(a.key))
-  }, [uniqueInvoices, payments, language])
+  }, [monthlyEntrySummaries, uniqueInvoices, payments, language])
 
   const financialYears = useMemo(() => {
     const years = new Set<number>()
@@ -793,7 +846,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                         </div>
                       </div>
                       <div className="max-h-[26rem] overflow-y-auto">
-                        {!hasLoadedDetails ? (
+                        {!hasLoadedDetails || summaryLoading ? (
                           <LoadingBlock label={t(language, 'loadingDetails')} minHeightClassName="min-h-[14rem]" size="sm" />
                         ) : selectedYearMonthlyBalances.length === 0 ? (
                           <div className="px-4 py-5 text-sm text-center text-slate-500">{t(language, 'noBillsFound')}</div>

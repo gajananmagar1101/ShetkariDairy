@@ -3,6 +3,7 @@ package com.dairy.backend.service;
 import com.dairy.backend.util.SecurityUtils;
 
 import com.dairy.backend.dto.MilkEntryDto;
+import com.dairy.backend.dto.MilkYearSummaryDto;
 import com.dairy.backend.entity.Customer;
 import com.dairy.backend.entity.DeliveryOverride;
 import com.dairy.backend.entity.MilkEntry;
@@ -176,6 +177,48 @@ public class MilkEntryService {
         return findEntriesByCustomerAndDateRange(SecurityUtils.getCurrentUserId(), customerId, startDate, endDate).stream()
                 .map(entry -> mapToDto(entry, customerName))
                 .collect(Collectors.toList());
+    }
+
+    public List<MilkYearSummaryDto> getMonthlySummaryByCustomerAndYear(String customerId, int year) {
+        YearMonth startMonth = YearMonth.of(year, 1);
+        YearMonth endMonth = YearMonth.of(year, 12);
+        LocalDate startDate = startMonth.atDay(1);
+        LocalDate endDate = endMonth.atEndOfMonth();
+
+        List<MilkEntry> entries = findEntriesByCustomerAndDateRange(SecurityUtils.getCurrentUserId(), customerId, startDate, endDate);
+
+        Map<Integer, MilkYearSummaryDto> monthMap = new LinkedHashMap<>();
+        for (int month = 1; month <= 12; month++) {
+            monthMap.put(month, MilkYearSummaryDto.builder()
+                    .year(year)
+                    .month(month)
+                    .totalAmount(BigDecimal.ZERO)
+                    .totalQuantity(BigDecimal.ZERO)
+                    .deliveredDays(0)
+                    .build());
+        }
+
+        Map<LocalDate, List<MilkEntry>> entriesByDate = entries.stream()
+                .filter(entry -> entry.getDate() != null)
+                .collect(Collectors.groupingBy(MilkEntry::getDate));
+
+        entriesByDate.forEach((date, dailyEntries) -> {
+            MilkYearSummaryDto summary = monthMap.get(date.getMonthValue());
+            if (summary == null) return;
+
+            BigDecimal totalAmount = dailyEntries.stream()
+                    .map(entry -> safe(entry.getTotalAmount()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal totalQuantity = dailyEntries.stream()
+                    .map(entry -> safe(entry.getMorningQuantity()).add(safe(entry.getEveningQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            summary.setTotalAmount(summary.getTotalAmount().add(totalAmount));
+            summary.setTotalQuantity(summary.getTotalQuantity().add(totalQuantity));
+            summary.setDeliveredDays(summary.getDeliveredDays() + (totalQuantity.compareTo(BigDecimal.ZERO) > 0 ? 1 : 0));
+        });
+
+        return new ArrayList<>(monthMap.values());
     }
 
     public List<MilkEntry> findEntriesByCustomerAndDateRange(String userId, String customerId, LocalDate startDate, LocalDate endDate) {
