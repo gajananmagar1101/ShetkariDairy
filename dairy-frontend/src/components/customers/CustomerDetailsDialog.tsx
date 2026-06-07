@@ -760,10 +760,10 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-5xl max-h-[86vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="px-4 sm:px-6 pt-5 sm:pt-6 pb-2 border-b border-slate-200 dark:border-slate-800 shrink-0">
+      <DialogContent className="sm:max-w-6xl lg:max-w-7xl max-h-[90vh] flex flex-col p-0 overflow-hidden border border-white/70 bg-white/92 shadow-[0_24px_80px_rgba(15,23,42,0.18)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#101114]/96">
+        <DialogHeader className="px-4 sm:px-6 pt-5 sm:pt-6 pb-3 border-b border-slate-200/80 dark:border-white/10 shrink-0 bg-gradient-to-b from-white/95 to-white/75 dark:from-[#14151a] dark:to-[#101114]">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xl dark:bg-white dark:text-black">
+            <div className="w-12 h-12 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-xl shadow-[0_8px_20px_rgba(124,58,237,0.12)] dark:bg-white dark:text-black">
               {customer.name.charAt(0)}
             </div>
             <div>
@@ -790,10 +790,10 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
+                className={`whitespace-nowrap rounded-full border px-3.5 py-1.75 text-sm font-semibold transition-all duration-200 ${
                   activeTab === tab.id 
-                    ? 'border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-black' 
-                    : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-800 dark:border-slate-700 dark:bg-[#111111] dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white'
+                    ? 'border-slate-900 bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)] dark:border-white dark:bg-white dark:text-black' 
+                    : 'border-slate-200 bg-white text-slate-500 hover:-translate-y-0.5 hover:border-slate-300 hover:text-slate-800 dark:border-slate-700 dark:bg-[#111111] dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white'
                 }`}
               >
                 {tab.label}
@@ -802,53 +802,58 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-slate-50/50 dark:bg-slate-900/20">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 bg-[linear-gradient(180deg,rgba(248,250,252,0.78),rgba(255,255,255,0.92))] dark:bg-[linear-gradient(180deg,rgba(17,18,20,0.92),rgba(17,18,20,0.98))]">
           {!hasLoadedDetails ? (
             renderBodySkeleton()
           ) : (
             <>
               {activeTab === 'info' && (
-                <div className="grid grid-cols-1 md:grid-cols-[0.95fr_1.35fr] gap-3 md:items-start">
-                  <div className="self-start bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
-                    <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-3">{t(language, 'customerDetails')}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-[0.9fr_1.2fr] gap-4 md:items-start">
+                  <div className="self-start rounded-[1.6rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#111214]/95">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h3 className="font-semibold text-slate-700 dark:text-slate-200">{t(language, 'customerDetails')}</h3>
+                      <span className="rounded-full border border-slate-200 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:border-white/10 dark:text-slate-400">
+                        Overview
+                      </span>
+                    </div>
                     <div className="grid grid-cols-1 gap-2 text-sm">
-                      <div className="flex items-start justify-between gap-4 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-900">
+                      <div className="flex items-start justify-between gap-4 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-900/80">
                         <span className="text-slate-500">{t(language, 'addressLabel')}</span>
                         <span className="max-w-[55%] text-right font-medium text-slate-800 dark:text-slate-200">{customer.address || '-'}</span>
                       </div>
-                      <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-900">
+                      <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-900/80">
                         <span className="text-slate-500">{t(language, 'milkType')}</span>
                         <span className="font-medium text-slate-800 dark:text-slate-200">{getMilkTypeLabel(customer.milkType)}</span>
                       </div>
-                      <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-900">
+                      <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-900/80">
                         <span className="text-slate-500">{t(language, 'dailyQuantityLabel')}</span>
                         <span className="font-medium text-slate-800 dark:text-slate-200">{customer.dailyQuantity} L</span>
                       </div>
-                      <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-900">
+                      <div className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-900/80">
                         <span className="text-slate-500">{t(language, 'ratePerLiterLabel')}</span>
                         <span className="font-medium text-slate-800 dark:text-slate-200">₹{customer.ratePerLiter}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="self-start bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700">
-                    <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="self-start rounded-[1.6rem] border border-slate-200/80 bg-white/90 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-[#111214]/95">
+                    <div className="mb-3 flex items-start justify-between gap-3">
                       <h3 className="font-semibold text-slate-700 dark:text-slate-200">{t(language, 'financialOverview')}</h3>
-                      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-2 text-right shadow-sm">
+                      <div className="rounded-2xl border border-slate-200/80 bg-slate-50 px-3 py-2 text-right shadow-[0_8px_18px_rgba(15,23,42,0.05)] dark:border-white/10 dark:bg-[#0d0e11]">
                         <div className="text-[11px] font-medium text-slate-500">{t(language, 'currentBalance')}</div>
                         <div className={`text-lg font-extrabold leading-tight ${customer.balance > 0 ? 'text-emerald-600' : customer.balance < 0 ? 'text-red-500' : 'text-slate-700 dark:text-slate-200'}`}>
                           ₹{customer.balance}
                         </div>
                       </div>
                     </div>
-                    <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                      <div className="px-4 py-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                    <div className="rounded-[1.4rem] border border-slate-200/80 dark:border-white/10 overflow-hidden bg-white/70 dark:bg-[#0f1014]">
+                      <div className="px-4 py-3 bg-slate-50/80 dark:bg-[#121318] border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-3">
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t(language, 'monthlyBalances')}</span>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t(language, 'yearLabel')}</span>
                           <select
                             value={selectedFinancialYear}
                             onChange={(e) => setSelectedFinancialYear(Number(e.target.value))}
-                            className="rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-[#111111] px-2.5 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-white/30"
+                            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-white/10 dark:bg-[#111111] dark:text-slate-200 dark:focus:ring-white/20"
                           >
                             {financialYears.map((year) => (
                               <option key={year} value={year}>{year}</option>
@@ -856,7 +861,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                           </select>
                         </div>
                       </div>
-                      <div className="max-h-[26rem] overflow-y-auto">
+                      <div className="max-h-[30rem] overflow-y-auto">
                         {!hasLoadedDetails || summaryLoading ? (
                           <LoadingBlock label={t(language, 'loadingDetails')} minHeightClassName="min-h-[14rem]" size="sm" />
                         ) : selectedYearMonthlyBalances.length === 0 ? (
@@ -874,7 +879,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                                   openMonthDetails(group)
                                 }
                               }}
-                              className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 last:border-b-0 cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                              className="px-4 py-3 border-b border-slate-100 dark:border-white/10 last:border-b-0 cursor-pointer transition-all hover:bg-slate-50/80 dark:hover:bg-white/[0.04] focus:outline-none focus:ring-2 focus:ring-primary-500/40"
                             >
                               <div className="flex items-center justify-between gap-3">
                                 <div className="min-w-0">
@@ -908,7 +913,7 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
                                         setMonthToPay(group)
                                         setMonthPayAmount(String(group.balance > 0 ? group.balance : group.billed || 0))
                                       }}
-                                      className="h-8 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100 dark:border-slate-700 dark:bg-[#111111] dark:text-white dark:hover:bg-slate-800"
+                                      className="h-8 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-100 dark:border-white/10 dark:bg-[#111111] dark:text-white dark:hover:bg-slate-800"
                                     >
                                       {group.paid > 0
                                         ? (language === 'mr' ? 'बाकी भरा' : 'Pay Due')

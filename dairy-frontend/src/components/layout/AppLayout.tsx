@@ -39,29 +39,33 @@ export default function AppLayout() {
   }, [theme])
 
   return (
-    <div className="flex h-screen bg-[#fafafc] dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-500 overflow-hidden relative">
+    <div className="relative flex h-screen overflow-hidden bg-[#f7f8fc] text-slate-800 transition-colors duration-500 dark:bg-[#050505] dark:text-slate-200">
       <GlobalLoadBar active={isNetworkBusy} />
       {/* Delicate Mesh Gradient Background */}
-      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-200/40 dark:bg-white/5 rounded-full blur-[100px] pointer-events-none mix-blend-multiply dark:mix-blend-screen transition-colors duration-500" />
-      <div className="fixed bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-fuchsia-200/30 dark:bg-white/4 rounded-full blur-[120px] pointer-events-none mix-blend-multiply dark:mix-blend-screen transition-colors duration-500" />
-      <div className="fixed top-[20%] right-[10%] w-[30%] h-[30%] bg-cyan-200/30 dark:bg-white/3 rounded-full blur-[90px] pointer-events-none mix-blend-multiply dark:mix-blend-screen transition-colors duration-500" />
+      <div className="pointer-events-none fixed left-[-8%] top-[-12%] h-[42%] w-[42%] rounded-full bg-primary-200/35 blur-[110px] transition-colors duration-500 dark:bg-white/5" />
+      <div className="pointer-events-none fixed bottom-[-12%] right-[-6%] h-[48%] w-[48%] rounded-full bg-fuchsia-200/25 blur-[140px] transition-colors duration-500 dark:bg-white/[0.035]" />
+      <div className="pointer-events-none fixed right-[14%] top-[18%] h-[28%] w-[28%] rounded-full bg-cyan-200/25 blur-[100px] transition-colors duration-500 dark:bg-white/[0.025]" />
 
-      {/* Desktop Sidebar */}
-      <div className="z-10 w-[280px] p-5 hidden md:block flex-shrink-0 h-full">
-        <Sidebar />
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 z-10 bg-sky-100/70 dark:bg-black p-0 sm:bg-transparent sm:p-5 sm:pl-0 h-full overflow-hidden">
-        <Header />
-        
-        <main className="relative mt-5 flex-1 overflow-hidden rounded-t-[2.4rem] rounded-b-none bg-white shadow-[0_10px_26px_rgba(15,23,42,0.08)] border-x-0 border-b-0 border-slate-100 transition-all duration-500 sm:mt-4 sm:rounded-[2rem] sm:border dark:border-slate-800 dark:bg-[#141416] dark:shadow-[0_20px_40px_rgba(0,0,0,0.45)]">
-          <div className="h-full overflow-y-auto overflow-x-hidden rounded-t-[inherit] rounded-b-none bg-white dark:bg-[#141416]">
-            <div className={`min-h-full px-6 pt-6 ${showMobileDock ? 'pb-28' : 'pb-8'} sm:p-8`}>
-              <Outlet />
-            </div>
+      <div className="relative z-10 mx-auto flex w-full max-w-[1720px] gap-0 px-3 py-3 sm:px-4 sm:py-4 lg:px-6 lg:py-6">
+        {/* Desktop Sidebar */}
+        <div className="hidden h-full flex-shrink-0 md:block md:w-[290px] lg:w-[304px]">
+          <div className="h-full p-2.5 lg:p-3">
+            <Sidebar />
           </div>
-        </main>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[2rem] bg-white/80 shadow-[0_20px_50px_rgba(15,23,42,0.08)] ring-1 ring-white/70 backdrop-blur-2xl transition-all duration-500 dark:bg-[#111214]/90 dark:shadow-[0_24px_60px_rgba(0,0,0,0.45)] dark:ring-white/10">
+          <Header />
+
+          <main className="relative flex-1 overflow-hidden rounded-b-[2rem] bg-transparent">
+            <div className="h-full overflow-y-auto overflow-x-hidden">
+              <div className={`min-h-full px-4 pb-24 pt-4 sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 ${showMobileDock ? 'lg:pb-28' : 'lg:pb-10'}`}>
+                <Outlet />
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
 
       {showMobileDock && <MobileDock />}

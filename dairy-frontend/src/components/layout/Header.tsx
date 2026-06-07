@@ -27,11 +27,11 @@ export default function Header() {
   }, [])
 
   return (
-    <header className="flex h-[4.75rem] items-center justify-between gap-2 px-4 min-w-0">
-      <div className="flex items-center gap-2 sm:gap-4 min-w-0 self-center">
+    <header className="sticky top-0 z-20 flex h-[5.25rem] items-center justify-between gap-3 border-b border-white/60 bg-white/65 px-4 shadow-[0_8px_30px_rgba(15,23,42,0.04)] backdrop-blur-2xl min-w-0 dark:border-white/10 dark:bg-[#111214]/75 dark:shadow-[0_12px_40px_rgba(0,0,0,0.22)] sm:px-6 lg:px-7">
+      <div className="flex items-center gap-3 sm:gap-5 min-w-0 self-center">
         <div className="min-w-0 pr-2">
           <h1
-            className="truncate text-[1.25rem] font-black leading-none text-slate-900 dark:text-white"
+            className="truncate text-[1.1rem] sm:text-[1.25rem] font-black leading-none text-slate-900 dark:text-white"
             style={{ fontFamily: "'Nunito', 'Plus Jakarta Sans', sans-serif" }}
           >
             Shetkari Vahi
@@ -42,25 +42,25 @@ export default function Header() {
           <input 
             type="text" 
             placeholder={language === 'mr' ? "काहीही शोधा..." : "Search anything..."} 
-            className="pl-11 pr-5 py-2.5 bg-white/40 dark:bg-zinc-900 border border-white/60 dark:border-zinc-700 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:focus:ring-white/30 w-72 shadow-[0_2px_10px_rgb(0,0,0,0.02)] backdrop-blur-md transition-all focus:bg-white/80 dark:focus:bg-black dark:text-white"
+            className="pl-11 pr-5 py-2.5 bg-white/55 dark:bg-black/35 border border-white/70 dark:border-white/10 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:focus:ring-white/20 w-[18rem] xl:w-[22rem] shadow-[0_2px_14px_rgba(15,23,42,0.04)] backdrop-blur-md transition-all focus:bg-white/90 dark:focus:bg-black/60 dark:text-white"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4 min-w-0 self-center">
-        <button onClick={toggleLanguage} className="relative flex h-10 w-10 items-center justify-center rounded-full p-2.5 text-sm font-bold text-slate-600 shadow-sm transition-all hover:scale-105 hover:bg-white/80 active:scale-95 dark:border dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 self-center">
+        <button onClick={toggleLanguage} className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/70 p-2.5 text-sm font-bold text-slate-600 shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:bg-white active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
           {language === 'en' ? 'म' : 'EN'}
         </button>
-        <button onClick={toggleTheme} className="relative flex items-center justify-center rounded-full p-2.5 text-slate-600 shadow-sm transition-all hover:scale-105 hover:bg-white/80 active:scale-95 dark:border dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
+        <button onClick={toggleTheme} className="relative flex items-center justify-center rounded-full border border-white/70 bg-white/70 p-2.5 text-slate-600 shadow-[0_4px_14px_rgba(15,23,42,0.05)] transition-all hover:-translate-y-0.5 hover:bg-white active:scale-95 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
           {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
         
         <div className="relative" ref={profileRef}>
           <div 
-            className="flex items-center gap-2 sm:gap-3 pl-3 sm:pl-5 border-l border-slate-200/50 dark:border-slate-700 cursor-pointer min-w-0"
+            className="flex items-center gap-2 sm:gap-3 pl-3 sm:pl-5 border-l border-slate-200/60 dark:border-white/10 cursor-pointer min-w-0"
             onClick={() => setIsProfileOpen(!isProfileOpen)}
           >
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr from-slate-200 to-slate-50 dark:from-slate-700 dark:to-slate-800 border border-white shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-tr from-slate-200 to-slate-50 dark:from-slate-700 dark:to-slate-800 border border-white shadow-[0_8px_18px_rgba(15,23,42,0.08)] flex items-center justify-center overflow-hidden flex-shrink-0">
               {user?.picture ? (
                 <img src={user.picture} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
