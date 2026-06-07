@@ -82,7 +82,7 @@ const Login: React.FC = () => {
   }
 
   return (
-    <div className="relative flex min-h-screen items-end justify-center overflow-x-hidden overflow-y-auto bg-slate-100 px-2 py-10 text-slate-900 dark:bg-slate-950 dark:text-white sm:items-center sm:px-4 sm:py-10">
+    <div className="relative flex min-h-screen items-start justify-center overflow-x-hidden overflow-y-auto bg-slate-100 px-2 py-4 text-slate-900 dark:bg-slate-950 dark:text-white sm:px-4 sm:py-6 lg:py-8">
       <div className="absolute right-3 top-3 z-20 sm:right-5 sm:top-5">
         <button
           type="button"
@@ -103,7 +103,7 @@ const Login: React.FC = () => {
         <div className="absolute right-[-10rem] top-[12%] h-96 w-96 rounded-full bg-lime-200/10 blur-3xl dark:bg-emerald-700/14" />
       </div>
 
-      <div className="relative z-10 grid w-full max-w-5xl items-end gap-2 sm:gap-8 lg:items-center lg:gap-10 lg:grid-cols-[1fr_460px]">
+      <div className="relative z-10 grid w-full max-w-6xl items-start gap-3 sm:gap-8 lg:gap-10 lg:grid-cols-[1.1fr_430px] lg:items-start">
         <section className="hidden lg:block">
           <div className="relative max-w-[36rem] overflow-hidden rounded-[1.8rem] shadow-[0_20px_56px_rgba(15,23,42,0.2)]">
             <div
@@ -163,7 +163,7 @@ const Login: React.FC = () => {
           </div>
         </section>
 
-        <section className="w-full">
+        <section className="w-full lg:pt-2">
           <div className="-mb-10 flex -translate-y-12 justify-center lg:hidden">
             <div className="relative flex h-40 w-40 items-center justify-center rounded-full bg-[radial-gradient(circle_at_50%_42%,rgba(255,242,206,0.18),rgba(255,226,150,0.08)_56%,rgba(255,255,255,0)_78%)]">
               <img
@@ -174,7 +174,7 @@ const Login: React.FC = () => {
             </div>
           </div>
           <div
-            className="relative mx-auto my-auto w-full max-w-[20.5rem] -translate-y-4 overflow-hidden rounded-[1.7rem] border border-white/8 bg-[linear-gradient(180deg,rgba(255,248,235,0.06)_0%,rgba(248,219,172,0.03)_48%,rgba(126,101,37,0.035)_100%)] p-3 shadow-[0_20px_56px_rgba(15,23,42,0.1)] backdrop-blur-[34px] dark:border-slate-700/10 dark:bg-[linear-gradient(180deg,rgba(51,65,85,0.1)_0%,rgba(30,41,59,0.1)_100%)] sm:max-w-md sm:rounded-[2rem] sm:p-8 sm:shadow-[0_30px_80px_rgba(15,23,42,0.1)] lg:border-transparent lg:bg-transparent lg:shadow-[0_20px_56px_rgba(15,23,42,0.2)] lg:backdrop-blur-0"
+            className="relative mx-auto my-auto w-full max-w-[20.5rem] overflow-hidden rounded-[1.7rem] border border-white/8 bg-[linear-gradient(180deg,rgba(255,248,235,0.06)_0%,rgba(248,219,172,0.03)_48%,rgba(126,101,37,0.035)_100%)] p-3 shadow-[0_20px_56px_rgba(15,23,42,0.1)] backdrop-blur-[34px] dark:border-slate-700/10 dark:bg-[linear-gradient(180deg,rgba(51,65,85,0.1)_0%,rgba(30,41,59,0.1)_100%)] sm:max-w-md sm:rounded-[2rem] sm:p-8 sm:shadow-[0_30px_80px_rgba(15,23,42,0.1)] lg:mx-0 lg:max-w-[430px] lg:justify-self-end lg:border-white/10 lg:bg-[linear-gradient(180deg,rgba(255,248,235,0.08)_0%,rgba(248,219,172,0.04)_48%,rgba(126,101,37,0.045)_100%)] lg:p-10 lg:shadow-[0_32px_90px_rgba(15,23,42,0.16)] lg:backdrop-blur-[36px]"
           >
             <div
               className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.015))] lg:hidden"
@@ -253,7 +253,7 @@ const Login: React.FC = () => {
               )}
             </div>
 
-            <div className="relative hidden lg:block lg:mt-6">
+            <div className="relative hidden lg:block lg:mt-2">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-[0.72rem] font-bold uppercase tracking-[0.2em] text-white/88">
                 <BadgeCheck className="h-3.5 w-3.5" />
                 {copy.verifiedText}
@@ -264,9 +264,19 @@ const Login: React.FC = () => {
               <p className="mt-1.5 text-[0.92rem] leading-5 text-white sm:mt-2 sm:text-sm sm:leading-6">
                 {copy.loginHelp}
               </p>
+              <div className="mt-5 grid grid-cols-1 gap-2">
+                {[copy.milkTracking, copy.customerBilling, copy.labourManagement].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(0,0,0,0.12)] backdrop-blur-md"
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="relative mt-6 hidden justify-center lg:flex">
+            <div className="relative mt-8 hidden justify-center lg:flex">
               {isGoogleSubmitting ? (
                 <div className="flex w-full max-w-[300px] items-center justify-center gap-3 rounded-full border border-white/45 bg-white/90 px-5 py-2.5 text-[0.92rem] font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 sm:max-w-[320px] sm:px-6 sm:py-3 sm:text-sm">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700 dark:border-slate-600 dark:border-t-slate-200" />
