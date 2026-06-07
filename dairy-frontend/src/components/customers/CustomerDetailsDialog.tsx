@@ -432,18 +432,28 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
 
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
       const existing = monthMap.get(key)
-      const billedAmount = invoice.totalAmount
+      const billedAmount = Number(invoice.totalAmount || 0)
+      const paidAmount = Number(invoice.paidAmount || 0)
       const bounds = getMonthBounds(date.getFullYear(), date.getMonth())
 
       if (existing) {
-        existing.billed = existing.hasInvoice ? existing.billed + billedAmount : billedAmount
-        existing.paid = existing.hasInvoice ? existing.paid : Math.max(0, existing.paid)
-        existing.hasInvoice = true
-        existing.invoiceId = invoice.id
-        existing.invoiceStatus = invoice.status
-        existing.periodStartDate = invoice.periodStartDate || bounds.startDate
-        existing.periodEndDate = invoice.periodEndDate || bounds.endDate
-        existing.paid = Number(invoice.paidAmount || 0)
+        const hasMeaningfulInvoice = billedAmount > 0 || paidAmount > 0 || invoice.status === 'PAID'
+        if (hasMeaningfulInvoice) {
+          existing.hasInvoice = true
+          existing.invoiceId = invoice.id
+          existing.invoiceStatus = invoice.status
+          existing.periodStartDate = invoice.periodStartDate || bounds.startDate
+          existing.periodEndDate = invoice.periodEndDate || bounds.endDate
+        }
+
+        // Preserve the summary amount when the invoice itself is zero or partial.
+        // This keeps month totals visible even when the generated invoice record is not authoritative yet.
+        const mergedBilled = billedAmount > 0 ? Math.max(existing.billed, billedAmount) : existing.billed
+        const mergedPaid = Math.max(existing.paid, paidAmount)
+
+        existing.billed = mergedBilled
+        existing.hasInvoice = existing.hasInvoice || hasMeaningfulInvoice
+        existing.paid = mergedPaid
         existing.balance = Math.max(0, existing.billed - existing.paid)
         existing.displayBalance = existing.balance > 0 ? existing.balance : existing.billed
         return
@@ -455,10 +465,10 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
         year: date.getFullYear(),
         monthIndex: date.getMonth(),
         billed: billedAmount,
-        paid: Number(invoice.paidAmount || 0),
-        balance: Math.max(0, billedAmount - Number(invoice.paidAmount || 0)),
-        displayBalance: Math.max(0, billedAmount - Number(invoice.paidAmount || 0)) || billedAmount,
-        hasInvoice: true,
+        paid: paidAmount,
+        balance: Math.max(0, billedAmount - paidAmount),
+        displayBalance: Math.max(0, billedAmount - paidAmount) || billedAmount,
+        hasInvoice: billedAmount > 0 || paidAmount > 0 || invoice.status === 'PAID',
         invoiceId: invoice.id,
         invoiceStatus: invoice.status,
         periodStartDate: invoice.periodStartDate || bounds.startDate,
