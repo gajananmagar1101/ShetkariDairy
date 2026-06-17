@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#1E1B4B"/>
+  <!-- Split milk drop — two halves with gap -->
+  <!-- Left half -->
+  <path d="M246 110 C246 110 155 240 155 325 C155 382 195 420 246 420 L246 110Z" fill="#A5B4FC" opacity="0.9"/>
+  <!-- Right half -->
+  <path d="M266 110 C266 110 357 240 357 325 C357 382 317 420 266 420 L266 110Z" fill="white" opacity="0.95"/>
+  <!-- Center line glow -->
+  <line x1="256" y1="130" x2="256" y2="410" stroke="#4F46E5" stroke-width="4" opacity="0.4"/>
+</svg>

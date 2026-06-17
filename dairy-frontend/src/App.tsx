@@ -1,7 +1,9 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Suspense, lazy } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Suspense, lazy, useEffect, useState, useCallback } from 'react'
 import AppLayout from './components/layout/AppLayout'
 import AuthGuard from './components/auth/AuthGuard'
+import SplashScreen from './components/layout/SplashScreen'
+import { useAuthStore } from './store/useAuthStore'
 import { LoadingBlock } from './components/ui/loading'
 
 const loadDashboard = () => import('./pages/Dashboard')
@@ -22,8 +24,10 @@ const loadLabourRecoveries = () => import('./pages/LabourRecoveries')
 const loadLogin = () => import('./pages/Login')
 const loadProfile = () => import('./pages/Profile')
 const loadSettings = () => import('./pages/Settings')
+const loadAnimationDemo = () => import('./pages/AnimationDemo')
 
 const Dashboard = lazy(loadDashboard)
+const AnimationDemo = lazy(loadAnimationDemo)
 const Home = lazy(loadHome)
 const DairyHub = lazy(loadDairyHub)
 const Customers = lazy(loadCustomers)
@@ -45,8 +49,9 @@ const Settings = lazy(loadSettings)
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      
+      <Route path="/login" element={<Navigate to="/" replace />} />
+      <Route path="/animation-demo" element={<AnimationDemo />} />
+
       <Route element={<AuthGuard />}>
         <Route path="/" element={<AppLayout />}>
           <Route index element={<Home />} />
@@ -73,7 +78,47 @@ function AppRoutes() {
   )
 }
 
-function App() {
+function AppShell() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const hasHydrated = useAuthStore((s) => s.hasHydrated)
+
+  const [showSplash, setShowSplash] = useState(() => {
+    return !sessionStorage.getItem('splash-seen')
+  })
+
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false)
+    sessionStorage.setItem('splash-seen', 'true')
+  }, [])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      sessionStorage.removeItem('dashboard-intro-seen')
+      sessionStorage.removeItem('splash-seen')
+    }
+  }, [isAuthenticated])
+
+  // Show splash on fresh load
+  if (showSplash) {
+    return <SplashScreen onComplete={handleSplashComplete} />
+  }
+
+  if (!hasHydrated) {
+    return <LoadingBlock label="Opening page..." minHeightClassName="min-h-screen" />
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Suspense fallback={<LoadingBlock label="Loading..." minHeightClassName="min-h-screen" />}>
+        <Login />
+      </Suspense>
+    )
+  }
+
+  if (window.location.pathname === '/login') {
+    window.history.replaceState(null, '', '/')
+  }
+
   return (
     <BrowserRouter>
       <Suspense fallback={<LoadingBlock label="Opening page..." minHeightClassName="min-h-screen" />}>
@@ -81,6 +126,10 @@ function App() {
       </Suspense>
     </BrowserRouter>
   )
+}
+
+function App() {
+  return <AppShell />
 }
 
 export default App

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#111827"/>
+  <!-- Super minimal — just bold "श" with a glowing accent dot -->
+  <text x="256" y="320" font-family="system-ui" font-size="220" font-weight="900" fill="white" text-anchor="middle">श</text>
+  <!-- Accent dot — like a notification/modern touch -->
+  <circle cx="370" cy="150" r="18" fill="#6366F1"/>
+</svg>

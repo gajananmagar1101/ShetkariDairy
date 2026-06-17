@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#059669"/>
+  <!-- Farmer's hand holding open vahi -->
+  <!-- Vahi pages -->
+  <path d="M160 160 L160 380 C160 385 165 390 175 390 L255 390 L255 150 L175 150 C165 150 160 155 160 160Z" fill="white" opacity="0.95"/>
+  <path d="M265 150 L265 390 L345 390 C355 390 360 385 360 380 L360 160 C360 155 355 150 345 150 L265 150Z" fill="white" opacity="0.85"/>
+  <!-- Center fold -->
+  <line x1="260" y1="150" x2="260" y2="390" stroke="#D1D5DB" stroke-width="4"/>
+  <!-- Lines -->
+  <line x1="180" y1="195" x2="240" y2="195" stroke="#A7F3D0" stroke-width="4" stroke-linecap="round"/>
+  <line x1="180" y1="225" x2="235" y2="225" stroke="#A7F3D0" stroke-width="4" stroke-linecap="round"/>
+  <line x1="180" y1="255" x2="238" y2="255" stroke="#A7F3D0" stroke-width="4" stroke-linecap="round"/>
+  <line x1="180" y1="285" x2="230" y2="285" stroke="#A7F3D0" stroke-width="4" stroke-linecap="round"/>
+  <!-- Wheat stalks on right page -->
+  <path d="M300 200 L300 340" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>
+  <path d="M290 220 Q300 210 310 220" stroke="#F59E0B" stroke-width="3" fill="none"/>
+  <path d="M290 245 Q300 235 310 245" stroke="#F59E0B" stroke-width="3" fill="none"/>
+  <path d="M290 270 Q300 260 310 270" stroke="#F59E0B" stroke-width="3" fill="none"/>
+  <path d="M290 295 Q300 285 310 295" stroke="#F59E0B" stroke-width="3" fill="none"/>
+  <!-- Milk drop top corner badge -->
+  <circle cx="355" cy="130" r="30" fill="white"/>
+  <path d="M355 112 C355 112 342 130 342 138 C342 146 348 152 355 152 C362 152 368 146 368 138 C368 130 355 112 355 112Z" fill="#059669"/>
+</svg>

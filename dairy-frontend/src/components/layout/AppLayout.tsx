@@ -1,6 +1,8 @@
-import { Outlet, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import axios from 'axios'
+import { Outlet, useLocation } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { Logo } from '../ui/Logo'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import MobileDock from './MobileDock'
@@ -10,6 +12,15 @@ import { Toaster } from 'react-hot-toast'
 import { GlobalLoadBar } from '../ui/loading'
 import { useNetworkActivity } from '../../lib/networkActivity'
 
+// Korsa sequence:
+// 1. icon: Large box, center
+// 2. moveUp: Shrinks, top-center
+// 3. expandDown: Full height strip, center (sidebar visible)
+// 4. moveLeft: Strip slides to LEFT edge
+// 5. expandRight: Page grows from strip to the right
+// 6. reveal: Content fades in
+type Stage = 'blank' | 'icon' | 'moveUp' | 'expandDown' | 'moveLeft' | 'expandRight' | 'reveal' | 'done'
+
 export default function AppLayout() {
   const { user, token, setAuth } = useAuthStore()
   const { theme } = useSettingsStore()
@@ -18,17 +29,36 @@ export default function AppLayout() {
   const pathname = location.pathname
   const showMobileDock = pathname === '/' || pathname === '/dairy' || pathname === '/labour'
 
+  const shouldAnimate = useRef(!sessionStorage.getItem('dashboard-intro-seen'))
+  const [stage, setStage] = useState<Stage>(shouldAnimate.current ? 'blank' : 'done')
+
+  useEffect(() => {
+    if (!shouldAnimate.current) return
+    const timers = [
+      setTimeout(() => setStage('icon'), 400),
+      setTimeout(() => setStage('moveUp'), 2400),
+      setTimeout(() => setStage('expandDown'), 3800),
+      setTimeout(() => setStage('moveLeft'), 5400),
+      setTimeout(() => setStage('expandRight'), 6800),
+      setTimeout(() => setStage('reveal'), 8400),
+      setTimeout(() => {
+        setStage('done')
+        sessionStorage.setItem('dashboard-intro-seen', 'true')
+      }, 9600),
+    ]
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!token || !user) return;
+      if (!token || !user) return
       try {
         const res = await axios.get('/api/users/profile')
         if (res.data.success) {
-          const fetchedUser = res.data.data;
-          setAuth({ ...user, ...fetchedUser }, token)
+          setAuth({ ...user, ...res.data.data }, token)
         }
       } catch (error) {
-        console.error("Failed to fetch latest profile", error)
+        console.error('Failed to fetch latest profile', error)
       }
     }
     fetchProfile()
@@ -38,49 +68,171 @@ export default function AppLayout() {
     document.documentElement.classList.toggle('dark', theme === 'dark')
   }, [theme])
 
+  const stageOrder: Stage[] = ['blank', 'icon', 'moveUp', 'expandDown', 'moveLeft', 'expandRight', 'reveal', 'done']
+  const stageIdx = stageOrder.indexOf(stage)
+  const past = (s: Stage) => stageIdx >= stageOrder.indexOf(s)
+
+  const dims = useMemo(() => {
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1440
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 900
+    const pad = vw >= 1024 ? 20 : vw >= 640 ? 16 : 12
+    const cardW = Math.min(vw - pad * 2, 1720)
+    const cardH = vh - pad * 2
+    const cardL = (vw - cardW) / 2
+    const cardT = pad
+    return { vw, vh, pad, cardW, cardH, cardL, cardT }
+  }, [])
+
+  const { vw, vh, cardW, cardH, cardL, cardT } = dims
+  const iconBoxSize = 110
+  const stripW = 68
+
+  const getRect = () => {
+    switch (stage) {
+      case 'blank':
+      case 'icon':
+        return { w: iconBoxSize, h: iconBoxSize, l: vw / 2 - iconBoxSize / 2, t: vh / 2 - iconBoxSize / 2 }
+      case 'moveUp':
+        return { w: stripW, h: stripW, l: vw / 2 - stripW / 2, t: cardT }
+      case 'expandDown':
+        // Full height, still CENTER
+        return { w: stripW, h: cardH, l: vw / 2 - stripW / 2, t: cardT }
+      case 'moveLeft':
+        // Same strip, moves to LEFT edge
+        return { w: stripW, h: cardH, l: cardL, t: cardT }
+      case 'expandRight':
+      case 'reveal':
+      case 'done':
+        // Full page card — expands from left strip
+        return { w: cardW, h: cardH, l: cardL, t: cardT }
+    }
+  }
+
+  const r = getRect()
+
   return (
-    <div className="relative flex h-screen overflow-hidden bg-[#f7f8fc] text-slate-800 transition-colors duration-500 dark:bg-[#050505] dark:text-slate-200">
+    <div className="relative flex h-screen overflow-hidden bg-[#F5F5F5] text-[#1A1A1A] transition-colors duration-500 dark:bg-[#0A0A0A] dark:text-[#E5E5E5]">
       <GlobalLoadBar active={isNetworkBusy} />
-      {/* Delicate Mesh Gradient Background */}
-      <div className="pointer-events-none fixed left-[-8%] top-[-12%] h-[42%] w-[42%] rounded-full bg-primary-200/35 blur-[110px] transition-colors duration-500 dark:bg-white/5" />
-      <div className="pointer-events-none fixed bottom-[-12%] right-[-6%] h-[48%] w-[48%] rounded-full bg-fuchsia-200/25 blur-[140px] transition-colors duration-500 dark:bg-white/[0.035]" />
-      <div className="pointer-events-none fixed right-[14%] top-[18%] h-[28%] w-[28%] rounded-full bg-cyan-200/25 blur-[100px] transition-colors duration-500 dark:bg-white/[0.025]" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1720px] gap-0 px-3 py-3 sm:px-4 sm:py-4 lg:px-6 lg:py-6">
-        {/* Desktop Sidebar */}
-        <div className="hidden h-full flex-shrink-0 md:block md:w-[290px] lg:w-[304px]">
-          <div className="h-full p-2.5 lg:p-3">
-            <Sidebar />
+      {/* ═══ ONE ELEMENT — transforms through all stages ═══ */}
+      <motion.div
+        className="absolute z-50 overflow-hidden bg-white dark:bg-[#111111]"
+        initial={{
+          width: iconBoxSize,
+          height: iconBoxSize,
+          left: vw / 2 - iconBoxSize / 2,
+          top: vh / 2 - iconBoxSize / 2,
+          borderRadius: 26,
+          boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
+          opacity: 0,
+          scale: 0.5,
+        }}
+        animate={{
+          width: r.w,
+          height: r.h,
+          left: r.l,
+          top: r.t,
+          borderRadius: past('expandRight') ? 24 : 26,
+          boxShadow: past('expandRight')
+            ? '0 4px 24px rgba(0,0,0,0.04)'
+            : '0 20px 60px rgba(0,0,0,0.08)',
+          opacity: stage === 'blank' ? 0 : 1,
+          scale: stage === 'blank' ? 0.5 : 1,
+        }}
+        transition={{
+          duration: stage === 'expandRight' ? 1.2 : stage === 'moveLeft' ? 1.1 : stage === 'expandDown' ? 1.1 : 1.0,
+          ease: [0.25, 0.1, 0.25, 1],
+          opacity: { duration: 0.8 },
+          scale: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
+        }}
+      >
+        {/* ── Brand icon: visible during icon & moveUp ── */}
+        <motion.div
+          className="absolute inset-0 z-20 flex items-center justify-center"
+          animate={{ opacity: (stage === 'icon' || stage === 'moveUp') ? 1 : 0 }}
+          transition={{ duration: 0.25 }}
+          style={{ pointerEvents: 'none' }}
+        >
+          <motion.div
+            className="flex items-center justify-center overflow-hidden rounded-[16px]"
+            initial={{ scale: 0.3, opacity: 0, filter: 'blur(8px)', width: 56, height: 56 }}
+            animate={
+              (stage === 'icon' || stage === 'moveUp')
+                ? { scale: 1, opacity: 1, filter: 'blur(0px)', width: stage === 'icon' ? 56 : 40, height: stage === 'icon' ? 56 : 40 }
+                : { scale: 0.8, opacity: 0, filter: 'blur(4px)', width: 40, height: 40 }
+            }
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Logo size={stage === 'icon' ? 56 : 40} />
+          </motion.div>
+        </motion.div>
+
+        {/* ── Real sidebar + content: from expandDown onward ──
+            Sidebar IS the strip. Never switches. ── */}
+        <motion.div
+          className="absolute inset-0 flex"
+          animate={{ opacity: past('expandDown') ? 1 : 0 }}
+          transition={{ duration: 0.3, delay: past('expandDown') ? 0.15 : 0 }}
+          style={{ pointerEvents: past('expandDown') ? 'auto' : 'none' }}
+        >
+          {/* Real Sidebar — this IS the strip */}
+          <div className="hidden h-full flex-shrink-0 md:block">
+            <Sidebar animationStage={!past('done') ? 'sidebar-content' : null} />
           </div>
-        </div>
 
-        {/* Main Content Area */}
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[2rem] bg-white/80 shadow-[0_20px_50px_rgba(15,23,42,0.08)] ring-1 ring-white/70 backdrop-blur-2xl transition-all duration-500 dark:bg-[#111214]/90 dark:shadow-[0_24px_60px_rgba(0,0,0,0.45)] dark:ring-white/10">
-          <Header />
+          {/* Main content area */}
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            {/* Header — enters from top FIRST */}
+            <motion.div
+              initial={{ opacity: 0, y: -30 }}
+              animate={past('reveal') ? { opacity: 1, y: 0 } : { opacity: 0, y: -30 }}
+              transition={{ duration: 0.9, delay: past('reveal') ? 0.1 : 0, ease: [0.25, 0.1, 0.25, 1] }}
+            >
+              <Header />
+            </motion.div>
 
-          <main className="relative flex-1 overflow-hidden rounded-b-[2rem] bg-transparent">
-            <div className="h-full overflow-y-auto overflow-x-hidden">
-              <div className={`min-h-full px-4 pb-24 pt-4 sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 ${showMobileDock ? 'lg:pb-28' : 'lg:pb-10'}`}>
-                <Outlet />
+            {/* Page content — enters slowly from top, staggered reveal */}
+            <main className="relative flex-1 overflow-hidden bg-transparent">
+              <div className="h-full overflow-y-auto overflow-x-hidden">
+                <motion.div
+                  className={`min-h-full px-4 pb-24 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-7 ${showMobileDock ? 'lg:pb-28' : 'lg:pb-10'}`}
+                  initial={{ opacity: 0, y: -40 }}
+                  animate={past('reveal') ? { opacity: 1, y: 0 } : { opacity: 0, y: -40 }}
+                  transition={{ duration: 1.8, delay: past('reveal') ? 0.6 : 0, ease: [0.16, 1, 0.3, 1] }}
+                  style={{
+                    maskImage: past('reveal')
+                      ? 'linear-gradient(to bottom, black 0%, black 100%)'
+                      : 'linear-gradient(to bottom, black 0%, transparent 40%)',
+                    WebkitMaskImage: past('reveal')
+                      ? 'linear-gradient(to bottom, black 0%, black 100%)'
+                      : 'linear-gradient(to bottom, black 0%, transparent 40%)',
+                  }}
+                >
+                  <Outlet />
+                </motion.div>
               </div>
-            </div>
-          </main>
-        </div>
-      </div>
+            </main>
+          </div>
+        </motion.div>
 
-      {showMobileDock && <MobileDock />}
+      </motion.div>
 
-      <Toaster position="top-center" toastOptions={{
-        style: {
-          borderRadius: '16px',
-          background: theme === 'dark' ? '#1a1a1d' : '#fff',
-          color: theme === 'dark' ? '#e5e7eb' : '#334155',
-          boxShadow: '0 8px 30px rgba(0,0,0,0.1)',
-          border: theme === 'dark' ? '1px solid rgba(51,65,85,0.8)' : '1px solid rgba(226, 232, 240, 0.8)',
-          padding: '12px 16px',
-          fontWeight: 500,
-        },
-      }} />
+      {showMobileDock && past('reveal') && <MobileDock />}
+
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            borderRadius: '16px',
+            background: theme === 'dark' ? '#1A1A1A' : '#FFFFFF',
+            color: theme === 'dark' ? '#E5E5E5' : '#1A1A1A',
+            boxShadow: '0 8px 40px rgba(0, 0, 0, 0.06)',
+            padding: '14px 18px',
+            fontWeight: 500,
+            fontSize: '14px',
+          },
+        }}
+      />
     </div>
   )
 }

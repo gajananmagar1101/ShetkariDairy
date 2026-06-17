@@ -17,7 +17,7 @@ interface LoadingSpinnerProps {
 export function LoadingSpinner({ size = 'md', className }: LoadingSpinnerProps) {
   return (
     <Loader2
-      className={cn('animate-spin text-primary-500', spinnerSizes[size], className)}
+      className={cn('animate-spin text-[#4F46E5]', spinnerSizes[size], className)}
     />
   )
 }
@@ -38,15 +38,15 @@ export function LoadingBlock({
   return (
     <div
       className={cn(
-        'flex w-full flex-col items-center justify-center gap-3 text-slate-500 dark:text-slate-300',
+        'flex w-full flex-col items-center justify-center gap-3 text-[#6B7280]',
         minHeightClassName,
         className,
       )}
     >
-      <div className="rounded-full border border-white/70 bg-white/80 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-900/70">
+      <div className="rounded-[20px] bg-white p-4 shadow-[0_4px_24px_rgba(0,0,0,0.04)] dark:bg-[#1A1A1A] dark:shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
         <LoadingSpinner size={size} />
       </div>
-      <p className="text-sm font-semibold tracking-wide">{label}</p>
+      <p className="text-[13px] font-medium">{label}</p>
     </div>
   )
 }
@@ -70,10 +70,10 @@ export function LoadingInline({
 
 export function GlobalLoadBar({ active }: { active: boolean }) {
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-1 overflow-hidden">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-[2px] overflow-hidden">
       <div
         className={cn(
-          'h-full origin-left rounded-r-full bg-gradient-to-r from-sky-400 via-primary-500 to-emerald-400 shadow-[0_0_24px_rgba(59,130,246,0.45)] transition-all duration-300 ease-out',
+          'h-full origin-left rounded-r-full bg-[#4F46E5] shadow-[0_0_12px_rgba(79,70,229,0.4)] transition-all duration-500 ease-out',
           active ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0',
         )}
       />

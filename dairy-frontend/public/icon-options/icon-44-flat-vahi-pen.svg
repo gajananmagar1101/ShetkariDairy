@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#059669"/>
+  <!-- Flat green theme — farmer feel -->
+  <!-- Vahi book -->
+  <rect x="125" y="120" width="210" height="290" rx="8" fill="white"/>
+  <!-- Red/maroon binding like real vahi -->
+  <rect x="125" y="120" width="25" height="290" rx="4" fill="#991B1B"/>
+  <!-- Lines -->
+  <line x1="170" y1="175" x2="315" y2="175" stroke="#D1FAE5" stroke-width="3"/>
+  <line x1="170" y1="215" x2="315" y2="215" stroke="#D1FAE5" stroke-width="3"/>
+  <line x1="170" y1="255" x2="315" y2="255" stroke="#D1FAE5" stroke-width="3"/>
+  <line x1="170" y1="295" x2="315" y2="295" stroke="#D1FAE5" stroke-width="3"/>
+  <line x1="170" y1="335" x2="315" y2="335" stroke="#D1FAE5" stroke-width="3"/>
+  <!-- Numbers written -->
+  <text x="180" y="210" font-family="system-ui" font-size="15" fill="#065F46">दूध ५ लि</text>
+  <text x="270" y="210" font-family="system-ui" font-size="15" fill="#065F46" font-weight="600">₹250</text>
+  <text x="180" y="250" font-family="system-ui" font-size="15" fill="#065F46">दूध ३ लि</text>
+  <text x="270" y="250" font-family="system-ui" font-size="15" fill="#065F46" font-weight="600">₹150</text>
+  <!-- Total line -->
+  <line x1="170" y1="300" x2="315" y2="300" stroke="#065F46" stroke-width="2"/>
+  <text x="250" y="330" font-family="system-ui" font-size="16" fill="#065F46" font-weight="700">₹400</text>
+  <!-- Pen laying on top corner -->
+  <line x1="290" y1="100" x2="380" y2="380" stroke="#FBBF24" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="380" cy="380" r="6" fill="#92400E"/>
+</svg>

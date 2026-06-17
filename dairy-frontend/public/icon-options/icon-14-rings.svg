@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0F172A"/>
+  <!-- Concentric rings representing milk ripple -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="white" stroke-width="3" opacity="0.15"/>
+  <circle cx="256" cy="256" r="120" fill="none" stroke="white" stroke-width="4" opacity="0.25"/>
+  <circle cx="256" cy="256" r="80" fill="none" stroke="white" stroke-width="5" opacity="0.4"/>
+  <circle cx="256" cy="256" r="40" fill="none" stroke="white" stroke-width="6" opacity="0.6"/>
+  <!-- Center drop -->
+  <path d="M256 220 C256 220 236 248 236 262 C236 274 245 282 256 282 C267 282 276 274 276 262 C276 248 256 220 256 220Z" fill="#4F46E5"/>
+  <!-- Glow -->
+  <circle cx="256" cy="256" r="18" fill="#4F46E5" opacity="0.3"/>
+</svg>

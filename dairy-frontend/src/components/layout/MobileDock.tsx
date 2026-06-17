@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react'
 import { BriefcaseBusiness, Droplets, Home } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useSettingsStore } from '../../store/settingsStore'
 import { t } from '../../utils/translations'
 
@@ -9,30 +10,31 @@ function DockTab({
   icon: Icon,
   label,
   onClick,
-  darkMode,
 }: {
   active: boolean
   icon: ComponentType<{ className?: string }>
   label: string
   onClick: () => void
-  darkMode: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex h-[3.55rem] min-w-0 flex-1 flex-col items-center justify-center gap-0 rounded-full px-1.5 text-[9px] font-semibold transition-all duration-300 ${
+      className={`relative flex h-[3.2rem] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl px-1.5 text-[9px] font-semibold transition-all duration-300 ${
         active
-          ? darkMode
-            ? 'bg-white text-black shadow-[0_12px_24px_-18px_rgba(0,0,0,0.9)]'
-            : 'bg-emerald-200/95 text-emerald-900 shadow-[0_10px_24px_-16px_rgba(16,185,129,0.42)]'
-          : darkMode
-            ? 'bg-transparent text-slate-200'
-            : 'bg-transparent text-slate-700'
+          ? 'text-[#4F46E5] dark:text-white'
+          : 'text-[#9CA3AF] dark:text-slate-400'
       }`}
     >
-      <Icon className={`h-4.5 w-4.5 transition-all duration-300 ${active ? 'scale-105' : ''}`} />
-      <span className="leading-none">{label}</span>
+      {active && (
+        <motion.div
+          layoutId="dock-active"
+          className="absolute inset-0 rounded-2xl bg-[#4F46E5]/8 dark:bg-white/[0.08]"
+          transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+        />
+      )}
+      <Icon className={`relative z-10 h-[18px] w-[18px] transition-all duration-300 ${active ? 'scale-105' : ''}`} />
+      <span className="relative z-10 leading-none">{label}</span>
     </button>
   )
 }
@@ -48,49 +50,40 @@ export default function MobileDock() {
   const isDairyActive = pathname.startsWith('/dairy') || (!isHomeActive && !isLabourActive)
 
   return (
-    <div className="md:hidden fixed inset-x-0 bottom-[calc(1.1rem+env(safe-area-inset-bottom))] z-40 px-5 pt-2 pointer-events-none">
-      <div
-        className={`pointer-events-auto mx-auto max-w-[18.8rem] rounded-full px-2 py-1 shadow-[0_10px_22px_rgba(15,23,42,0.12),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-xl ${
+    <div className="md:hidden fixed inset-x-0 bottom-[calc(1.75rem+env(safe-area-inset-bottom))] z-[70] px-6 pointer-events-none">
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.3 }}
+        className={`pointer-events-auto mx-auto max-w-[17rem] rounded-2xl px-2 py-1.5 ring-1 ring-black/5 ${
           theme === 'dark'
-            ? 'border border-white/10 bg-[#111111]/94 shadow-[0_18px_34px_rgba(0,0,0,0.42)]'
-            : 'border border-emerald-200/90 bg-emerald-50/92'
+            ? 'bg-[#1A1A1A] shadow-[0_20px_60px_rgba(0,0,0,0.5)]'
+            : 'bg-white shadow-[0_20px_60px_rgba(0,0,0,0.08)]'
         }`}
       >
-        <div className="flex items-center justify-between gap-1.5">
+        <div className="flex items-center justify-between gap-1">
           <DockTab
             active={isDairyActive}
             icon={Droplets}
             label={t(language, 'sidebarDairySection')}
             onClick={() => navigate('/dairy')}
-            darkMode={theme === 'dark'}
           />
 
-          <button
-            type="button"
+          <DockTab
+            active={isHomeActive}
+            icon={Home}
+            label={language === 'mr' ? 'होम' : 'Home'}
             onClick={() => navigate('/')}
-            className={`relative flex h-[3.55rem] min-w-0 flex-1 flex-col items-center justify-center gap-0 rounded-full px-1.5 text-[9px] font-semibold transition-all duration-300 ${
-              isHomeActive
-                ? theme === 'dark'
-                  ? 'bg-white text-black shadow-[0_12px_24px_-18px_rgba(0,0,0,0.9)]'
-                  : 'bg-emerald-200/95 text-emerald-900 shadow-[0_10px_24px_-16px_rgba(16,185,129,0.42)]'
-                : theme === 'dark'
-                  ? 'bg-transparent text-slate-200'
-                  : 'bg-transparent text-slate-700'
-            }`}
-          >
-            <Home className={`h-4.5 w-4.5 transition-all duration-300 ${isHomeActive ? 'scale-105' : ''}`} />
-            <span className="leading-none">{language === 'mr' ? 'होम' : 'Home'}</span>
-          </button>
+          />
 
           <DockTab
             active={isLabourActive}
             icon={BriefcaseBusiness}
             label={t(language, 'sidebarLabourSection')}
             onClick={() => navigate('/labour')}
-            darkMode={theme === 'dark'}
           />
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

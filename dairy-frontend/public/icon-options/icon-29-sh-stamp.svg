@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g29" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#FFFBEB"/>
+  <!-- Circular stamp/seal design -->
+  <circle cx="256" cy="256" r="170" fill="none" stroke="#92400E" stroke-width="6" opacity="0.8"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#92400E" stroke-width="3" opacity="0.5"/>
+  <!-- "शेतकरी वही" around the circle would be complex, so using श in center -->
+  <text x="256" y="290" font-family="system-ui" font-size="150" font-weight="800" fill="#92400E" text-anchor="middle" opacity="0.85">श</text>
+  <!-- Small decorative dots around -->
+  <circle cx="256" cy="95" r="8" fill="#F59E0B"/>
+  <circle cx="256" cy="417" r="8" fill="#F59E0B"/>
+  <circle cx="95" cy="256" r="8" fill="#F59E0B"/>
+  <circle cx="417" cy="256" r="8" fill="#F59E0B"/>
+  <!-- Wheat curves on sides -->
+  <path d="M120 180 Q140 200 130 220" stroke="#D97706" stroke-width="3" fill="none" opacity="0.6"/>
+  <path d="M392 180 Q372 200 382 220" stroke="#D97706" stroke-width="3" fill="none" opacity="0.6"/>
+  <!-- Bottom text area -->
+  <text x="256" y="385" font-family="system-ui" font-size="22" font-weight="600" fill="#92400E" text-anchor="middle" opacity="0.6">VAHI</text>
+</svg>

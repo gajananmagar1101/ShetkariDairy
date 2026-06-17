@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="glow19" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#818CF8" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0F0A2E" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="neon19">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#0A0A1A"/>
+  <circle cx="256" cy="280" r="180" fill="url(#glow19)"/>
+  <!-- Neon outlined drop -->
+  <path d="M256 115 C256 115 168 248 168 325 C168 378 208 415 256 415 C304 415 344 378 344 325 C344 248 256 115 256 115Z" fill="none" stroke="#818CF8" stroke-width="8" filter="url(#neon19)"/>
+  <!-- Inner smaller drop -->
+  <path d="M256 195 C256 195 212 275 212 320 C212 345 232 365 256 365 C280 365 300 345 300 320 C300 275 256 195 256 195Z" fill="#818CF8" opacity="0.15"/>
+  <!-- Highlight dot -->
+  <circle cx="225" cy="295" r="12" fill="white" opacity="0.25"/>
+</svg>

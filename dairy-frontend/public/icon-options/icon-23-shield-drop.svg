@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g23" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="100%" stop-color="#1E1B4B"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g23)"/>
+  <!-- Modern shield shape -->
+  <path d="M256 80 L380 140 C385 145 390 160 388 180 L370 340 C365 370 320 410 256 435 C192 410 147 370 142 340 L124 180 C122 160 127 145 132 140 L256 80Z" fill="white" opacity="0.12" stroke="white" stroke-width="3" stroke-opacity="0.4"/>
+  <!-- Inner shield -->
+  <path d="M256 120 L350 165 C353 168 356 178 355 192 L342 315 C338 338 305 368 256 387 C207 368 174 338 170 315 L157 192 C156 178 159 168 162 165 L256 120Z" fill="white" opacity="0.08"/>
+  <!-- Drop inside shield -->
+  <path d="M256 175 C256 175 205 265 205 315 C205 345 228 368 256 368 C284 368 307 345 307 315 C307 265 256 175 256 175Z" fill="white" opacity="0.92"/>
+  <ellipse cx="233" cy="295" rx="14" ry="22" fill="white" opacity="0.3"/>
+</svg>

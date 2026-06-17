@@ -1,7 +1,13 @@
 {
-  "short_name": "Shetkari Vahi",
-  "name": "Shetkari Vahi",
+  "short_name": "शेतकरी वही",
+  "name": "शेतकरी वही - Shetkari Vahi",
   "icons": [
+    {
+      "src": "logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
     {
       "src": "app-icon-192.png",
       "type": "image/png",
@@ -17,6 +23,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#ffffff",
+  "theme_color": "#5F259F",
   "background_color": "#ffffff"
 }

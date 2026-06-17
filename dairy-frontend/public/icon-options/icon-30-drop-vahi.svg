@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#4F46E5"/>
+  <!-- Milk drop shape that contains ledger lines inside — drop IS the vahi -->
+  <path d="M256 85 C256 85 140 235 140 330 C140 390 192 435 256 435 C320 435 372 390 372 330 C372 235 256 85 256 85Z" fill="white" opacity="0.95"/>
+  <!-- Ledger lines INSIDE the drop -->
+  <line x1="190" y1="240" x2="322" y2="240" stroke="#C7D2FE" stroke-width="4" stroke-linecap="round"/>
+  <line x1="190" y1="275" x2="322" y2="275" stroke="#C7D2FE" stroke-width="4" stroke-linecap="round"/>
+  <line x1="195" y1="310" x2="317" y2="310" stroke="#C7D2FE" stroke-width="4" stroke-linecap="round"/>
+  <line x1="205" y1="345" x2="307" y2="345" stroke="#C7D2FE" stroke-width="4" stroke-linecap="round"/>
+  <line x1="215" y1="380" x2="297" y2="380" stroke="#C7D2FE" stroke-width="4" stroke-linecap="round"/>
+  <!-- Vertical divider (ledger column) -->
+  <line x1="270" y1="220" x2="270" y2="395" stroke="#A5B4FC" stroke-width="2" opacity="0.6"/>
+  <!-- Small pen nib at top of drop -->
+  <path d="M256 85 L250 120 L256 130 L262 120 Z" fill="#F59E0B"/>
+</svg>

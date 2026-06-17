@@ -1,9 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Nunito:wght@700;800;900&family=Montserrat:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  /* ─── Colors ─── */
   --color-primary-50: #f5f3ff;
   --color-primary-100: #ede9fe;
   --color-primary-200: #ddd6fe;
@@ -14,12 +15,20 @@
   --color-primary-700: #6d28d9;
   --color-primary-800: #5b21b6;
   --color-primary-900: #4c1d95;
-  
-  --color-background: #fafafc;
-  --color-surface: #ffffff;
-  
+
+  --color-accent: #4F46E5;
+  --color-accent-light: #6366F1;
+  --color-accent-dark: #4338CA;
+
+  --color-background: #F5F5F5;
+  --color-surface: #FFFFFF;
+
+  /* ─── Animations ─── */
   --animate-bounce-slow: bounce-slow 3s infinite;
-  
+  --animate-float-soft: float-soft 10s ease-in-out infinite;
+  --animate-drift-slow: drift-slow 18s ease-in-out infinite;
+  --animate-fade-up: fade-up 0.6s ease-out both;
+
   @keyframes bounce-slow {
     0%, 100% {
       transform: translateY(-5%);
@@ -28,6 +37,35 @@
     50% {
       transform: translateY(0);
       animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
+
+  @keyframes float-soft {
+    0%, 100% {
+      transform: translateY(0px) scale(1);
+    }
+    50% {
+      transform: translateY(-10px) scale(1.02);
+    }
+  }
+
+  @keyframes drift-slow {
+    0%, 100% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(18px, -14px, 0);
+    }
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 }
@@ -40,15 +78,17 @@
   }
 
   body {
-    background-color: var(--color-background);
-    color: #1e293b;
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background-color: #F5F5F5;
+    color: #1A1A1A;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
   }
 
   .dark body {
-    background-color: #050505;
-    color: #ffffff;
+    background-color: #0A0A0A;
+    color: #E5E5E5;
   }
 
   .dark h1,
@@ -56,7 +96,10 @@
   .dark h3,
   .dark h4,
   .dark h5,
-  .dark h6,
+  .dark h6 {
+    color: #FFFFFF;
+  }
+
   .dark p,
   .dark span,
   .dark label,
@@ -65,43 +108,91 @@
   .dark button,
   .dark a,
   .dark li {
-    color: #ffffff;
+    color: #E5E5E5;
   }
 
   .dark input,
   .dark textarea,
   .dark select {
-    color: #ffffff !important;
-    caret-color: #ffffff;
+    color: #FFFFFF !important;
+    caret-color: #6366F1;
   }
 
   .dark input::placeholder,
   .dark textarea::placeholder {
-    color: rgba(255, 255, 255, 0.72) !important;
+    color: rgba(255, 255, 255, 0.4) !important;
   }
 
   .dark option {
-    background: #1b1d22;
+    background: #141414;
     color: #ffffff;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    color: #1A1A1A;
   }
 }
 
+/* ─── Soft Card (Korsa style) ─── */
+.soft-card {
+  background: #FFFFFF;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.soft-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+}
+
+.dark .soft-card {
+  background: #111111;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.dark .soft-card:hover {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── Glass Effects (for dark mode) ─── */
 .glass {
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 10px 40px -10px rgba(124, 58, 237, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
 }
 
 .glass-dark {
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
+/* ─── iOS Icon Style ─── */
+.icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: #F5F5F5;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.icon-box:hover {
+  transform: scale(1.05);
+}
+
+.dark .icon-box {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Scrollbar ─── */
 * {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -113,6 +204,7 @@
   display: none;
 }
 
+/* ─── Dark Mode Overrides ─── */
 .dark .text-slate-900,
 .dark .text-slate-800,
 .dark .text-slate-700,
@@ -126,7 +218,7 @@
 .dark .text-zinc-600,
 .dark .text-zinc-500,
 .dark .text-zinc-400 {
-  color: #ffffff !important;
+  color: #E5E5E5 !important;
 }
 
 .dark .bg-white\/95,
@@ -138,7 +230,7 @@
 .dark .bg-white\/60,
 .dark .bg-white\/50,
 .dark .bg-white {
-  background-color: #17181d !important;
+  background-color: #111111 !important;
 }
 
 .dark .border-white\/80,
@@ -149,5 +241,27 @@
 .dark .border-slate-200\/70,
 .dark .border-slate-200\/80,
 .dark .border-slate-300 {
-  border-color: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ─── Animation Utilities ─── */
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+
+.animate-float-soft {
+  animation: float-soft 10s ease-in-out infinite;
+}
+
+.animate-drift-slow {
+  animation: drift-slow 18s ease-in-out infinite;
+}
+
+/* ─── Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

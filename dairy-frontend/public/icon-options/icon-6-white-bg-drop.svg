@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- White rounded square background -->
+  <rect width="512" height="512" rx="112" fill="white"/>
+  <!-- Subtle shadow border -->
+  <rect x="4" y="4" width="504" height="504" rx="110" fill="none" stroke="#E5E7EB" stroke-width="2"/>
+  <!-- Indigo milk drop -->
+  <path d="M256 110 C256 110 155 245 155 335 C155 395 200 430 256 430 C312 430 357 395 357 335 C357 245 256 110 256 110Z" fill="#4F46E5"/>
+  <!-- White shine inside drop -->
+  <ellipse cx="218" cy="305" rx="22" ry="35" fill="white" opacity="0.25"/>
+</svg>

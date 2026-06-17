@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#18181B"/>
+  <!-- 3D isometric cube with milk drop on face -->
+  <!-- Top face -->
+  <polygon points="256,140 370,210 256,280 142,210" fill="#4F46E5" opacity="0.8"/>
+  <!-- Left face -->
+  <polygon points="142,210 256,280 256,400 142,330" fill="#3730A3" opacity="0.9"/>
+  <!-- Right face -->
+  <polygon points="370,210 256,280 256,400 370,330" fill="#6366F1" opacity="0.7"/>
+  <!-- Drop on right face -->
+  <path d="M313 270 C313 270 298 295 298 308 C298 318 305 324 313 324 C321 324 328 318 328 308 C328 295 313 270 313 270Z" fill="white" opacity="0.9"/>
+  <!-- Highlight edge -->
+  <line x1="256" y1="140" x2="256" y2="400" stroke="white" stroke-width="2" opacity="0.3"/>
+</svg>

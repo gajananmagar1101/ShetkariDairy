@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="112" fill="#4F46E5"/>
+  <!-- Milk drop shape -->
+  <path d="M256 100 C256 100 160 220 160 310 C160 370 200 412 256 412 C312 412 352 370 352 310 C352 220 256 100 256 100Z" fill="white" opacity="0.95"/>
+  <!-- Small shine -->
+  <ellipse cx="220" cy="280" rx="20" ry="30" fill="white" opacity="0.3"/>
+</svg>

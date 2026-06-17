@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0F172A"/>
+  <!-- Clean notebook shape -->
+  <rect x="120" y="100" width="220" height="312" rx="12" fill="white" opacity="0.95"/>
+  <!-- Spine binding -->
+  <rect x="120" y="100" width="20" height="312" rx="6" fill="#6366F1"/>
+  <!-- Lines with numbers -->
+  <line x1="160" y1="165" x2="320" y2="165" stroke="#E2E8F0" stroke-width="2"/>
+  <line x1="160" y1="205" x2="320" y2="205" stroke="#E2E8F0" stroke-width="2"/>
+  <line x1="160" y1="245" x2="320" y2="245" stroke="#E2E8F0" stroke-width="2"/>
+  <line x1="160" y1="285" x2="320" y2="285" stroke="#E2E8F0" stroke-width="2"/>
+  <line x1="160" y1="325" x2="320" y2="325" stroke="#E2E8F0" stroke-width="2"/>
+  <line x1="160" y1="365" x2="320" y2="365" stroke="#E2E8F0" stroke-width="2"/>
+  <!-- Vertical column divider -->
+  <line x1="270" y1="140" x2="270" y2="390" stroke="#CBD5E1" stroke-width="1.5"/>
+  <!-- Handwritten numbers feel -->
+  <text x="285" y="195" font-family="system-ui" font-size="16" fill="#4F46E5" text-anchor="middle">450</text>
+  <text x="285" y="235" font-family="system-ui" font-size="16" fill="#4F46E5" text-anchor="middle">320</text>
+  <text x="285" y="275" font-family="system-ui" font-size="16" fill="#4F46E5" text-anchor="middle">180</text>
+  <text x="285" y="315" font-family="system-ui" font-size="16" fill="#4F46E5" text-anchor="middle">275</text>
+  <!-- Pen angled — actively writing -->
+  <line x1="320" y1="140" x2="270" y2="350" stroke="#F59E0B" stroke-width="10" stroke-linecap="round"/>
+  <!-- Pen tip -->
+  <circle cx="270" cy="350" r="6" fill="#1E293B"/>
+  <!-- Small ink dot -->
+  <circle cx="270" cy="355" r="3" fill="#6366F1" opacity="0.6"/>
+</svg>

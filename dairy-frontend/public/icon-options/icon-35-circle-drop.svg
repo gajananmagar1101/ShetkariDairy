@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#F8FAFC"/>
+  <!-- Minimal — just a circle with drop cutout (negative space) -->
+  <circle cx="256" cy="256" r="160" fill="#4F46E5"/>
+  <!-- White drop in center = negative space -->
+  <path d="M256 170 C256 170 210 240 210 280 C210 310 230 330 256 330 C282 330 302 310 302 280 C302 240 256 170 256 170Z" fill="#F8FAFC"/>
+</svg>

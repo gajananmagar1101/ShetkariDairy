@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="112" fill="#4F46E5"/>
+  <!-- Open book/ledger -->
+  <g fill="none" stroke="white" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left page -->
+    <path d="M256 160 L256 390 C230 375 180 370 150 375 L150 155 C180 150 230 150 256 160Z"/>
+    <!-- Right page -->
+    <path d="M256 160 L256 390 C282 375 332 370 362 375 L362 155 C332 150 282 150 256 160Z"/>
+    <!-- Lines on left page -->
+    <line x1="180" y1="200" x2="240" y2="200" opacity="0.5"/>
+    <line x1="180" y1="235" x2="235" y2="235" opacity="0.5"/>
+    <line x1="180" y1="270" x2="230" y2="270" opacity="0.5"/>
+  </g>
+  <!-- Milk drop on right page -->
+  <path d="M310 240 C310 240 295 265 295 278 C295 290 302 296 310 296 C318 296 325 290 325 278 C325 265 310 240 310 240Z" fill="white" opacity="0.85"/>
+</svg>

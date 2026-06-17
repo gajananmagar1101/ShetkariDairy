@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#4F46E5"/>
+  <!-- Split square — half page, half drop. Minimal geometric -->
+  <!-- Left half: page corner -->
+  <rect x="130" y="130" width="120" height="252" rx="8" fill="white" opacity="0.92"/>
+  <!-- Right half: rounded drop shape -->
+  <path d="M310 130 C310 130 262 220 262 280 C262 340 280 382 310 382 C340 382 380 340 380 280 C380 220 310 130 310 130Z" fill="white" opacity="0.92"/>
+  <!-- Small connecting line between them -->
+  <line x1="250" y1="256" x2="262" y2="256" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+</svg>
