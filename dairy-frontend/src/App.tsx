@@ -98,8 +98,8 @@ function AppShell() {
     }
   }, [isAuthenticated])
 
-  // Show splash on fresh load
-  if (showSplash) {
+  // Show splash only if already authenticated
+  if (showSplash && isAuthenticated && hasHydrated) {
     return <SplashScreen onComplete={handleSplashComplete} />
   }
 

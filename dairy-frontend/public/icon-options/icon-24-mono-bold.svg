@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="white"/>
-  <!-- Super bold, thick outlined drop — modern minimal -->
-  <path d="M256 100 C256 100 145 255 145 340 C145 400 195 440 256 440 C317 440 367 400 367 340 C367 255 256 100 256 100Z" fill="none" stroke="#1E1B4B" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Small accent dot -->
-  <circle cx="256" cy="360" r="18" fill="#4F46E5"/>
-</svg>

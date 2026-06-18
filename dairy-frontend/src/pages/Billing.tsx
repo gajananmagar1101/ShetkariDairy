@@ -427,7 +427,7 @@ export default function Billing() {
       ? `<div style="margin-top: 15px; color: #b45309; font-size: 13px;">${t(language, 'noDeliveryBill')}: ${computedSkippedDates.map(formatDate).join(', ')}</div>`
       : '';
 
-    const logoUrl = window.location.origin + '/logo.png';
+    const logoUrl = window.location.origin + '/logo.svg';
 
     const html = `
       <!DOCTYPE html>
