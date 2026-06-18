@@ -15,7 +15,7 @@ export function Logo({ size = 40, className = '' }: LogoProps) {
       <text
         x="256"
         y="330"
-        fontFamily="'Noto Sans Devanagari', system-ui, sans-serif"
+        fontFamily="system-ui, -apple-system, sans-serif"
         fontSize="230"
         fontWeight="900"
         fill="white"
