@@ -53,6 +53,15 @@ export default function MobileDock() {
   const location = useLocation()
   const { language } = useSettingsStore()
   const pathname = location.pathname
+  const shouldHideDock =
+    pathname.startsWith('/customers') ||
+    pathname.startsWith('/milk-entries') ||
+    pathname.startsWith('/payments') ||
+    pathname.startsWith('/labour')
+
+  if (shouldHideDock) {
+    return null
+  }
 
   const isHomeActive = pathname === '/'
   const isDairyActive = pathname.startsWith('/dairy') || pathname.startsWith('/customers') || pathname.startsWith('/milk-entries') || pathname.startsWith('/billing') || pathname.startsWith('/payments')
