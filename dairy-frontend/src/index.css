@@ -266,3 +266,64 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─── Mobile Green Theme (Cash App Inspired) ─── */
+@media (max-width: 767px) {
+  :root {
+    --mobile-green-900: #1B5E20;
+    --mobile-green-800: #2E7D32;
+    --mobile-green-700: #388E3C;
+    --mobile-green-600: #43A047;
+    --mobile-green-500: #4CAF50;
+    --mobile-green-50: #E8F5E9;
+  }
+
+  .dark {
+    --mobile-green-900: #0D3B13;
+    --mobile-green-800: #1B5E20;
+    --mobile-green-700: #2E7D32;
+  }
+}
+
+@media (max-width: 767px) {
+  .mobile-balance-card {
+    background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%) !important;
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(27, 94, 32, 0.3);
+    color: white;
+  }
+
+  .dark .mobile-balance-card {
+    background: linear-gradient(135deg, #0D3B13 0%, #1B5E20 100%) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    color: white;
+  }
+}
+
+.mobile-quick-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.mobile-quick-action-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #E8F5E9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1B5E20;
+  transition: all 0.2s ease;
+}
+
+.mobile-quick-action-icon:active {
+  transform: scale(0.95);
+}
+
+.dark .mobile-quick-action-icon {
+  background: rgba(27, 94, 32, 0.2);
+  color: #66BB6A;
+}

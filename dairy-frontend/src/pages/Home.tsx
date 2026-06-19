@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ArrowRight, BriefcaseBusiness, Clock3, Droplets, IndianRupee, Users } from 'lucide-react'
+import { ArrowRight, BriefcaseBusiness, Clock3, Droplets, IndianRupee, Users, FileText, CreditCard } from 'lucide-react'
 import { Logo } from '../components/ui/Logo'
 import { motion } from 'framer-motion'
 import axios from 'axios'
@@ -211,29 +211,29 @@ export default function Home() {
     >
       {/* Hero overview section */}
       <motion.section
-        className="relative overflow-hidden rounded-[20px] bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)] transition-colors duration-500 sm:p-6 dark:bg-[#111111] dark:shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
+        className="mobile-balance-card relative overflow-hidden rounded-[20px] bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)] transition-colors duration-500 sm:p-6 dark:bg-[#111111] dark:shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
         variants={dashboardSection}
       >
         <motion.div className="relative space-y-5" variants={dashboardStagger(0.08, 0.05)}>
           <motion.div className="flex flex-wrap items-center gap-2" variants={fadeDown}>
-            <span className="rounded-full bg-[#4F46E5]/8 px-3 py-1 text-[10px] font-semibold tracking-[0.14em] text-[#4F46E5] dark:bg-[#6366F1]/15 dark:text-[#6366F1]">
+            <span className="rounded-full bg-[#4F46E5]/8 px-3 py-1 text-[10px] font-semibold tracking-[0.14em] text-[#4F46E5] max-md:bg-white/20 max-md:text-white dark:bg-[#6366F1]/15 dark:text-[#6366F1]">
               {language === 'mr' ? 'डेअरी + कामगार' : 'Dairy + Labour'}
             </span>
-            <span className="rounded-full bg-[#F5F5F5] px-3 py-1 text-[10px] font-semibold tracking-[0.14em] text-[#6B7280] dark:bg-white/[0.05] dark:text-slate-400">
+            <span className="rounded-full bg-[#F5F5F5] px-3 py-1 text-[10px] font-semibold tracking-[0.14em] text-[#6B7280] max-md:bg-white/10 max-md:text-white/80 dark:bg-white/[0.05] dark:text-slate-400">
               {language === 'mr' ? 'एकाच मुख्य पानात' : 'One home view'}
             </span>
           </motion.div>
 
           <motion.div className="max-w-3xl" variants={fadeDown}>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-[1.85rem]">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 max-md:text-white dark:text-white sm:text-[1.85rem]">
               {language === 'mr'
                 ? 'दूध नोंदी, ग्राहक आणि कामगार यांना जोडणारे एक सुंदर मुख्य पान'
                 : 'A smart home page that connects dairy records, customers, and labour'}
             </h1>
-            <p className="mt-2.5 max-w-2xl text-[13.5px] leading-relaxed text-slate-500 dark:text-slate-400">
+            <p className="mt-2.5 max-w-2xl text-[13.5px] leading-relaxed text-slate-500 max-md:text-white/70 dark:text-slate-400">
               {language === 'mr'
                 ? 'वरचा आढावा पाहा, खाली डेअरी आणि कामगार दोन्ही विभाग पटकन उघडा, आणि रोजच्या कामाचा सगळा प्रवास एकाच स्क्रीनवरून सांभाळा.'
-                : "See today’s overview, jump into Dairy or Labour instantly, and manage the full daily workflow from one screen."}
+                : "See today's overview, jump into Dairy or Labour instantly, and manage the full daily workflow from one screen."}
             </p>
           </motion.div>
 
@@ -255,10 +255,10 @@ export default function Home() {
                 key={item.label}
                 variants={riseIn}
                 whileHover={{ y: -2, transition: { duration: 0.2 } }}
-                className="rounded-[14px] bg-[#F9F9F9] px-3.5 py-3 transition-all duration-300 dark:bg-white/[0.04]"
+                className="rounded-[14px] bg-[#F9F9F9] px-3.5 py-3 transition-all duration-300 max-md:bg-white/15 dark:bg-white/[0.04]"
               >
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">{item.label}</p>
-                <p className="mt-1.5 text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 max-md:text-white/60 dark:text-slate-500">{item.label}</p>
+                <p className="mt-1.5 text-lg font-bold tracking-tight text-slate-900 max-md:text-white dark:text-white">
                   {typeof item.value === 'string' ? item.value : item.value}
                 </p>
               </motion.div>
@@ -267,8 +267,30 @@ export default function Home() {
         </motion.div>
       </motion.section>
 
+      {/* Mobile Quick Actions (Cash App style) */}
+      <motion.div className="flex items-start justify-around px-2 md:hidden" variants={dashboardSection}>
+        {[
+          { icon: Droplets, label: language === 'mr' ? 'दूध नोंद' : 'Milk Entry', route: '/milk-entries' },
+          { icon: Users, label: language === 'mr' ? 'ग्राहक' : 'Customers', route: '/customers' },
+          { icon: CreditCard, label: language === 'mr' ? 'पेमेंट' : 'Payments', route: '/payments' },
+          { icon: FileText, label: language === 'mr' ? 'रिपोर्ट' : 'Reports', route: '/reports' },
+        ].map((action) => (
+          <button
+            key={action.route}
+            type="button"
+            onClick={() => navigate(action.route)}
+            className="mobile-quick-action"
+          >
+            <span className="mobile-quick-action-icon">
+              <action.icon className="h-5 w-5" />
+            </span>
+            <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">{action.label}</span>
+          </button>
+        ))}
+      </motion.div>
+
       {/* Quick nav cards */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="hidden gap-3 md:grid md:grid-cols-2">
         <motion.button
           type="button"
           onClick={() => navigate('/dairy')}
@@ -342,7 +364,7 @@ export default function Home() {
 
       {/* Recent activity */}
       <motion.section
-        className="rounded-[20px] bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)] transition-colors duration-500 dark:bg-[#111111] dark:shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
+        className="rounded-[20px] bg-white p-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)] transition-colors duration-500 max-md:rounded-[20px] max-md:shadow-[0_2px_16px_rgba(0,0,0,0.06)] dark:bg-[#111111] dark:shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
         variants={dashboardSection}
       >
         <div className="flex items-center justify-between gap-3">

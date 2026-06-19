@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
 import axios from 'axios'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Logo } from '../ui/Logo'
 import Sidebar from './Sidebar'
@@ -25,9 +25,6 @@ export default function AppLayout() {
   const { user, token, setAuth } = useAuthStore()
   const { theme } = useSettingsStore()
   const isNetworkBusy = useNetworkActivity()
-  const location = useLocation()
-  const pathname = location.pathname
-  const showMobileDock = pathname === '/' || pathname === '/dairy' || pathname === '/labour'
 
   const shouldAnimate = useRef(!sessionStorage.getItem('dashboard-intro-seen'))
   const [stage, setStage] = useState<Stage>(shouldAnimate.current ? 'blank' : 'done')
@@ -195,7 +192,7 @@ export default function AppLayout() {
             <main className="relative flex-1 overflow-hidden bg-transparent">
               <div className="h-full overflow-y-auto overflow-x-hidden">
                 <motion.div
-                  className={`min-h-full px-4 pb-24 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-7 ${showMobileDock ? 'lg:pb-28' : 'lg:pb-10'}`}
+                  className="min-h-full px-4 pb-28 pt-5 sm:px-6 sm:pt-6 lg:px-8 lg:pt-7 lg:pb-10"
                   initial={{ opacity: 0, y: -40 }}
                   animate={past('reveal') ? { opacity: 1, y: 0 } : { opacity: 0, y: -40 }}
                   transition={{ duration: 1.8, delay: past('reveal') ? 0.6 : 0, ease: [0.16, 1, 0.3, 1] }}
@@ -217,7 +214,7 @@ export default function AppLayout() {
 
       </motion.div>
 
-      {showMobileDock && past('reveal') && <MobileDock />}
+      {past('reveal') && <MobileDock />}
 
       <Toaster
         position="top-center"

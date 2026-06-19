@@ -37,7 +37,7 @@ export default function Header({ revealStage = 'done' }: HeaderProps) {
 
   return (
     <motion.header
-      className="sticky top-0 z-20 flex h-[60px] items-center justify-between gap-3 border-b border-[#E5E7EB]/60 bg-white px-4 min-w-0 dark:border-white/[0.04] dark:bg-[#111111] sm:px-5 lg:px-6"
+      className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-[#E5E7EB]/60 bg-white px-4 min-w-0 h-[60px] max-md:h-[72px] max-md:bg-[#1B5E20] max-md:border-transparent max-md:px-5 max-md:dark:bg-[#0D3B13] dark:border-white/[0.04] dark:bg-[#111111] sm:px-5 lg:px-6"
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : -10 }}
       transition={{ type: 'spring', stiffness: 150, damping: 20, delay: 0.2 }}
@@ -45,8 +45,8 @@ export default function Header({ revealStage = 'done' }: HeaderProps) {
       {/* Left: title + search */}
       <div className="flex items-center gap-4 min-w-0 self-center">
         <div className="min-w-0">
-          <h1 className="truncate text-[1rem] font-bold leading-none tracking-tight text-[#1A1A1A] dark:text-white">
-            Shetkari Vahi
+          <h1 className="truncate text-[1rem] font-bold leading-none tracking-tight text-[#1A1A1A] max-md:text-[1.35rem] max-md:text-white max-md:font-extrabold dark:text-white">
+            {language === 'mr' ? 'शेतकरी वही' : 'Shetkari Vahi'}
           </h1>
         </div>
 
@@ -73,16 +73,17 @@ export default function Header({ revealStage = 'done' }: HeaderProps) {
 
       {/* Right: actions */}
       <div className="flex items-center gap-2 min-w-0 self-center">
+        {/* Desktop buttons */}
         <button
           onClick={toggleLanguage}
-          className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-[#F5F5F5] text-[11px] font-bold text-[#6B7280] transition-all duration-200 hover:bg-[#EBEBEB] hover:text-[#1A1A1A] active:scale-95 dark:bg-white/[0.05] dark:text-slate-300 dark:hover:bg-white/[0.08]"
+          className="relative hidden md:flex h-8 w-8 items-center justify-center rounded-xl bg-[#F5F5F5] text-[11px] font-bold text-[#6B7280] transition-all duration-200 hover:bg-[#EBEBEB] hover:text-[#1A1A1A] active:scale-95 dark:bg-white/[0.05] dark:text-slate-300 dark:hover:bg-white/[0.08]"
         >
           {language === 'en' ? 'म' : 'EN'}
         </button>
 
         <button
           onClick={toggleTheme}
-          className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-[#F5F5F5] text-[#6B7280] transition-all duration-200 hover:bg-[#EBEBEB] hover:text-[#1A1A1A] active:scale-95 dark:bg-white/[0.05] dark:text-slate-300 dark:hover:bg-white/[0.08]"
+          className="relative hidden md:flex h-8 w-8 items-center justify-center rounded-xl bg-[#F5F5F5] text-[#6B7280] transition-all duration-200 hover:bg-[#EBEBEB] hover:text-[#1A1A1A] active:scale-95 dark:bg-white/[0.05] dark:text-slate-300 dark:hover:bg-white/[0.08]"
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -97,17 +98,42 @@ export default function Header({ revealStage = 'done' }: HeaderProps) {
           </AnimatePresence>
         </button>
 
+        {/* Mobile: green circle buttons (Cash App style) */}
+        <button
+          onClick={toggleLanguage}
+          className="md:hidden flex h-10 w-10 items-center justify-center rounded-full bg-[#2E7D32] text-white text-[12px] font-bold transition-all duration-200 active:scale-95"
+        >
+          {language === 'en' ? 'म' : 'EN'}
+        </button>
+
+        <button
+          onClick={toggleTheme}
+          className="md:hidden flex h-10 w-10 items-center justify-center rounded-full bg-[#2E7D32] text-white transition-all duration-200 active:scale-95"
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={theme}
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              transition={{ duration: 0.15 }}
+            >
+              {theme === 'dark' ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+            </motion.div>
+          </AnimatePresence>
+        </button>
+
         {/* Profile */}
         <div className="relative" ref={profileRef}>
           <div
-            className="flex min-w-0 cursor-pointer items-center gap-2.5 border-l border-[#E5E7EB]/60 pl-3 sm:pl-4 dark:border-white/[0.04]"
+            className="flex min-w-0 cursor-pointer items-center gap-2.5 border-l border-[#E5E7EB]/60 pl-3 sm:pl-4 max-md:border-transparent max-md:pl-2 dark:border-white/[0.04]"
             onClick={() => setIsProfileOpen(!isProfileOpen)}
           >
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-[#F5F5F5] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] dark:bg-white/[0.05]">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#F5F5F5] transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)] max-md:h-10 max-md:w-10 max-md:ring-2 max-md:ring-white/30 dark:bg-white/[0.05]">
               {user?.picture ? (
                 <img src={user.picture} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
-                <span className="font-semibold text-[#6B7280] text-[11px]">
+                <span className="font-semibold text-[#6B7280] text-[11px] max-md:text-white max-md:text-[12px]">
                   {user?.name ? user.name.substring(0, 2).toUpperCase() : 'GM'}
                 </span>
               )}
