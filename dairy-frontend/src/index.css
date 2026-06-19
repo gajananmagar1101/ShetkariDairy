@@ -16,9 +16,9 @@
   --color-primary-800: #5b21b6;
   --color-primary-900: #4c1d95;
 
-  --color-accent: #4F46E5;
-  --color-accent-light: #6366F1;
-  --color-accent-dark: #4338CA;
+  --color-accent: #355E3B;
+  --color-accent-light: #4CAF50;
+  --color-accent-dark: #1B5E20;
 
   --color-background: #F5F5F5;
   --color-surface: #FFFFFF;
@@ -116,7 +116,7 @@
   .dark textarea,
   .dark select {
     color: #FFFFFF !important;
-    caret-color: #6366F1;
+    caret-color: #4CAF50;
   }
 
   .dark input::placeholder,

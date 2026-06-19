@@ -216,7 +216,7 @@ export default function Home() {
       >
         <motion.div className="relative space-y-5" variants={dashboardStagger(0.08, 0.05)}>
           <motion.div className="flex flex-wrap items-center gap-2" variants={fadeDown}>
-            <span className="rounded-full bg-[#4F46E5]/8 px-3 py-1 text-[10px] font-semibold tracking-[0.14em] text-[#4F46E5] max-md:bg-white/20 max-md:text-white dark:bg-[#6366F1]/15 dark:text-[#6366F1]">
+            <span className="rounded-full bg-[#355E3B]/8 px-3 py-1 text-[10px] font-semibold tracking-[0.14em] text-[#355E3B] max-md:bg-white/20 max-md:text-white dark:bg-[#4CAF50]/15 dark:text-[#4CAF50]">
               {language === 'mr' ? 'डेअरी + कामगार' : 'Dairy + Labour'}
             </span>
             <span className="rounded-full bg-[#F5F5F5] px-3 py-1 text-[10px] font-semibold tracking-[0.14em] text-[#6B7280] max-md:bg-white/10 max-md:text-white/80 dark:bg-white/[0.05] dark:text-slate-400">
@@ -302,7 +302,7 @@ export default function Home() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <motion.span
-                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl shadow-[0_4px_12px_rgba(95,37,159,0.25)]"
+                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl shadow-[0_4px_12px_rgba(53,94,59,0.3)]"
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: 'spring', stiffness: 220, damping: 18 }}
               >

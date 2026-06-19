@@ -56,11 +56,11 @@ export default function Header({ revealStage = 'done' }: HeaderProps) {
           animate={{ opacity: isVisible ? 1 : 0, x: isVisible ? 0 : -10 }}
           transition={{ type: 'spring', stiffness: 140, damping: 20, delay: 0.28 }}
         >
-          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200 ${isSearchFocused ? 'text-[#4F46E5]' : 'text-[#9CA3AF]'}`} />
+          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200 ${isSearchFocused ? 'text-[#355E3B]' : 'text-[#9CA3AF]'}`} />
           <input
             type="text"
             placeholder={language === 'mr' ? "काहीही शोधा..." : "Search anything..."}
-            className="w-[16rem] rounded-xl border border-[#E5E7EB]/80 bg-[#F9F9F9] py-2 pl-10 pr-12 text-[13px] text-[#1A1A1A] transition-all duration-300 placeholder:text-[#9CA3AF] focus:border-[#4F46E5]/30 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/10 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-white dark:focus:border-[#6366F1]/20 dark:focus:bg-white/[0.05] xl:w-[20rem]"
+            className="w-[16rem] rounded-xl border border-[#E5E7EB]/80 bg-[#F9F9F9] py-2 pl-10 pr-12 text-[13px] text-[#1A1A1A] transition-all duration-300 placeholder:text-[#9CA3AF] focus:border-[#355E3B]/30 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#355E3B]/10 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-white dark:focus:border-[#4CAF50]/20 dark:focus:bg-white/[0.05] xl:w-[20rem]"
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
           />

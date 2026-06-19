@@ -62,7 +62,7 @@ function SidebarLink({
       className={({ isActive }) =>
         `group flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} rounded-2xl px-3.5 py-3 transition-all duration-300 relative ${
           isActive
-            ? 'text-[#4F46E5] font-semibold dark:text-white'
+            ? 'text-[#355E3B] font-semibold dark:text-white'
             : 'text-[#6B7280] hover:text-[#1A1A1A] dark:text-slate-400 dark:hover:text-white'
         }`
       }
@@ -78,7 +78,7 @@ function SidebarLink({
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             />
           )}
-          <item.icon className={`relative z-10 h-[18px] w-[18px] transition-colors duration-200 ${isActive ? 'text-[#4F46E5] dark:text-[#6366F1]' : ''}`} strokeWidth={isActive ? 2 : 1.7} />
+          <item.icon className={`relative z-10 h-[18px] w-[18px] transition-colors duration-200 ${isActive ? 'text-[#355E3B] dark:text-[#4CAF50]' : ''}`} strokeWidth={isActive ? 2 : 1.7} />
           {!isCollapsed && <span className="relative z-10 text-[13.5px]">{t(language, item.labelKey)}</span>}
         </>
       )}
@@ -135,7 +135,7 @@ function SidebarSection({
           <span
             className={`icon-box flex h-9 w-9 items-center justify-center rounded-[12px] transition-all duration-300 ${
               isExpanded
-                ? 'bg-[#4F46E5]/10 text-[#4F46E5] dark:bg-[#6366F1]/15 dark:text-[#6366F1]'
+                ? 'bg-[#355E3B]/10 text-[#355E3B] dark:bg-[#4CAF50]/15 dark:text-[#4CAF50]'
                 : 'bg-[#F5F5F5] text-[#6B7280] dark:bg-white/[0.05] dark:text-slate-400'
             }`}
           >

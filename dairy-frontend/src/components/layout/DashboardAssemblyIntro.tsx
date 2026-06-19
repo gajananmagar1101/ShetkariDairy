@@ -265,7 +265,7 @@ export default function DashboardAssemblyIntro({ open, onComplete }: DashboardAs
                     transition={{ duration: 0.2 }}
                   >
                     <motion.div
-                      className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1.2rem] shadow-[0_16px_40px_rgba(95,37,159,0.22)]"
+                      className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1.2rem] shadow-[0_16px_40px_rgba(53,94,59,0.22)]"
                       animate={{ scale: stageIndex >= 2 ? 1 : 0.95 }}
                       transition={{ type: 'spring', stiffness: 180, damping: 18 }}
                     >

@@ -221,7 +221,7 @@ const Login: React.FC = () => {
         </div>
 
         <div
-          className="hidden w-full max-w-[360px] rounded-[3rem] border border-white/20 bg-white p-8 shadow-[0_16px_50px_rgba(0,0,0,0.25),0_6px_20px_rgba(95,37,159,0.3)] lg:block lg:rounded-[3.2rem] lg:p-10"
+          className="hidden w-full max-w-[360px] rounded-[3rem] border border-white/20 bg-white p-8 shadow-[0_16px_50px_rgba(0,0,0,0.25),0_6px_20px_rgba(53,94,59,0.3)] lg:block lg:rounded-[3.2rem] lg:p-10"
         >
           {/* Logo + Brand */}
           <div className="flex items-center gap-3">

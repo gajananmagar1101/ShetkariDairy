@@ -17,7 +17,7 @@ interface LoadingSpinnerProps {
 export function LoadingSpinner({ size = 'md', className }: LoadingSpinnerProps) {
   return (
     <Loader2
-      className={cn('animate-spin text-[#4F46E5]', spinnerSizes[size], className)}
+      className={cn('animate-spin text-[#355E3B]', spinnerSizes[size], className)}
     />
   )
 }
@@ -73,7 +73,7 @@ export function GlobalLoadBar({ active }: { active: boolean }) {
     <div className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-[2px] overflow-hidden">
       <div
         className={cn(
-          'h-full origin-left rounded-r-full bg-[#4F46E5] shadow-[0_0_12px_rgba(79,70,229,0.4)] transition-all duration-500 ease-out',
+          'h-full origin-left rounded-r-full bg-[#355E3B] shadow-[0_0_12px_rgba(53,94,59,0.4)] transition-all duration-500 ease-out',
           active ? 'scale-x-100 opacity-100' : 'scale-x-0 opacity-0',
         )}
       />

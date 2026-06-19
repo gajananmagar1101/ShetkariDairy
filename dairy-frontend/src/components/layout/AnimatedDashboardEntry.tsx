@@ -157,7 +157,7 @@ export default function AnimatedDashboardEntry({ onComplete }: AnimatedDashboard
                   >
                     <motion.div
                       layoutId="brand-icon"
-                      className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl shadow-[0_8px_20px_rgba(95,37,159,0.3)]"
+                      className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl shadow-[0_8px_20px_rgba(53,94,59,0.3)]"
                     >
                       <Logo size={48} />
                     </motion.div>
