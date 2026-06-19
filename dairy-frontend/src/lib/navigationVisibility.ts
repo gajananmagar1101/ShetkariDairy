@@ -2,6 +2,9 @@ const MOBILE_DOCK_HIDDEN_PREFIXES = [
   '/customers',
   '/milk-entries',
   '/payments',
+  '/billing',
+  '/dashboard',
+  '/reports',
 ]
 
 export function shouldHideMobileDock(pathname: string) {
