@@ -71,7 +71,7 @@ const Login: React.FC = () => {
       {/* Intro: Logo appears, scales up, fades out to reveal login */}
       {introPhase === 'zoom' && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#5F259F]"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#355E3B]"
           initial={{ opacity: 1 }}
           animate={{ opacity: 0 }}
           transition={{ duration: 0.5, delay: 1.8 }}
@@ -98,7 +98,7 @@ const Login: React.FC = () => {
       {/* Login page */}
       <div className="relative flex min-h-screen overflow-hidden">
       {/* Left panel — brand/visual */}
-      <div className="relative hidden w-[52%] items-center justify-center overflow-hidden bg-[#5F259F] lg:flex">
+      <div className="relative hidden w-[52%] items-center justify-center overflow-hidden bg-[#355E3B] lg:flex">
         {/* Gradient mesh overlay */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_50%,rgba(167,139,250,0.3),transparent_50%),radial-gradient(ellipse_at_80%_20%,rgba(124,58,237,0.4),transparent_40%),radial-gradient(ellipse_at_50%_90%,rgba(91,33,182,0.5),transparent_45%)]" />
         {/* Grid pattern */}
@@ -146,7 +146,7 @@ const Login: React.FC = () => {
       </div>
 
       {/* Right panel — login form */}
-      <div className="relative flex flex-1 flex-col items-center justify-end bg-[#5F259F] px-6 pb-16 lg:justify-center lg:pb-0">
+      <div className="relative flex flex-1 flex-col items-center justify-end bg-[#355E3B] px-6 pb-16 lg:justify-center lg:pb-0">
         {/* Light accents from top, right, bottom */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -right-20 top-0 h-[300px] w-[300px] rounded-full bg-white/10 blur-[80px]" />
@@ -157,7 +157,7 @@ const Login: React.FC = () => {
         <button
           type="button"
           onClick={toggleLanguage}
-          className="absolute right-5 top-5 rounded-lg border border-slate-100 px-2.5 py-1.5 text-[11px] font-semibold text-slate-400 transition hover:border-[#5F259F]/20 hover:text-[#5F259F]"
+          className="absolute right-5 top-5 rounded-lg border border-slate-100 px-2.5 py-1.5 text-[11px] font-semibold text-slate-400 transition hover:border-[#355E3B]/20 hover:text-[#355E3B]"
         >
           {copy.languageLabel}
         </button>
@@ -183,7 +183,7 @@ const Login: React.FC = () => {
           <div className="mt-5">
             {isGoogleSubmitting ? (
               <div className="flex items-center justify-center gap-2.5 rounded-full border border-slate-200 bg-slate-50 px-5 py-3.5 text-[0.82rem] font-medium text-slate-500">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-[#5F259F]" />
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-[#355E3B]" />
                 {copy.googleLoading}
               </div>
             ) : (
