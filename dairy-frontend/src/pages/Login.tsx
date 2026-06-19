@@ -174,13 +174,13 @@ const Login: React.FC = () => {
         </button>
 
         <div className="relative z-10 flex w-full max-w-[390px] flex-col items-center gap-4 lg:hidden">
-          <div className="inline-flex items-center gap-3 rounded-[1.5rem] border border-white/20 bg-white/12 px-4 py-3 shadow-[0_18px_44px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+          <div className="flex w-full max-w-[340px] items-center gap-3 rounded-[1.5rem] border border-white/20 bg-white/12 px-4 py-3 shadow-[0_18px_44px_rgba(0,0,0,0.18)] backdrop-blur-xl">
             <Logo size={42} className="rounded-[12px]" />
             <div className="min-w-0 text-left">
               <p className="text-[0.66rem] font-semibold uppercase tracking-[0.28em] text-white/70">
                 {copy.brandName}
               </p>
-              <p className="truncate text-sm font-medium text-white/85">
+              <p className="text-[0.72rem] font-medium leading-tight text-white/85">
                 {copy.tagline}
               </p>
             </div>
