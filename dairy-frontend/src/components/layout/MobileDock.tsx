@@ -3,6 +3,7 @@ import { BriefcaseBusiness, Droplets, Home, Search, Settings } from 'lucide-reac
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useSettingsStore } from '../../store/settingsStore'
+import { shouldHideMobileDock } from '../../lib/navigationVisibility'
 import { t } from '../../utils/translations'
 
 function DockTab({
@@ -53,13 +54,8 @@ export default function MobileDock() {
   const location = useLocation()
   const { language } = useSettingsStore()
   const pathname = location.pathname
-  const shouldHideDock =
-    pathname.startsWith('/customers') ||
-    pathname.startsWith('/milk-entries') ||
-    pathname.startsWith('/payments') ||
-    pathname.startsWith('/labour')
 
-  if (shouldHideDock) {
+  if (shouldHideMobileDock(pathname)) {
     return null
   }
 
