@@ -25,6 +25,11 @@ const Login: React.FC = () => {
     languageLabel: isMarathi ? 'EN' : 'मरा',
     terms: isMarathi ? 'साइन इन करून तुम्ही सेवा अटी स्वीकारता' : 'By signing in you agree to our terms',
   }
+  const mobileGridStyle = {
+    backgroundImage:
+      'linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)',
+    backgroundSize: '48px 48px',
+  }
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential || isGoogleSubmitting) {
@@ -147,6 +152,12 @@ const Login: React.FC = () => {
 
       {/* Right panel — login form */}
       <div className="relative flex flex-1 flex-col items-center justify-end bg-[#355E3B] px-6 pb-16 lg:justify-center lg:pb-0">
+        <div className="pointer-events-none absolute inset-0 lg:hidden">
+          <div className="absolute inset-0 bg-[#355E3B] bg-[radial-gradient(ellipse_at_20%_50%,rgba(167,139,250,0.28),transparent_55%),radial-gradient(ellipse_at_80%_20%,rgba(124,58,237,0.24),transparent_42%),radial-gradient(ellipse_at_50%_90%,rgba(91,33,182,0.35),transparent_45%)]" />
+          <div className="absolute inset-0 opacity-[0.05]" style={mobileGridStyle} />
+          <div className="absolute -left-16 top-20 h-56 w-56 rounded-full border border-white/10" />
+          <div className="absolute -right-16 bottom-16 h-44 w-44 rounded-full border border-white/10" />
+        </div>
         {/* Light accents from top, right, bottom */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -right-20 top-0 h-[300px] w-[300px] rounded-full bg-white/10 blur-[80px]" />
