@@ -151,7 +151,7 @@ const Login: React.FC = () => {
       </div>
 
       {/* Right panel — login form */}
-      <div className="relative flex flex-1 flex-col items-center justify-center bg-[#355E3B] px-4 pb-8 pt-16 lg:justify-center lg:px-6 lg:pb-0 lg:pt-0">
+      <div className="relative flex flex-1 flex-col items-center justify-end bg-[#355E3B] px-4 pb-16 pt-16 lg:justify-center lg:px-6 lg:pb-0 lg:pt-0">
         <div className="pointer-events-none absolute inset-0 lg:hidden">
           <div className="absolute inset-0 bg-[#355E3B] bg-[radial-gradient(ellipse_at_20%_50%,rgba(167,139,250,0.28),transparent_55%),radial-gradient(ellipse_at_80%_20%,rgba(124,58,237,0.24),transparent_42%),radial-gradient(ellipse_at_50%_90%,rgba(91,33,182,0.35),transparent_45%)]" />
           <div className="absolute inset-0 opacity-[0.05]" style={mobileGridStyle} />
@@ -173,42 +173,27 @@ const Login: React.FC = () => {
           {copy.languageLabel}
         </button>
 
-        <div className="relative z-10 flex w-full max-w-[390px] flex-col items-center gap-4 lg:hidden">
-          <div className="flex w-full max-w-[340px] items-center gap-3 rounded-[1.5rem] border border-white/20 bg-white/12 px-4 py-3 shadow-[0_18px_44px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-            <Logo size={42} className="rounded-[12px]" />
-            <div className="min-w-0 text-left">
-              <p className="text-[0.66rem] font-semibold uppercase tracking-[0.28em] text-white/70">
-                {copy.brandName}
-              </p>
-              <p className="text-[0.72rem] font-medium leading-tight text-white/85">
-                {copy.tagline}
-              </p>
-            </div>
-          </div>
-
+        <div className="relative z-10 flex w-full flex-1 items-end justify-center lg:hidden">
           <div
-            className="w-full rounded-[2.25rem] border border-white/30 bg-white p-5 shadow-[0_20px_70px_rgba(0,0,0,0.25),0_10px_30px_rgba(95,37,159,0.18)] backdrop-blur-xl"
+            className="w-full max-w-[360px] rounded-[2rem] rounded-b-[1.4rem] border border-white/20 bg-white/[0.96] p-4 shadow-[0_-18px_48px_rgba(0,0,0,0.16)] backdrop-blur-xl"
           >
             <div className="flex items-center gap-3">
-              <Logo size={40} className="rounded-[11px]" />
-              <div>
-                <h1 className="text-[1rem] font-bold tracking-tight text-slate-900">
+              <Logo size={38} className="rounded-[11px]" />
+              <div className="min-w-0 text-left">
+                <h1 className="truncate text-[0.98rem] font-bold tracking-tight text-slate-900">
                   {copy.brandName}
                 </h1>
-                <p className="text-[0.68rem] text-slate-400">
+                <p className="truncate text-[0.68rem] text-slate-400">
                   {copy.tagline}
                 </p>
               </div>
             </div>
 
-            <h2 className="mt-5 text-[1.45rem] font-black tracking-tight text-slate-900">
+            <h2 className="mt-4 text-[1.18rem] font-black tracking-tight text-slate-900">
               {copy.welcome}
             </h2>
-            <p className="mt-2 text-[0.9rem] leading-6 text-slate-500">
-              {copy.tagline}
-            </p>
 
-            <div className="mt-5">
+            <div className="mt-4">
               {isGoogleSubmitting ? (
                 <div className="flex items-center justify-center gap-2.5 rounded-full border border-slate-200 bg-slate-50 px-5 py-3.5 text-[0.82rem] font-medium text-slate-500">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-200 border-t-[#355E3B]" />
@@ -229,7 +214,7 @@ const Login: React.FC = () => {
               )}
             </div>
 
-            <p className="mt-4 text-center text-[0.68rem] leading-5 text-slate-400">
+            <p className="mt-3 text-center text-[0.64rem] leading-5 text-slate-400">
               {copy.terms}
             </p>
           </div>
