@@ -16,6 +16,8 @@ interface CachedCustomers<T> {
   data: T[]
 }
 
+let inflightFetch: Promise<any[]> | null = null
+
 export function getCachedCustomers<T extends CustomerLike>() {
   try {
     const raw = sessionStorage.getItem(CUSTOMER_CACHE_KEY)
@@ -63,12 +65,21 @@ export async function fetchCustomersWithCache<T extends CustomerLike>(
     if (cached) return cached
   }
 
-  const res = await axios.get('/api/customers')
-  if (res.data.success) {
-    const customers = res.data.data as T[]
-    setCachedCustomers(customers)
-    return customers
-  }
+  if (inflightFetch) return inflightFetch as Promise<T[]>
 
-  return [] as T[]
+  inflightFetch = (async () => {
+    try {
+      const res = await axios.get('/api/customers')
+      if (res.data.success) {
+        const customers = res.data.data as T[]
+        setCachedCustomers(customers)
+        return customers
+      }
+      return [] as T[]
+    } finally {
+      inflightFetch = null
+    }
+  })()
+
+  return inflightFetch as Promise<T[]>
 }

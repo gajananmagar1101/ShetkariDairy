@@ -24,7 +24,8 @@ import java.time.LocalDateTime;
 @CompoundIndexes({
     @CompoundIndex(name = "payment_user_customer_idx", def = "{'userId': 1, 'customerId': 1}"),
     @CompoundIndex(name = "payment_user_payment_date_idx", def = "{'userId': 1, 'paymentDate': -1}"),
-    @CompoundIndex(name = "payment_user_created_idx", def = "{'userId': 1, 'createdAt': -1}")
+    @CompoundIndex(name = "payment_user_created_idx", def = "{'userId': 1, 'createdAt': -1}"),
+    @CompoundIndex(name = "payment_customer_date_idx", def = "{'customerId': 1, 'paymentDate': -1}")
 })
 public class Payment {
     @Indexed

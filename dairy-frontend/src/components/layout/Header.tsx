@@ -44,8 +44,8 @@ export default function Header({ revealStage = 'done' }: HeaderProps) {
     >
       {/* Left: title + search */}
       <div className="flex items-center gap-4 min-w-0 self-center">
-        <div className="min-w-0">
-          <h1 className="truncate text-[1rem] font-bold leading-none tracking-tight text-[#1A1A1A] max-md:text-[1.35rem] max-md:text-white max-md:font-extrabold dark:text-white">
+        <div className="shrink-0">
+          <h1 className="whitespace-nowrap text-[1rem] font-bold leading-none tracking-tight text-[#1A1A1A] max-md:text-[1.35rem] max-md:text-white max-md:font-extrabold dark:text-white">
             {language === 'mr' ? 'शेतकरी वही' : 'Shetkari Vahi'}
           </h1>
         </div>

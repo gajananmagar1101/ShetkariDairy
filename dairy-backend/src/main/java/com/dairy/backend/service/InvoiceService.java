@@ -186,7 +186,7 @@ public class InvoiceService {
 
     public List<InvoiceDto> getAllInvoices() {
         Set<String> ownedUserIds = resolveOwnedUserIds(SecurityUtils.getCurrentUserId());
-        return dedupeInvoicesByPeriod(
+        List<Invoice> dedupedInvoices = dedupeInvoicesByPeriod(
                 ownedUserIds.stream()
                         .flatMap(ownedUserId -> invoiceRepository.findByUserId(ownedUserId, Sort.by(Sort.Direction.DESC, "createdAt")).stream())
                 .collect(Collectors.collectingAndThen(
@@ -198,23 +198,33 @@ public class InvoiceService {
                         ),
                         map -> new ArrayList<>(map.values())
                 ))
-        ).stream()
+        );
+
+        // Batch-load all customers to avoid N+1 queries
+        Set<String> customerIds = dedupedInvoices.stream()
+                .map(Invoice::getCustomerId)
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
+        Map<String, Customer> customerMap = customerRepository.findAllById(customerIds).stream()
+                .collect(Collectors.toMap(Customer::getId, c -> c, (a, b) -> a));
+
+        return dedupedInvoices.stream()
                 .map(inv -> {
-                    String name = customerRepository.findById(inv.getCustomerId())
-                            .map(Customer::getName).orElse("Unknown");
+                    Customer customer = customerMap.get(inv.getCustomerId());
+                    String name = customer != null ? customer.getName() : "Unknown";
                     LocalDate startDate = resolveInvoiceStartDate(inv);
                     LocalDate endDate = resolveInvoiceEndDate(inv);
                     List<MilkEntry> entries = inv.getStatus() == PaymentStatus.PAID
                             ? findBillableEntries(ownedUserIds, inv.getCustomerId(), startDate, endDate, inv.getId(), inv.getCreatedAt(), inv.getId())
                             : findBillableEntries(ownedUserIds, inv.getCustomerId(), startDate, endDate, inv.getId(), null, null);
-                    List<LocalDate> skippedDates = customerRepository.findById(inv.getCustomerId())
-                            .map(customer -> resolveSkippedDates(
+                    List<LocalDate> skippedDates = customer != null
+                            ? resolveSkippedDates(
                                     customer,
                                     milkEntryService.findEntriesByCustomerAndDateRange(resolveCurrentUserId(ownedUserIds), inv.getCustomerId(), startDate, endDate),
                                     startDate,
                                     endDate
-                            ))
-                            .orElseGet(ArrayList::new);
+                            )
+                            : new ArrayList<>();
                     BigDecimal effectiveTotalAmount = resolveTotalAmount(entries);
                     if (inv.getTotalAmount() == null || inv.getTotalAmount().compareTo(effectiveTotalAmount) != 0) {
                         inv.setTotalAmount(effectiveTotalAmount);

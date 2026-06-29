@@ -8,6 +8,7 @@ import { getDisplayLocale } from '../utils/numberFormat'
 import { Button } from '../components/ui/button'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog'
 import { LoadingBlock } from '../components/ui/loading'
+import { fetchCustomersWithCache } from '../lib/customerCache'
 
 interface Customer {
   id: string
@@ -97,8 +98,8 @@ export default function CustomerMonthView() {
 
     setIsLoading(true)
     try {
-      const [customersRes, entriesRes, invoicesRes, paymentsRes] = await Promise.all([
-        axios.get('/api/customers'),
+      const [customers, entriesRes, invoicesRes, paymentsRes] = await Promise.all([
+        fetchCustomersWithCache<Customer>(),
         axios.get('/api/milk-entries/customer-range', {
           params: {
             customerId,
@@ -106,14 +107,12 @@ export default function CustomerMonthView() {
             endDate: bounds.endDate,
           },
         }),
-        axios.get('/api/invoices'),
-        axios.get('/api/payments'),
+        axios.get(`/api/invoices/customer/${customerId}`),
+        axios.get(`/api/payments/customer/${customerId}`),
       ])
 
-      if (customersRes.data?.success) {
-        const foundCustomer = (customersRes.data.data ?? []).find((item: Customer) => item.id === customerId) ?? null
-        setCustomer(foundCustomer)
-      }
+      const foundCustomer = customers.find((item) => item.id === customerId) ?? null
+      setCustomer(foundCustomer)
 
       if (entriesRes.data?.success) {
         const sortedEntries = [...(entriesRes.data.data ?? [])].sort((a: MilkEntry, b: MilkEntry) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -122,7 +121,6 @@ export default function CustomerMonthView() {
 
       if (invoicesRes.data?.success) {
         const monthInvoices: Invoice[] = (invoicesRes.data.data ?? []).filter((item: Invoice) => {
-          if (item.customerId !== customerId) return false
           const startDate = item.periodStartDate ? new Date(item.periodStartDate) : null
           if (!startDate || Number.isNaN(startDate.getTime())) return false
           return startDate.getFullYear() === year && startDate.getMonth() === monthIndex
@@ -148,7 +146,6 @@ export default function CustomerMonthView() {
 
       if (paymentsRes.data?.success) {
         const monthPayments = (paymentsRes.data.data ?? []).filter((item: Payment) => {
-          if (item.customerId !== customerId) return false
           const paymentDate = item.paymentDate ? new Date(item.paymentDate) : null
           if (paymentDate && !Number.isNaN(paymentDate.getTime())) {
             return paymentDate.getFullYear() === year && paymentDate.getMonth() === monthIndex
@@ -282,7 +279,7 @@ export default function CustomerMonthView() {
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/customers', { state: { openCustomerId: customerId } })}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100 dark:border-slate-700 dark:bg-[#111111] dark:text-white dark:hover:bg-slate-800"
         >
           <ArrowLeft className="h-4 w-4" />

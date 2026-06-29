@@ -46,6 +46,17 @@ const Login = lazy(loadLogin)
 const Profile = lazy(loadProfile)
 const Settings = lazy(loadSettings)
 
+// Prefetch critical routes after initial load
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      loadCustomers()
+      loadMilkEntries()
+      loadHome()
+    }, 1000)
+  }, { once: true })
+}
+
 function AppRoutes() {
   return (
     <Routes>

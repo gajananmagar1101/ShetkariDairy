@@ -2,9 +2,15 @@ import { useEffect, useState } from 'react'
 
 let pendingRequests = 0
 const listeners = new Set<(count: number) => void>()
+let notifyScheduled = false
 
 const notify = () => {
-  listeners.forEach((listener) => listener(pendingRequests))
+  if (notifyScheduled) return
+  notifyScheduled = true
+  queueMicrotask(() => {
+    notifyScheduled = false
+    listeners.forEach((listener) => listener(pendingRequests))
+  })
 }
 
 export function beginNetworkActivity() {

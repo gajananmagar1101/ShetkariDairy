@@ -161,11 +161,13 @@ export default function Home() {
         })
       }
 
-      const payments = ((paymentsRes.data?.data ?? []) as HomePayment[]).sort((a, b) =>
-        new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
-      )
-      if (payments.length > 0) {
-        const latestPayment = payments[0]
+      const rawPayments = (paymentsRes.data?.data ?? []) as HomePayment[]
+      const latestPayment = rawPayments.length > 0
+        ? rawPayments.reduce((latest, p) =>
+            new Date(p.paymentDate).getTime() > new Date(latest.paymentDate).getTime() ? p : latest
+          )
+        : null
+      if (latestPayment) {
         nextActivities.push({
           id: `payment-${latestPayment.id}`,
           title: language === 'mr' ? 'अलीकडील पेमेंट' : 'Recent payment',

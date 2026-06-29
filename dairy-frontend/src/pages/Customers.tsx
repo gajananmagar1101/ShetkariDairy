@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Plus, Search, Trash, Clock, PencilLine, Ban, Mic, MicOff, Play, ChevronDown, ChevronUp, Eye } from 'lucide-react'
 import toast from 'react-hot-toast'
 import axios from 'axios'
@@ -17,6 +17,7 @@ import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 import { getDisplayLocale } from '../utils/numberFormat'
 import { setCachedCustomers } from '../lib/customerCache'
+import { useLocation } from 'react-router-dom'
 import { CustomerDetailsDialog } from '../components/customers/CustomerDetailsDialog'
 
 interface Customer {
@@ -52,6 +53,7 @@ interface Customer {
 
 export default function Customers() {
   const { language } = useSettingsStore()
+  const location = useLocation()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -99,9 +101,20 @@ export default function Customers() {
     return []
   }
 
+  const reopenHandled = useRef(false)
+
   useEffect(() => {
     fetchCustomers()
   }, [])
+
+  useEffect(() => {
+    const openCustomerId = (location.state as { openCustomerId?: string } | null)?.openCustomerId
+    if (openCustomerId && customers.length > 0 && !reopenHandled.current) {
+      reopenHandled.current = true
+      const found = customers.find((c) => c.id === openCustomerId)
+      if (found) setViewingCustomer(found)
+    }
+  }, [customers, location.state])
 
   const refreshViewingCustomer = async () => {
     const nextCustomers = await fetchCustomers()

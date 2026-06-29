@@ -12,6 +12,7 @@ import com.dairy.backend.repository.MilkEntryRepository;
 import com.dairy.backend.repository.PaymentRepository;
 import com.dairy.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -145,7 +146,7 @@ public class PaymentService {
     public List<PaymentDto> getAllPayments() {
         Set<String> ownedUserIds = resolveOwnedUserIds(SecurityUtils.getCurrentUserId());
         Set<String> ownedCustomerIds = resolveOwnedCustomerIds(ownedUserIds);
-        List<Payment> payments = paymentRepository.findAll().stream()
+        List<Payment> payments = paymentRepository.findByUserIdIn(ownedUserIds, Sort.by(Sort.Direction.DESC, "paymentDate")).stream()
                 .filter(payment -> payment.getCustomerId() != null && ownedCustomerIds.contains(payment.getCustomerId()))
                 .sorted(Comparator
                         .comparing(Payment::getPaymentDate, Comparator.nullsLast(Comparator.naturalOrder()))
@@ -163,6 +164,14 @@ public class PaymentService {
         Map<String, Map<LocalDate, BigDecimal>> customerEntryAmountByDate = new HashMap<>();
         Map<String, Set<LocalDate>> customerCoveredDates = new HashMap<>();
 
+        // Batch-load all customer names to avoid N+1 queries
+        Set<String> customerIds = payments.stream()
+                .map(Payment::getCustomerId)
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
+        Map<String, String> customerNameMap = customerRepository.findAllById(customerIds).stream()
+                .collect(Collectors.toMap(Customer::getId, Customer::getName, (a, b) -> a));
+
         List<PaymentDto> dtos = payments.stream()
                 .map(payment -> {
                     BigDecimal effectiveAmount = resolveEffectivePaymentAmount(
@@ -178,8 +187,7 @@ public class PaymentService {
                         paymentRepository.save(payment);
                     }
 
-                    String name = customerRepository.findById(payment.getCustomerId())
-                            .map(Customer::getName).orElse("Unknown");
+                    String name = customerNameMap.getOrDefault(payment.getCustomerId(), "Unknown");
                     PaymentDto dto = mapToDto(payment, name);
                     dto.setAmount(effectiveAmount);
                     return dto;
@@ -210,12 +218,12 @@ public class PaymentService {
                         map -> new java.util.ArrayList<>(map.values())
                 ));
 
+        // Batch-load customer name once instead of per-payment
+        String customerName = customerRepository.findById(customerId)
+                .map(Customer::getName).orElse("Unknown");
+
         return payments.stream()
-                .map(payment -> {
-                    String name = customerRepository.findById(payment.getCustomerId())
-                            .map(Customer::getName).orElse("Unknown");
-                    return mapToDto(payment, name);
-                })
+                .map(payment -> mapToDto(payment, customerName))
                 .sorted(Comparator
                         .comparing(PaymentDto::getPaymentDate, Comparator.nullsLast(Comparator.reverseOrder()))
                         .thenComparing(PaymentDto::getId, Comparator.nullsLast(Comparator.reverseOrder())))

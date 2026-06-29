@@ -30,6 +30,16 @@ if (configuredApiUrl) {
   axios.defaults.baseURL = configuredApiUrl
 }
 
+// In-flight GET request deduplication
+const inflightRequests = new Map<string, Promise<any>>()
+
+function getDedupeKey(config: any): string | null {
+  if (config.method && config.method.toLowerCase() !== 'get') return null
+  const url = config.url || ''
+  const params = config.params ? JSON.stringify(config.params) : ''
+  return `${url}?${params}`
+}
+
 axios.interceptors.request.use((config) => {
   beginNetworkActivity()
   const token = useAuthStore.getState().token;
@@ -45,10 +55,16 @@ axios.interceptors.request.use((config) => {
 axios.interceptors.response.use(
   (response) => {
     endNetworkActivity()
+    const key = getDedupeKey(response.config)
+    if (key) inflightRequests.delete(key)
     return response
   },
   (error) => {
     endNetworkActivity()
+    if (error.config) {
+      const key = getDedupeKey(error.config)
+      if (key) inflightRequests.delete(key)
+    }
     if (axios.isAxiosError(error)) {
       if (error.code === 'ECONNABORTED') {
         error.message =
@@ -72,5 +88,20 @@ axios.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+// Wrap axios.get to deduplicate in-flight GET requests
+const originalGet = axios.get.bind(axios)
+axios.get = ((url: string, config?: any) => {
+  const fullConfig = { ...config, url, method: 'get' }
+  const key = getDedupeKey(fullConfig)
+  if (key) {
+    const existing = inflightRequests.get(key)
+    if (existing) return existing
+    const promise = originalGet(url, config).finally(() => inflightRequests.delete(key))
+    inflightRequests.set(key, promise)
+    return promise
+  }
+  return originalGet(url, config)
+}) as typeof axios.get
 
 export const getApiBaseUrl = () => configuredApiUrl || window.location.origin

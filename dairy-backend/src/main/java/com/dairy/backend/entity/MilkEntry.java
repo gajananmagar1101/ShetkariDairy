@@ -23,7 +23,8 @@ import java.time.LocalDateTime;
 @Document(collection = "milk_entries")
 @CompoundIndexes({
     @CompoundIndex(name = "user_date_idx", def = "{'userId': 1, 'date': 1}"),
-    @CompoundIndex(name = "user_customer_idx", def = "{'userId': 1, 'customerId': 1}")
+    @CompoundIndex(name = "user_customer_idx", def = "{'userId': 1, 'customerId': 1}"),
+    @CompoundIndex(name = "user_customer_date_idx", def = "{'userId': 1, 'customerId': 1, 'date': 1}")
 })
 public class MilkEntry {
     @Indexed
