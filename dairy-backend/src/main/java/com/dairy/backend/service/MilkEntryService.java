@@ -222,7 +222,9 @@ public class MilkEntryService {
 
     public List<MilkEntry> findEntriesByCustomerAndDateRange(String userId, String customerId, LocalDate startDate, LocalDate endDate) {
         Set<String> ownedUserIds = resolveOwnedUserIds(userId);
-        return milkEntryRepository.findByUserIdInAndDateBetween(ownedUserIds, startDate, endDate).stream()
+        LocalDate queryStart = startDate.minusDays(1);
+        LocalDate queryEnd = endDate.plusDays(1);
+        return milkEntryRepository.findByUserIdInAndDateBetween(ownedUserIds, queryStart, queryEnd).stream()
                 .filter(entry -> customerId.equals(entry.getCustomerId()))
                 .filter(entry -> entry.getDate() != null)
                 .filter(entry -> !entry.getDate().isBefore(startDate) && !entry.getDate().isAfter(endDate))
