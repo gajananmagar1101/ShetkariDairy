@@ -24,7 +24,8 @@ import java.time.LocalDateTime;
 @CompoundIndexes({
     @CompoundIndex(name = "user_date_idx", def = "{'userId': 1, 'date': 1}"),
     @CompoundIndex(name = "user_customer_idx", def = "{'userId': 1, 'customerId': 1}"),
-    @CompoundIndex(name = "user_customer_date_idx", def = "{'userId': 1, 'customerId': 1, 'date': 1}")
+    @CompoundIndex(name = "user_customer_date_idx", def = "{'userId': 1, 'customerId': 1, 'date': 1}"),
+    @CompoundIndex(name = "customer_date_unique_idx", def = "{'customerId': 1, 'date': 1}", unique = true)
 })
 public class MilkEntry {
     @Indexed

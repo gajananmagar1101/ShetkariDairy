@@ -8,7 +8,6 @@ import com.dairy.backend.entity.Customer;
 import com.dairy.backend.entity.DeliveryOverride;
 import com.dairy.backend.entity.MilkEntry;
 import com.dairy.backend.entity.SpecialCondition;
-import com.dairy.backend.entity.User;
 import com.dairy.backend.event.MonthEndEntrySavedEvent;
 import com.dairy.backend.repository.CustomerRepository;
 import com.dairy.backend.repository.MilkEntryRepository;
@@ -104,7 +103,7 @@ public class MilkEntryService {
         BigDecimal totalQty = mQty.add(eQty);
         BigDecimal totalAmount = totalQty.multiply(rate);
 
-        List<MilkEntry> sameDateEntries = milkEntryRepository.findByUserIdAndCustomerIdAndDate(userId, customer.getId(), entryDate);
+        List<MilkEntry> sameDateEntries = milkEntryRepository.findByCustomerIdAndDate(customer.getId(), entryDate);
         MilkEntry entry;
         BigDecimal previousGroupAmount = sameDateEntries.stream()
                 .map(MilkEntry::getTotalAmount)
@@ -235,12 +234,11 @@ public class MilkEntryService {
     public MilkEntryDto updateMilkEntry(String id, MilkEntryDto dto) {
         MilkEntry entry = milkEntryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Milk entry not found"));
-        String userId = SecurityUtils.getCurrentUserId();
 
         Customer customer = customerRepository.findById(entry.getCustomerId())
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
 
-        List<MilkEntry> sameDateEntries = milkEntryRepository.findByUserIdAndCustomerIdAndDate(userId, entry.getCustomerId(), entry.getDate());
+        List<MilkEntry> sameDateEntries = milkEntryRepository.findByCustomerIdAndDate(entry.getCustomerId(), entry.getDate());
         BigDecimal previousGroupAmount = sameDateEntries.stream()
                 .map(MilkEntry::getTotalAmount)
                 .map(this::safe)
@@ -265,7 +263,7 @@ public class MilkEntryService {
 
         customer.setBalance(customer.getBalance().subtract(previousGroupAmount).add(totalAmount));
         customerRepository.save(customer);
-        publishMonthEndInvoiceEvent(userId, entry.getCustomerId(), entry.getDate());
+        publishMonthEndInvoiceEvent(SecurityUtils.getCurrentUserId(), entry.getCustomerId(), entry.getDate());
 
         return mapToDto(entry, customer.getName());
     }
@@ -349,7 +347,7 @@ public class MilkEntryService {
 
             if (!shouldAutoGenerate
                     || skippedDates.contains(date)
-                    || milkEntryRepository.existsByUserIdInAndCustomerIdAndDate(ownedUserIds, customer.getId(), date)) {
+                    || milkEntryRepository.existsByCustomerIdAndDate(customer.getId(), date)) {
                 continue;
             }
 

@@ -21,6 +21,8 @@ List<MilkEntry> findByUserIdAndDate(String userId, LocalDate date);
 List<MilkEntry> findByUserIdInAndDate(Collection<String> userIds, LocalDate date);
 boolean existsByUserIdAndCustomerIdAndDate(String userId, String customerId, LocalDate date);
 boolean existsByUserIdInAndCustomerIdAndDate(Collection<String> userIds, String customerId, LocalDate date);
+boolean existsByCustomerIdAndDate(String customerId, LocalDate date);
+List<MilkEntry> findByCustomerIdAndDate(String customerId, LocalDate date);
 void deleteByUserIdAndCustomerId(String userId, String customerId);
     List<MilkEntry> findByUserId(String userId);
 }
