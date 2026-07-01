@@ -166,9 +166,28 @@ export default function CustomerMonthView() {
     void loadData()
   }, [customerId, year, monthIndex])
 
-  const deliveredDays = entries.filter((entry) => (entry.morningQuantity ?? 0) > 0 || (entry.eveningQuantity ?? 0) > 0).length
-  const totalLiters = entries.reduce((sum, entry) => sum + (entry.morningQuantity ?? 0) + (entry.eveningQuantity ?? 0), 0)
-  const totalAmount = entries.reduce((sum, entry) => sum + Number(entry.totalAmount || 0), 0)
+  const { deliveredDays, totalLiters, totalAmount } = useMemo(() => {
+    const byDate = new Map<string, { qty: number; amount: number }>()
+    for (const entry of entries) {
+      const dateKey = entry.date?.slice(0, 10) ?? ''
+      const qty = (entry.morningQuantity ?? 0) + (entry.eveningQuantity ?? 0)
+      const amt = Number(entry.totalAmount || 0)
+      const existing = byDate.get(dateKey)
+      if (existing) {
+        existing.qty += qty
+        existing.amount += amt
+      } else {
+        byDate.set(dateKey, { qty, amount: amt })
+      }
+    }
+    let days = 0, liters = 0, amount = 0
+    for (const v of byDate.values()) {
+      if (v.qty > 0) days++
+      liters += v.qty
+      amount += v.amount
+    }
+    return { deliveredDays: days, totalLiters: liters, totalAmount: amount }
+  }, [entries])
   const paidAmount = invoice?.paidAmount != null
     ? Number(invoice.paidAmount || 0)
     : payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
@@ -183,7 +202,18 @@ export default function CustomerMonthView() {
     const entryByDate = new Map<string, MilkEntry>()
     entries.forEach((entry) => {
       if (entry.date) {
-        entryByDate.set(entry.date.slice(0, 10), entry)
+        const key = entry.date.slice(0, 10)
+        const existing = entryByDate.get(key)
+        if (existing) {
+          entryByDate.set(key, {
+            ...existing,
+            morningQuantity: (existing.morningQuantity ?? 0) + (entry.morningQuantity ?? 0),
+            eveningQuantity: (existing.eveningQuantity ?? 0) + (entry.eveningQuantity ?? 0),
+            totalAmount: Number(existing.totalAmount || 0) + Number(entry.totalAmount || 0),
+          })
+        } else {
+          entryByDate.set(key, entry)
+        }
       }
     })
 
