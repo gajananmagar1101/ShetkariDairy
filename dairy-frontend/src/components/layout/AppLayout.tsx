@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import axios from 'axios'
 import { Outlet } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -6,6 +6,7 @@ import { Logo } from '../ui/Logo'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import MobileDock from './MobileDock'
+import MobileIntro from './MobileIntro'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useSettingsStore } from '../../store/settingsStore'
 import { Toaster } from 'react-hot-toast'
@@ -26,11 +27,18 @@ export default function AppLayout() {
   const { theme } = useSettingsStore()
   const isNetworkBusy = useNetworkActivity()
 
+  const isMobile = useRef(typeof window !== 'undefined' && window.innerWidth < 768)
   const shouldAnimate = useRef(!sessionStorage.getItem('dashboard-intro-seen'))
-  const [stage, setStage] = useState<Stage>(shouldAnimate.current ? 'blank' : 'done')
+  const [showMobileIntro, setShowMobileIntro] = useState(shouldAnimate.current && isMobile.current)
+  const [stage, setStage] = useState<Stage>(shouldAnimate.current && !isMobile.current ? 'blank' : 'done')
+
+  const handleMobileIntroComplete = useCallback(() => {
+    setShowMobileIntro(false)
+    sessionStorage.setItem('dashboard-intro-seen', 'true')
+  }, [])
 
   useEffect(() => {
-    if (!shouldAnimate.current) return
+    if (!shouldAnimate.current || isMobile.current) return
     const timers = [
       setTimeout(() => setStage('icon'), 400),
       setTimeout(() => setStage('moveUp'), 2400),
@@ -111,10 +119,22 @@ export default function AppLayout() {
     <div className="relative flex h-screen overflow-hidden bg-[#F5F5F5] text-[#1A1A1A] transition-colors duration-500 dark:bg-[#0A0A0A] dark:text-[#E5E5E5]">
       <GlobalLoadBar active={isNetworkBusy} />
 
+      {/* Mobile intro */}
+      {showMobileIntro && <MobileIntro onComplete={handleMobileIntroComplete} />}
+
       {/* ═══ ONE ELEMENT — transforms through all stages ═══ */}
       <motion.div
         className="absolute z-50 overflow-hidden bg-white dark:bg-[#111111]"
-        initial={{
+        initial={stage === 'done' ? {
+          width: r.w,
+          height: r.h,
+          left: r.l,
+          top: r.t,
+          borderRadius: 24,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.04)',
+          opacity: 1,
+          scale: 1,
+        } : {
           width: iconBoxSize,
           height: iconBoxSize,
           left: vw / 2 - iconBoxSize / 2,
@@ -214,7 +234,7 @@ export default function AppLayout() {
 
       </motion.div>
 
-      {past('reveal') && <MobileDock />}
+      {(past('reveal') || isMobile.current) && !showMobileIntro && <MobileDock />}
 
       <Toaster
         position="top-center"

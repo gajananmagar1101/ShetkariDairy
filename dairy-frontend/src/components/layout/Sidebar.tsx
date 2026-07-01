@@ -171,7 +171,7 @@ export default function Sidebar({ animationStage = null, forceCollapsed = false 
   const navigate = useNavigate()
   const [isDairyExpanded, setIsDairyExpanded] = useState(true)
   const [isLabourExpanded, setIsLabourExpanded] = useState(false)
-  const [isCollapsedState, setIsCollapsedState] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
+  const [isCollapsedState, setIsCollapsedState] = useState(true)
   const isCollapsed = forceCollapsed || isCollapsedState
 
   const isAnimating = animationStage !== null
