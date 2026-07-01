@@ -164,21 +164,22 @@ function SidebarSection({
 
 type AnimationStage = 'sidebar-content' | 'sidebar-position' | 'dashboard-expand' | 'complete' | null
 
-export default function Sidebar({ animationStage = null }: { animationStage?: AnimationStage | string | null }) {
+export default function Sidebar({ animationStage = null, forceCollapsed = false }: { animationStage?: AnimationStage | string | null; forceCollapsed?: boolean }) {
   const { language, setMobileMenuOpen } = useSettingsStore()
   const logout = useAuthStore((state) => state.logout)
   const location = useLocation()
   const navigate = useNavigate()
   const [isDairyExpanded, setIsDairyExpanded] = useState(true)
   const [isLabourExpanded, setIsLabourExpanded] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
+  const [isCollapsedState, setIsCollapsedState] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true')
+  const isCollapsed = forceCollapsed || isCollapsedState
 
   const isAnimating = animationStage !== null
   const showContent = !isAnimating || animationStage === 'sidebar-content' || animationStage === 'sidebar-position' || animationStage === 'dashboard-expand' || animationStage === 'complete'
 
   const toggleCollapse = () => {
-    const newState = !isCollapsed
-    setIsCollapsed(newState)
+    const newState = !isCollapsedState
+    setIsCollapsedState(newState)
     localStorage.setItem('sidebar-collapsed', String(newState))
   }
 

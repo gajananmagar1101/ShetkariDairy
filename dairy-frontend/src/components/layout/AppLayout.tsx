@@ -174,7 +174,7 @@ export default function AppLayout() {
         >
           {/* Real Sidebar — this IS the strip */}
           <div className="hidden h-full flex-shrink-0 md:block">
-            <Sidebar animationStage={!past('done') ? 'sidebar-content' : null} />
+            <Sidebar animationStage={!past('done') ? 'sidebar-content' : null} forceCollapsed={!past('done')} />
           </div>
 
           {/* Main content area */}
