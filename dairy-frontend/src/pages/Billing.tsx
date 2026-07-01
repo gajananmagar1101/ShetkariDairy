@@ -167,10 +167,6 @@ export default function Billing() {
     }
   }
 
-  const reconcileInvoiceTotal = (invoice: Invoice, _sourceInvoices: Invoice[]) => {
-    return invoice
-  }
-
   const getCoveredPaidDates = (invoice: Invoice, sourceInvoices: Invoice[]) => {
     const coveredDates = new Set<string>()
 
