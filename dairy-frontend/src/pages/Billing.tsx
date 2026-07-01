@@ -50,7 +50,7 @@ interface MilkEntryRow {
 }
 
 const BILLING_CACHE_KEY = 'view-cache-billing-invoices'
-const BILLING_CACHE_TTL_MS = 60_000
+const BILLING_CACHE_TTL_MS = 300_000
 
 export default function Billing() {
   const { language } = useSettingsStore()
@@ -167,38 +167,8 @@ export default function Billing() {
     }
   }
 
-  const reconcileInvoiceTotal = async (invoice: Invoice, sourceInvoices: Invoice[]) => {
-    if (invoice.status === 'PAID') {
-      return invoice
-    }
-
-    if (!invoice.periodStartDate || !invoice.periodEndDate) {
-      return invoice
-    }
-
-    try {
-      const res = await axios.get(`/api/milk-entries/customer-range?customerId=${invoice.customerId}&startDate=${invoice.periodStartDate}&endDate=${invoice.periodEndDate}`)
-      if (!res.data.success) {
-        return invoice
-      }
-
-      const paidDates = getCoveredPaidDates(invoice, sourceInvoices)
-      const totalAmount = (res.data.data ?? []).reduce((sum: number, entry: any) => {
-        const normalizedDate = normalizeApiDate(entry.date)
-        if (paidDates.has(normalizedDate)) {
-          return sum
-        }
-        return sum + Number(entry.totalAmount || 0)
-      }, 0)
-
-      return {
-        ...invoice,
-        totalAmount,
-      }
-    } catch (error) {
-      console.error('Failed to reconcile invoice total', error)
-      return invoice
-    }
+  const reconcileInvoiceTotal = (invoice: Invoice, _sourceInvoices: Invoice[]) => {
+    return invoice
   }
 
   const getCoveredPaidDates = (invoice: Invoice, sourceInvoices: Invoice[]) => {
@@ -230,9 +200,7 @@ export default function Billing() {
       const res = await axios.get('/api/invoices')
       if (res.data.success) {
         const rawInvoices = normalizeInvoices(res.data.data)
-        const reconciledInvoices = await Promise.all(rawInvoices.map((invoice) => reconcileInvoiceTotal(invoice, rawInvoices)))
-        const sortedInvoices = uniqueInvoices(reconciledInvoices).sort((a: Invoice, b: Invoice) => {
-          // ObjectIDs can be sorted chronologically
+        const sortedInvoices = uniqueInvoices(rawInvoices).sort((a: Invoice, b: Invoice) => {
           return b.id.localeCompare(a.id);
         })
         setInvoices(sortedInvoices)

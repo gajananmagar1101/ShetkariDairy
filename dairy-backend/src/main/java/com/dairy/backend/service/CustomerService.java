@@ -226,15 +226,15 @@ public class CustomerService {
         String userId = SecurityUtils.getCurrentUserId();
         Set<String> ownedUserIds = resolveOwnedUserIds(userId);
         List<Customer> customers = customerRepository.findByUserId(userId);
-        List<com.dairy.backend.entity.MilkEntry> milkEntries = milkEntryRepository.findByUserIdIn(ownedUserIds);
-        List<com.dairy.backend.entity.Invoice> invoices = invoiceRepository.findByUserIdIn(ownedUserIds, Sort.by(Sort.Direction.ASC, "createdAt"));
-        List<com.dairy.backend.entity.Payment> payments = paymentRepository.findByUserIdIn(ownedUserIds, Sort.by(Sort.Direction.ASC, "createdAt"));
+        LocalDate recentStart = java.time.LocalDate.now().minusDays(7);
+        List<com.dairy.backend.entity.MilkEntry> recentEntries = milkEntryRepository.findByUserIdInAndDateBetween(
+                ownedUserIds, recentStart, java.time.LocalDate.now().plusDays(1));
 
         return customers.stream()
                 .map(customer -> mapToDto(
                         customer,
-                        calculateLiveBalanceFromCollections(customer, milkEntries, invoices, payments),
-                        buildRecentSummary(customer, milkEntries)
+                        customer.getBalance() != null ? customer.getBalance() : BigDecimal.ZERO,
+                        buildRecentSummary(customer, recentEntries)
                 ))
                 .collect(Collectors.toList());
     }

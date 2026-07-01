@@ -16,7 +16,7 @@ import { LoadingBlock, LoadingInline } from '../components/ui/loading'
 import { useSettingsStore } from '../store/settingsStore'
 import { t } from '../utils/translations'
 import { getDisplayLocale } from '../utils/numberFormat'
-import { setCachedCustomers } from '../lib/customerCache'
+import { getCachedCustomers, setCachedCustomers } from '../lib/customerCache'
 import { useLocation } from 'react-router-dom'
 import { CustomerDetailsDialog } from '../components/customers/CustomerDetailsDialog'
 
@@ -104,6 +104,13 @@ export default function Customers() {
   const reopenHandled = useRef(false)
 
   useEffect(() => {
+    const cached = getCachedCustomers<Customer>()
+    if (cached) {
+      setCustomers(cached)
+      setIsLoading(false)
+      void fetchCustomers()
+      return
+    }
     fetchCustomers()
   }, [])
 

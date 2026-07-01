@@ -161,10 +161,6 @@ public class PaymentService {
                         ),
                         map -> new java.util.ArrayList<>(map.values())
                 ));
-        Map<String, Map<LocalDate, BigDecimal>> customerEntryAmountByDate = new HashMap<>();
-        Map<String, Set<LocalDate>> customerCoveredDates = new HashMap<>();
-
-        // Batch-load all customer names to avoid N+1 queries
         Set<String> customerIds = payments.stream()
                 .map(Payment::getCustomerId)
                 .filter(id -> id != null)
@@ -172,32 +168,15 @@ public class PaymentService {
         Map<String, String> customerNameMap = customerRepository.findAllById(customerIds).stream()
                 .collect(Collectors.toMap(Customer::getId, Customer::getName, (a, b) -> a));
 
-        List<PaymentDto> dtos = payments.stream()
+        return payments.stream()
                 .map(payment -> {
-                    BigDecimal effectiveAmount = resolveEffectivePaymentAmount(
-                            ownedUserIds,
-                            payment,
-                            customerEntryAmountByDate,
-                            customerCoveredDates
-                    );
-                    if (payment.getPaidFromDate() != null
-                            && payment.getPaidToDate() != null
-                            && effectiveAmount.compareTo(safe(payment.getAmount())) != 0) {
-                        payment.setAmount(effectiveAmount);
-                        paymentRepository.save(payment);
-                    }
-
                     String name = customerNameMap.getOrDefault(payment.getCustomerId(), "Unknown");
-                    PaymentDto dto = mapToDto(payment, name);
-                    dto.setAmount(effectiveAmount);
-                    return dto;
+                    return mapToDto(payment, name);
                 })
                 .sorted(Comparator
                         .comparing(PaymentDto::getPaymentDate, Comparator.nullsLast(Comparator.reverseOrder()))
                         .thenComparing(PaymentDto::getId, Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
-
-        return dtos;
     }
 
     public List<PaymentDto> getPaymentsByCustomer(String customerId) {

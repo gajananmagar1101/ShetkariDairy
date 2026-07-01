@@ -214,26 +214,14 @@ public class InvoiceService {
                     String name = customer != null ? customer.getName() : "Unknown";
                     LocalDate startDate = resolveInvoiceStartDate(inv);
                     LocalDate endDate = resolveInvoiceEndDate(inv);
-                    List<MilkEntry> entries = inv.getStatus() == PaymentStatus.PAID
-                            ? findBillableEntries(ownedUserIds, inv.getCustomerId(), startDate, endDate, inv.getId(), inv.getCreatedAt(), inv.getId())
-                            : findBillableEntries(ownedUserIds, inv.getCustomerId(), startDate, endDate, inv.getId(), null, null);
-                    List<LocalDate> skippedDates = customer != null
-                            ? resolveSkippedDates(
-                                    customer,
-                                    milkEntryService.findEntriesByCustomerAndDateRange(resolveCurrentUserId(ownedUserIds), inv.getCustomerId(), startDate, endDate),
-                                    startDate,
-                                    endDate
-                            )
+                    List<LocalDate> skippedDates = customer != null && customer.getSkippedDates() != null
+                            ? customer.getSkippedDates().stream()
+                                    .filter(date -> !date.isBefore(startDate) && !date.isAfter(endDate))
+                                    .sorted()
+                                    .collect(Collectors.toList())
                             : new ArrayList<>();
-                    BigDecimal effectiveTotalAmount = resolveTotalAmount(entries);
-                    if (inv.getTotalAmount() == null || inv.getTotalAmount().compareTo(effectiveTotalAmount) != 0) {
-                        inv.setTotalAmount(effectiveTotalAmount);
-                        if (inv.getStatus() == PaymentStatus.PAID) {
-                            inv.setPaidAmount(effectiveTotalAmount);
-                        }
-                        invoiceRepository.save(inv);
-                    }
-                    return mapToDto(inv, name, skippedDates, effectiveTotalAmount);
+                    BigDecimal totalAmount = inv.getTotalAmount() != null ? inv.getTotalAmount() : BigDecimal.ZERO;
+                    return mapToDto(inv, name, skippedDates, totalAmount);
                 })
                 .collect(Collectors.toList());
     }
@@ -259,24 +247,14 @@ public class InvoiceService {
                 .map(inv -> {
                     LocalDate startDate = resolveInvoiceStartDate(inv);
                     LocalDate endDate = resolveInvoiceEndDate(inv);
-                    List<MilkEntry> entries = inv.getStatus() == PaymentStatus.PAID
-                            ? findBillableEntries(ownedUserIds, inv.getCustomerId(), startDate, endDate, inv.getId(), inv.getCreatedAt(), inv.getId())
-                            : findBillableEntries(ownedUserIds, inv.getCustomerId(), startDate, endDate, inv.getId(), null, null);
-                    List<LocalDate> skippedDates = resolveSkippedDates(
-                            customer,
-                            milkEntryService.findEntriesByCustomerAndDateRange(resolveCurrentUserId(ownedUserIds), inv.getCustomerId(), startDate, endDate),
-                            startDate,
-                            endDate
-                    );
-                    BigDecimal effectiveTotalAmount = resolveTotalAmount(entries);
-                    if (inv.getTotalAmount() == null || inv.getTotalAmount().compareTo(effectiveTotalAmount) != 0) {
-                        inv.setTotalAmount(effectiveTotalAmount);
-                        if (inv.getStatus() == PaymentStatus.PAID) {
-                            inv.setPaidAmount(effectiveTotalAmount);
-                        }
-                        invoiceRepository.save(inv);
-                    }
-                    return mapToDto(inv, customer.getName(), skippedDates, effectiveTotalAmount);
+                    List<LocalDate> skippedDates = customer.getSkippedDates() != null
+                            ? customer.getSkippedDates().stream()
+                                    .filter(date -> !date.isBefore(startDate) && !date.isAfter(endDate))
+                                    .sorted()
+                                    .collect(Collectors.toList())
+                            : new ArrayList<>();
+                    BigDecimal totalAmount = inv.getTotalAmount() != null ? inv.getTotalAmount() : BigDecimal.ZERO;
+                    return mapToDto(inv, customer.getName(), skippedDates, totalAmount);
                 })
                 .sorted(Comparator.comparing((InvoiceDto inv) -> inv.getPeriodStartDate(), Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());

@@ -13,8 +13,17 @@ server:
   port: ${PORT:8080}
   compression:
     enabled: true
-    mime-types: application/json,application/xml,text/html,text/xml,text/plain
-    min-response-size: 1024
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript
+    min-response-size: 512
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 10
+    max-connections: 8192
+    accept-count: 100
+
+spring.jackson:
+  default-property-inclusion: non_null
 
 app:
   mongo:

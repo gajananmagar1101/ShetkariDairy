@@ -133,7 +133,6 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
       setInvoices([])
       setPayments([])
       void fetchCustomerData(customer.id)
-      void fetchCustomerEntries(customer.id, '2000-01-01', '2100-01-01')
     }
   }, [isOpen, customer])
 

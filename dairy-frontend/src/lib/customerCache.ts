@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const CUSTOMER_CACHE_KEY = 'customer-cache-v1'
-const CUSTOMER_CACHE_TTL_MS = 60_000
+const CUSTOMER_CACHE_TTL_MS = 300_000
 
 interface CustomerLike {
   id: string

@@ -21,6 +21,11 @@ public class MongoConfig {
                         .connectTimeout(connectTimeoutMs, TimeUnit.MILLISECONDS)
                         .readTimeout(readTimeoutMs, TimeUnit.MILLISECONDS))
                 .applyToClusterSettings(cluster ->
-                        cluster.serverSelectionTimeout(serverSelectionTimeoutMs, TimeUnit.MILLISECONDS));
+                        cluster.serverSelectionTimeout(serverSelectionTimeoutMs, TimeUnit.MILLISECONDS))
+                .applyToConnectionPoolSettings(pool -> pool
+                        .minSize(2)
+                        .maxSize(20)
+                        .maxWaitTime(3000, TimeUnit.MILLISECONDS)
+                        .maxConnectionIdleTime(60000, TimeUnit.MILLISECONDS));
     }
 }
