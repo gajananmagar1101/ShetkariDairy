@@ -427,14 +427,18 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
     })
 
     uniqueInvoices.forEach((invoice) => {
-      const date = new Date(invoice.periodStartDate)
-      if (Number.isNaN(date.getTime())) return
+      const startDate = new Date(invoice.periodStartDate)
+      const endDate = new Date(invoice.periodEndDate)
+      if (Number.isNaN(startDate.getTime())) return
 
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      const isMultiMonth = !Number.isNaN(endDate.getTime()) &&
+        (endDate.getFullYear() !== startDate.getFullYear() || endDate.getMonth() !== startDate.getMonth())
+
+      const key = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}`
       const existing = monthMap.get(key)
       const billedAmount = Number(invoice.totalAmount || 0)
       const paidAmount = Number(invoice.paidAmount || 0)
-      const bounds = getMonthBounds(date.getFullYear(), date.getMonth())
+      const bounds = getMonthBounds(startDate.getFullYear(), startDate.getMonth())
 
       if (existing) {
         const hasMeaningfulInvoice = billedAmount > 0 || paidAmount > 0 || invoice.status === 'PAID'
@@ -442,13 +446,13 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
           existing.hasInvoice = true
           existing.invoiceId = invoice.id
           existing.invoiceStatus = invoice.status
-          existing.periodStartDate = invoice.periodStartDate || bounds.startDate
-          existing.periodEndDate = invoice.periodEndDate || bounds.endDate
+          if (!isMultiMonth) {
+            existing.periodStartDate = invoice.periodStartDate || bounds.startDate
+            existing.periodEndDate = invoice.periodEndDate || bounds.endDate
+          }
         }
 
-        // Preserve the summary amount when the invoice itself is zero or partial.
-        // This keeps month totals visible even when the generated invoice record is not authoritative yet.
-        const mergedBilled = billedAmount > 0 ? Math.max(existing.billed, billedAmount) : existing.billed
+        const mergedBilled = (!isMultiMonth && billedAmount > 0) ? Math.max(existing.billed, billedAmount) : existing.billed
         const mergedPaid = Math.max(existing.paid, paidAmount)
 
         existing.billed = mergedBilled
@@ -459,11 +463,13 @@ export function CustomerDetailsDialog({ customer, isOpen, onClose, onCustomerUpd
         return
       }
 
+      if (isMultiMonth) return
+
       monthMap.set(key, {
         key,
-        label: formatMonthOnly(date.getFullYear(), date.getMonth()),
-        year: date.getFullYear(),
-        monthIndex: date.getMonth(),
+        label: formatMonthOnly(startDate.getFullYear(), startDate.getMonth()),
+        year: startDate.getFullYear(),
+        monthIndex: startDate.getMonth(),
         billed: billedAmount,
         paid: paidAmount,
         balance: Math.max(0, billedAmount - paidAmount),
