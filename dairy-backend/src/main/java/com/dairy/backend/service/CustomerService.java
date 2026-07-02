@@ -134,6 +134,35 @@ public class CustomerService {
         return milkEntriesTotal.subtract(paidInvoicesTotal).subtract(manualPaymentsTotal);
     }
 
+    private BigDecimal calculateStoredBalance(Customer customer) {
+        if (customer == null || customer.getId() == null) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal milkEntriesTotal = milkEntryRepository.findByCustomerId(customer.getId()).stream()
+                .map(entry -> safe(entry.getTotalAmount()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal paymentsTotal = paymentRepository.findByCustomerId(customer.getId()).stream()
+                .map(payment -> safe(payment.getAmount()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return milkEntriesTotal.subtract(paymentsTotal);
+    }
+
+    public void recalculateBalance(Customer customer) {
+        if (customer == null) {
+            return;
+        }
+
+        customer.setBalance(calculateStoredBalance(customer));
+        customerRepository.save(customer);
+    }
+
+    public void recalculateAllBalances() {
+        customerRepository.findAll().forEach(this::recalculateBalance);
+    }
+
     private BigDecimal calculateLiveBalance(String userId, Customer customer) {
         Set<String> ownedUserIds = resolveOwnedUserIds(userId);
         List<com.dairy.backend.entity.MilkEntry> milkEntries = milkEntryRepository.findByUserIdIn(ownedUserIds);

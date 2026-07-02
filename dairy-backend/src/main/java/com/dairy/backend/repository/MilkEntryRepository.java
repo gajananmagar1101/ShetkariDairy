@@ -19,6 +19,7 @@ List<MilkEntry> findByUserIdInAndDateBetween(Collection<String> userIds, LocalDa
 List<MilkEntry> findByUserIdAndDateBetween(String userId, LocalDate startDate, LocalDate endDate);
 List<MilkEntry> findByUserIdAndDate(String userId, LocalDate date);
 List<MilkEntry> findByUserIdInAndDate(Collection<String> userIds, LocalDate date);
+List<MilkEntry> findByCustomerId(String customerId);
 boolean existsByUserIdAndCustomerIdAndDate(String userId, String customerId, LocalDate date);
 boolean existsByUserIdInAndCustomerIdAndDate(Collection<String> userIds, String customerId, LocalDate date);
 boolean existsByCustomerIdAndDate(String customerId, LocalDate date);

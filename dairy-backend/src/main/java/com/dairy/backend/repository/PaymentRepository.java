@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 @Repository
 public interface PaymentRepository extends MongoRepository<Payment, String> {
 List<Payment> findByUserIdAndCustomerId(String userId, String customerId);
+List<Payment> findByCustomerId(String customerId);
 void deleteByUserIdAndCustomerId(String userId, String customerId);
 List<Payment> findByUserId(String userId, Sort sort);
 List<Payment> findByUserIdIn(Collection<String> userIds, Sort sort);

@@ -2,6 +2,7 @@ package com.dairy.backend.config;
 
 import com.dairy.backend.entity.Invoice;
 import com.dairy.backend.entity.MilkEntry;
+import com.dairy.backend.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -27,10 +28,12 @@ import java.util.Map;
 public class MilkEntryDeduplicator {
 
     private final MongoTemplate mongoTemplate;
+    private final CustomerService customerService;
 
     @EventListener(ApplicationReadyEvent.class)
     public void onStartup() {
         deduplicateMilkEntries();
+        customerService.recalculateAllBalances();
         ensureUniqueIndex();
         fixInvoicePeriodDates();
     }
