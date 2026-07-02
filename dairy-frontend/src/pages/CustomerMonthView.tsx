@@ -122,8 +122,12 @@ export default function CustomerMonthView() {
       if (invoicesRes.data?.success) {
         const monthInvoices: Invoice[] = (invoicesRes.data.data ?? []).filter((item: Invoice) => {
           const startDate = item.periodStartDate ? new Date(item.periodStartDate) : null
+          const endDate = item.periodEndDate ? new Date(item.periodEndDate) : null
           if (!startDate || Number.isNaN(startDate.getTime())) return false
-          return startDate.getFullYear() === year && startDate.getMonth() === monthIndex
+          if (!endDate || Number.isNaN(endDate.getTime())) return false
+          const startsInMonth = startDate.getFullYear() === year && startDate.getMonth() === monthIndex
+          const endsInMonth = endDate.getFullYear() === year && endDate.getMonth() === monthIndex
+          return startsInMonth && endsInMonth
         })
 
         const preferred = monthInvoices.reduce<Invoice | null>((current, candidate) => {
